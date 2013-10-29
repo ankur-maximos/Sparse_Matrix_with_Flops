@@ -33,7 +33,8 @@ void arrayThreshPruneTest() {
   double values[] = {2.1, 1.5, 4.0, 3.0, -2.0};
   int count = sizeof(values) / sizeof(double);
   int indices[] = {1, 2, 3, 4, 5};
-  arrayThreshPrune(thresh, &count, indices, values);
+  arrayThreshPrune(thresh, indices, values,
+      &count, indices, values);
   assert(fabs(values[0] - 2.1) <= 1.0e-7);
   assert(fabs(values[1] - 4.0) <= 1.0e-7);
   assert(fabs(values[2] - 3.0) <= 1.0e-7);

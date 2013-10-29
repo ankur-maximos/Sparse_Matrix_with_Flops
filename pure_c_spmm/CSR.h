@@ -1,0 +1,113 @@
+/*
+ * CSR.h
+ *
+ *  Created on: Oct 3, 2013
+ *      Author: niuq
+ */
+
+#ifndef CSR_H_
+#define CSR_H_
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "cpu_csr_kernel.h"
+#include "math.h"
+
+struct CSR {
+public:
+/*A real or complex array that contains the non-zero elements of a sparse matrix.
+ * The non-zero elements are mapped into the values array using the row-major upper
+ * triangular storage mapping described above.*/
+	double* values;
+
+/*Element i of the integer array columns is the number of the column that
+ * contains the i-th element in the values array.*/
+	int* colInd;
+
+/*Element j of the integer array rowIndex gives the index of the element
+ * in the values array that is
+ * first non-zero element in a row j.*/
+	int* rowPtr;
+	int rows, cols, nnz;
+
+/* if allocate by malloc, isStatus=1
+ * else if allocate by cudaMalloc isStatus=-1
+ * else isStatus=0 */
+	CSR() {
+		 this->values = NULL;
+		  this->colInd = NULL;
+		  this->rowPtr = NULL;
+		  this->rows = 0;
+		  this->cols = 0;
+		  this->nnz = 0;
+	}
+
+	CSR(double* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
+		this->values = values;
+		  this->colInd = colInd;
+		  this->rowPtr = rowPtr;
+		  this->rows = rows;
+		  this->cols = cols;
+		  this->nnz = nnz;
+	}
+  long spmmFlops(const CSR& B) const;
+  CSR spmm(const CSR& B);
+  CSR omp_spmm(const CSR& B);
+  void output(const char* msg) const {
+    printf("%s\n", msg);
+    for (int i = 0; i < rows; i++) {
+      for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+        int col=colInd[j];
+        double val=values[j];
+        printf("%d\t%d\t%.6lf\n", i, col, val);
+      }
+    }
+  }
+  void makeOrdered();
+  void matrixRowReorder(const int* ranks) const;
+
+  //Both CSR should be called makeOrdered before call isEqual
+  bool isEqual(const CSR &B) const {
+    if (rows != B.rows) {
+      printf("rows = %d\tB_rows = %d\n", rows, B.rows);
+      return false;
+    }
+    if (cols != B.cols) {
+      printf("cols = %d\tB_cols = %d\n", cols, B.cols);
+      return false;
+    }
+    if (nnz != B.nnz) {
+      printf("nnz = %d\tB_nnz = %d\n", nnz, B.nnz);
+      return false;
+    }
+
+    for (int i = 0; i < (rows + 1); ++i) {
+      if (rowPtr[i] != B.rowPtr[i]) {
+        printf("rowPtr[%d] %d\t%d\n", i, rowPtr[i], B.rowPtr[i]);
+        return false;
+      }
+    }
+
+    for (int i = 0; i < nnz; ++i) {
+      if (colInd[i] != B.colInd[i]) {
+        printf("colInd[%d] %d\t%d\n", i, colInd[i], B.colInd[i]);
+        return false;
+      }
+    }
+
+    for (int i = 0; i < nnz; ++i) {
+      if (fabs(values[i] - B.values[i]) > 1e7) {
+        printf("values[%d] %lf\t%lf\n", i, values[i], B.values[i]);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  ~CSR() {
+      free(values);
+      free(colInd);
+      free(rowPtr);
+  }
+};
+#endif /* CSR_CUH_ */

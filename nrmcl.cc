@@ -4,10 +4,38 @@
 #include "ntimer.h"
 #include "omp.h"
 #include "util.h"
-
-void rmclIter(const int maxIter, const int gamma, const CSR Mgt, CSR &Mt) {
+#include "key_value_qsort.h"
+#include "process_args.h"
+void ompRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
+  CSR newMt;
+  double tsum = 0.0;
+  int nthreads = 8;
+  double now = time_in_mill_now();
+  thread_data_t* thread_datas = allocateThreadDatas(nthreads, Mt.cols);
   for (int iter = 0; iter < maxIter; ++iter) {
-    CSR newMt = Mgt.spmm(Mt);
+#ifdef debugging
+    Mgt.output("Mgt iter");
+    Mt.output("Mt iter");
+#endif
+    newMt = Mgt.rmclOneStep(Mt, thread_datas);
+    Mt.dispose();
+    Mt = newMt;
+    printf("iter %d done\n", iter);
+  }
+  freeThreadDatas(thread_datas, nthreads);
+  cout << "iter finish in " << time_in_mill_now() - now << "\n";
+}
+
+void rmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
+  CSR newMt;
+  double tsum = 0.0;
+  for (int iter = 0; iter < maxIter; ++iter) {
+  double now = time_in_mill_now();
+    //newMt = Mgt.omp_spmm(Mt);
+    newMt = Mgt.spmm(Mt);
+    tsum += time_in_mill_now() - now;
+  //printf("time pass total = %lf\n", time_in_mill_now() - now);
+    //newMt.output("newMt spmm");
     int pos = 0;
     int i;
     for (i = 0; i < newMt.rows; ++i) {
@@ -18,11 +46,8 @@ void rmclIter(const int maxIter, const int gamma, const CSR Mgt, CSR &Mt) {
       double rsum = arraySum(values, count);
       double thresh = computeThreshold(rsum / count, rmax);
       int* indices = (int*)malloc(count * sizeof(int));
-      double nsum = arrayThreshPrune(thresh, &count, indices, values);
-      //normalize values vector
-      for (int k = 0; k < count; ++k) {
-        values[k] /= nsum;
-      }
+      double nsum = arrayThreshPruneNormalize(thresh, newMt.colInd + newMt.rowPtr[i], values,
+          &count, indices, values);
       memcpy(newMt.values + pos, values, count * sizeof(double));
       memcpy(newMt.colInd + pos, indices, count * sizeof(int));
       newMt.rowPtr[i] = pos;
@@ -30,13 +55,18 @@ void rmclIter(const int maxIter, const int gamma, const CSR Mgt, CSR &Mt) {
       free(values);
       free(indices);
     }
-    newMt.rowPtr[i + 1] = pos;
+    newMt.rowPtr[newMt.rows] = pos;
+    newMt.nnz = pos;
+    Mt.dispose();
+    Mt = newMt;
+    printf("iter %d done\n", iter);
   }
+  printf("time pass tsum spmm = %lf\n", tsum);
 }
 
 CSR rmclInit(COO &cooAt) {
+  //cooAt.output("COO");
   cooAt.addSelfLoopIfNeeded();
-  //cooA.output("COO");
   cooAt.makeOrdered();
   //cooA.output("COO");
   CSR At = cooAt.toCSR();
@@ -44,19 +74,58 @@ CSR rmclInit(COO &cooAt) {
   return At;
 }
 
-void RMCL(const char iname[]) {
+CSR ompRMCL(const char iname[], int maxIters) {
   COO cooAt;
   cooAt.readTransposedSNAPFile(iname);
   CSR Mt = rmclInit(cooAt);
-  cooAt.~COO();
+  //Mt.output("CSR Mt");
+  cooAt.dispose();
   CSR Mgt = Mt.deepCopy();
-  rmclIter(1000, 2, Mgt, Mt);
+  //Mt.output("CSR Mgt");
+  double now = time_in_mill_now();
+  //rmclIter(maxIters, Mgt, Mt);
+  ompRmclIter(maxIters, Mgt, Mt);
+  printf("time pass iters = %lf\n", time_in_mill_now() - now);
+  Mgt.dispose();
+  return Mt;
+}
+
+CSR RMCL(const char iname[], int maxIters) {
+  COO cooAt;
+  cooAt.readTransposedSNAPFile(iname);
+  CSR Mt = rmclInit(cooAt);
+  //Mt.output("CSR Mt");
+  cooAt.dispose();
+  CSR Mgt = Mt.deepCopy();
+  //Mt.output("CSR Mgt");
+  double now = time_in_mill_now();
+  rmclIter(maxIters, Mgt, Mt);
+  //ompRmclIter(maxIters, Mgt, Mt);
+  printf("time pass iters = %lf\n", time_in_mill_now() - now);
+  return Mt;
 }
 
 int main(int argc, char *argv[]) {
-  char iname[500] = "email-Enron.txt";
-  if (argc == 2) {
-    strcpy(iname, argv[1]);
+  process_args(argc, argv);
+  double now = time_in_mill_now();
+  CSR Mt = RMCL(options.inputFileName, options.maxIters);
+  printf("time pass rmcl total = %lf\n", time_in_mill_now() - now);
+  now = time_in_mill_now();
+  CSR oMt = ompRMCL(options.inputFileName, options.maxIters);
+  printf("time pass omp rmcl total = %lf\n", time_in_mill_now() - now);
+#ifdef debugging
+  Mt.output("mt");
+  oMt.output("omt");
+#endif
+  Mt.makeOrdered();
+  oMt.makeOrdered();
+  bool isSame = Mt.isEqual(oMt);
+  if (isSame) {
+    std::cout << "Same\n";
+  } else {
+    std::cout << "Diffs\n";
   }
+  Mt.dispose();
+  oMt.dispose();
   return 0;
 }

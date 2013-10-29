@@ -4,9 +4,9 @@
 CC = icpc
 
 # What optimization level to use
-#OPTFLAGS = -O3
-#OPTFLAGS = -fast
-OPTFLAGS = -O0 -openmp
+OPTFLAGS = -O3 -openmp
+#OPTFLAGS = -fast -openmp
+#OPTFLAGS = -O0 -openmp
 
 LIBDIR=nlibs
 LIBNAME=libnrmcl.a

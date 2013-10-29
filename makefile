@@ -6,7 +6,7 @@ CFLAGS += -Inlibs
 
 SOURCES=$(wildcard *.cc)
 OBJS=$(shell echo $(SOURCES) | sed s/.cc/.o/g)
-EXE=spmm.x
+EXE=nrmcl.x
 #VPATH := ..:.
 all:$(EXE)
 

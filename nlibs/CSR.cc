@@ -4,10 +4,11 @@
  *  Created on: Oct 3, 2013
  *      Author: niuq
  */
-
 #include "CSR.h"
+#include "util.h"
 #include <vector>
 #include <algorithm>
+#include <omp.h>
 
 void CSR::matrixRowReorder(const int* ranks) const {
   int* nrowPtr = (int*)malloc((rows + 1) * sizeof(int));
@@ -75,15 +76,16 @@ void CSR::averAndNormRowValue() {
 }
 
 CSR CSR::deepCopy() {
-  int* browPtr = (int*)malloc(rows * sizeof(int));
+  int* browPtr = (int*)malloc((rows + 1) * sizeof(int));
 	double* bvalues = (double*)malloc(nnz * sizeof(double));
   int* bcolInd = (int*)malloc(nnz * sizeof(int));;
-  memcpy(browPtr, rowPtr, rows * sizeof(int));
+  memcpy(browPtr, rowPtr, (rows + 1) * sizeof(int));
   memcpy(bvalues, values, nnz * sizeof(double));
   memcpy(bcolInd, colInd, nnz * sizeof(int));
   CSR B(bvalues, bcolInd, browPtr, rows, cols, nnz);
   return B;
 }
+
 
 CSR CSR::omp_spmm(const CSR& B) const {
   assert(this->cols == B.rows);
@@ -99,12 +101,49 @@ CSR CSR::omp_spmm(const CSR& B) const {
   return csr;
 }
 
+/* This method returns the norm of A-B. Remember, it assumes
+ * that the adjacency lists in both A and B are sorted in
+ * ascending order. */
 double CSR::differs(const CSR& B) const {
   double sum = 0;
-  for (int i = 0; i < rows; ++i) {
-    for (int j = rowPtr[i], k = B.rowPtr[i];
+  int i, j, k;
+  for (i = 0; i < rows; ++i) {
+    for (j = rowPtr[i], k = B.rowPtr[i];
         j < rowPtr[i + 1] && k < B.rowPtr[i + 1];) {
+      double a = values[j];
+      double b = B.values[k];
+      if (colInd[j] == colInd[k]) {
+        sum += (a - b) * (a - b);
+        ++j, ++k;
+      } else if (colInd[j] < colInd[k]){
+        sum += a * a;
+        ++j;
+      } else {
+        sum += b * b;
+        ++k;
+      }
+    }
+    for (; j < rowPtr[i + 1]; ++j) {
+      sum += values[j] * values[j];
+    }
+    for (; k < rowPtr[i + 1]; ++k) {
+      sum += B.values[k] * B.values[k];
     }
   }
   return sum;
 }
+
+CSR CSR::rmclOneStep(const CSR &B, thread_data_t *thread_datas) const {
+  assert(this->cols == B.rows);
+  int* IC;
+  int* JC;
+  double* C;
+  int nnzC;
+  omp_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz,
+      IC, JC, C, nnzC,
+      this->rows, this->cols, B.cols, thread_datas);
+  CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
+  return csr;
+}
+

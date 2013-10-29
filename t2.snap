@@ -1,0 +1,9 @@
+# Directed graph (each unordered pair of nodes is saved once): test.snap
+# Enron email network (edge indicated that email was exchanged, directed edges)
+# Nodes: 3 Edges: 4
+# FromNodeId	ToNodeId 
+3 4
+0 0
+0 1
+1 1
+2 2

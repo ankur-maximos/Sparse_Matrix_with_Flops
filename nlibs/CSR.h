@@ -10,8 +10,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "cpu_csr_kernel.h"
 #include "math.h"
+#include "cpu_csr_kernel.h"
 
 struct CSR {
 public:
@@ -108,10 +108,10 @@ public:
     return true;
   }
 
-  ~CSR() {
-      free(values);
-      free(colInd);
-      free(rowPtr);
+  void dispose() {
+      free(values); values = NULL;
+      free(colInd); colInd = NULL;
+      free(rowPtr); rowPtr = NULL;
   }
 
   /*Default rowInflation gamma is 2*/
@@ -143,6 +143,7 @@ public:
     return rowPtr[rowId + 1] - rowPtr[rowId];
   }
 
+  CSR rmclOneStep(const CSR &B, thread_data_t *thread_datas) const;
   double differs(const CSR& B) const;
 };
 #endif /* CSR_CUH_ */

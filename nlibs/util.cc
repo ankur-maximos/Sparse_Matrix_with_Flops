@@ -17,6 +17,18 @@ double arrayMax(const double values[], const int count) {
   return rmax;
 }
 
+pair<double, double> arrayMaxSum(const double values[], const int count) {
+  double rmax = 0.0;
+  double rsum = 0.0;
+  for ( int i = 0; i < count; ++i) {
+    if (rmax < values[i]) {
+      rmax = values[i];
+    }
+    rsum += values[i];
+  }
+  return make_pair(rmax, rsum);
+}
+
 double arraySum(const double values[], const int count) {
   double rsum = 0.0;
   for (int i = 0; i < count; ++i) {
@@ -31,22 +43,27 @@ void arrayInflationR2(const double ivalues[], const int count, double ovalues[])
   }
 }
 
-double arrayThreshPrune(const double thresh, int* count, int indices[], double values[]) {
-	int* indicesToRetain = (int*)malloc(sizeof(int) * (*count));
+double arrayThreshPruneNormalize(const double thresh, const int rindices[], const double rvalues[],
+    int* count, int indices[], double values[]) {
+	//int* indicesToRetain = (int*)malloc(sizeof(int) * (*count));
 	int i, j;
 	double sum = 0;
 	for (i = 0, j = 0; i < *count; ++i) {
 		if (values[i] >= thresh) {
-			sum += values[i];
-			indicesToRetain[j++] = i;
+			sum += rvalues[i];
+			//indicesToRetain[j++] = i;
+      indices[j] = rindices[i];
+      values[j++] = rvalues[i];
 		}
 	}
+  //normalize
 	for (i = 0; i < j; ++i) {
-		indices[i] = indices[indicesToRetain[i]];
-		values[i] = values[indicesToRetain[i]];
+		//indices[i] = rindices[indicesToRetain[i]];
+		//values[i] = rvalues[indicesToRetain[i]] / sum;
+		values[i] = values[i] / sum;
 	}
 	*count = j;
-	free(indicesToRetain);
+	//free(indicesToRetain);
 	return sum;
 }
 

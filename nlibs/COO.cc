@@ -20,10 +20,23 @@ COO::COO(const char fname[]) {
   this->readMatrixMarketFile(fname);
 }
 
-COO::~COO() {
-	free(cooRowIndex);
-	free(cooColIndex);
-	free(cooVal);
+COO::COO(const double* const cooVal, const int* const cooColIndex,
+      const int* const cooRowIndex, const int rows, const int cols, const int nnz) {
+  this->rows = rows;
+  this->cols = cols;
+  this->nnz = nnz;
+  this->cooColIndex = (int*)malloc(nnz * sizeof(int));
+  this->cooRowIndex = (int*)malloc(nnz * sizeof(int));
+  this->cooVal = (double*)malloc(nnz * sizeof(double));
+  memcpy(this->cooColIndex, cooColIndex, nnz * sizeof(int));
+  memcpy(this->cooRowIndex, cooRowIndex, nnz * sizeof(int));
+  memcpy(this->cooVal, cooVal, nnz * sizeof(double));
+}
+
+void COO::dispose() {
+	free(cooRowIndex); cooRowIndex = NULL;
+	free(cooColIndex); cooColIndex = NULL;
+	free(cooVal); cooVal = NULL;
 }
 
 void COO::readMatrixMarketFile(const char fname[]) {
@@ -53,7 +66,6 @@ void COO::readTransposedSNAPFile(const char fname[]) {
   cooVal = (double*)malloc(nnz * sizeof(double));
   int from, to;
   for (int i = 0; i < nnz; ++i) {
-    fgets(line, MAX_LINE, fpin);
     fscanf(fpin, "%d%d", &from, &to);
     //Reverse row and col so that it is transposed.
     cooRowIndex[i] = to;
@@ -116,21 +128,21 @@ void COO::makeOrdered() const {
 }
 
 CSR COO::toCSR() const {
-    int row=0;
-	int* ocsrRowPtr=(int*)malloc(sizeof(int)*(rows+1));
-	memset(ocsrRowPtr,-1,sizeof(int)*(rows+1));
-	for(int t=0;t<nnz;t++) {
-		while(row<cooRowIndex[t] && row<rows && ocsrRowPtr[row]==-1)
-		  ocsrRowPtr[row++]=t;
-		if(row==cooRowIndex[t] && ocsrRowPtr[row]==-1)
-		  ocsrRowPtr[row++]=t;
+  int row = 0;
+	int* ocsrRowPtr = (int*)malloc(sizeof(int) * (rows + 1));
+	memset(ocsrRowPtr, -1, sizeof(int) * (rows + 1));
+	for (int t = 0; t < nnz; ++t) {
+		while(row < cooRowIndex[t] && row < rows && ocsrRowPtr[row] == -1)
+		  ocsrRowPtr[row++] = t;
+		if(row == cooRowIndex[t] && ocsrRowPtr[row] == -1)
+		  ocsrRowPtr[row++] = t;
 	}
-	ocsrRowPtr[rows]=nnz;
-	int onnz=nnz;
-	int* ocsrColInd=(int*)malloc(sizeof(int)*onnz);
-	double* ocsrVals=(double*)malloc(sizeof(double)*onnz);
-	memcpy(ocsrColInd, cooColIndex, sizeof(int)*onnz);
-	memcpy(ocsrVals, cooVal, sizeof(double)*onnz);
+	ocsrRowPtr[rows] = nnz;
+	int onnz = nnz;
+	int* ocsrColInd = (int*)malloc(sizeof(int) * onnz);
+	double* ocsrVals = (double*)malloc(sizeof(double) * onnz);
+	memcpy(ocsrColInd, cooColIndex, sizeof(int) * onnz);
+	memcpy(ocsrVals, cooVal, sizeof(double) * onnz);
 	CSR csr(ocsrVals, ocsrColInd, ocsrRowPtr, rows, cols, onnz);
 	return csr;
 }

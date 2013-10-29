@@ -12,7 +12,10 @@ private:
 public:
   COO(const char fname[]);
 	COO();
-	virtual ~COO();
+	COO(const double* const cooVal, const int* const cooColIndex,
+      const int* const cooRowIndex, const int rows, const int cols, const int nnz);
+	//virtual ~COO();
+  void dispose();
 	void readMatrixMarketFile(const char fname[]);
 /*Instead of read matrix read its transpose. It is useful for RMCL which process column instead of row.*/
   void readTransposedSNAPFile(const char fname[]);

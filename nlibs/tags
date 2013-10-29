@@ -1,0 +1,288 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+CFLAGS	Makefile	/^CFLAGS = $(COPTIONS) $(OPTFLAGS) $(INCLUDES)$/;"	m
+COO	COO.cc	/^COO::COO() {$/;"	f	class:COO	signature:()
+COO	COO.cc	/^COO::COO(const char fname[]) {$/;"	f	class:COO	signature:(const char fname[])
+COO	COO.cc	/^COO::COO(const double* const cooVal, const int* const cooColIndex,$/;"	f	class:COO	signature:(const double* const cooVal, const int* const cooColIndex, const int* const cooRowIndex, const int rows, const int cols, const int nnz)
+COO	COO.h	/^	COO();$/;"	p	class:COO	access:public	signature:()
+COO	COO.h	/^	COO(const double* const cooVal, const int* const cooColIndex,$/;"	p	class:COO	access:public	signature:(const double* const cooVal, const int* const cooColIndex, const int* const cooRowIndex, const int rows, const int cols, const int nnz)
+COO	COO.h	/^  COO(const char fname[]);$/;"	p	class:COO	access:public	signature:(const char fname[])
+COO	COO.h	/^class COO {$/;"	c
+COO::COO	COO.cc	/^COO::COO() {$/;"	f	class:COO	signature:()
+COO::COO	COO.cc	/^COO::COO(const char fname[]) {$/;"	f	class:COO	signature:(const char fname[])
+COO::COO	COO.cc	/^COO::COO(const double* const cooVal, const int* const cooColIndex,$/;"	f	class:COO	signature:(const double* const cooVal, const int* const cooColIndex, const int* const cooRowIndex, const int rows, const int cols, const int nnz)
+COO::COO	COO.h	/^	COO();$/;"	p	class:COO	access:public	signature:()
+COO::COO	COO.h	/^	COO(const double* const cooVal, const int* const cooColIndex,$/;"	p	class:COO	access:public	signature:(const double* const cooVal, const int* const cooColIndex, const int* const cooRowIndex, const int rows, const int cols, const int nnz)
+COO::COO	COO.h	/^  COO(const char fname[]);$/;"	p	class:COO	access:public	signature:(const char fname[])
+COO::addSelfLoopIfNeeded	COO.cc	/^void COO::addSelfLoopIfNeeded() {$/;"	f	class:COO	signature:()
+COO::addSelfLoopIfNeeded	COO.h	/^  void addSelfLoopIfNeeded();$/;"	p	class:COO	access:public	signature:()
+COO::cols	COO.h	/^	int rows, cols, nnz;$/;"	m	class:COO	access:private
+COO::cooColIndex	COO.h	/^	int * cooColIndex;$/;"	m	class:COO	access:private
+COO::cooRowIndex	COO.h	/^	int * cooRowIndex;$/;"	m	class:COO	access:private
+COO::cooVal	COO.h	/^	double * cooVal;$/;"	m	class:COO	access:private
+COO::dispose	COO.cc	/^void COO::dispose() {$/;"	f	class:COO	signature:()
+COO::dispose	COO.h	/^  void dispose();$/;"	p	class:COO	access:public	signature:()
+COO::makeOrdered	COO.cc	/^void COO::makeOrdered() const {$/;"	f	class:COO	signature:() const
+COO::makeOrdered	COO.h	/^  void makeOrdered() const;$/;"	p	class:COO	access:public	signature:() const
+COO::nnz	COO.h	/^	int rows, cols, nnz;$/;"	m	class:COO	access:private
+COO::output	COO.cc	/^void COO::output(const char* msg) {$/;"	f	class:COO	signature:(const char* msg)
+COO::output	COO.h	/^	void output(const char* msg);$/;"	p	class:COO	access:public	signature:(const char* msg)
+COO::readMatrixMarketFile	COO.cc	/^void COO::readMatrixMarketFile(const char fname[]) {$/;"	f	class:COO	signature:(const char fname[])
+COO::readMatrixMarketFile	COO.h	/^	void readMatrixMarketFile(const char fname[]);$/;"	p	class:COO	access:public	signature:(const char fname[])
+COO::readTransposedSNAPFile	COO.cc	/^void COO::readTransposedSNAPFile(const char fname[]) {$/;"	f	class:COO	signature:(const char fname[])
+COO::readTransposedSNAPFile	COO.h	/^  void readTransposedSNAPFile(const char fname[]);$/;"	p	class:COO	access:public	signature:(const char fname[])
+COO::rows	COO.h	/^	int rows, cols, nnz;$/;"	m	class:COO	access:private
+COO::toCSR	COO.cc	/^CSR COO::toCSR() const {$/;"	f	class:COO	signature:() const
+COO::toCSR	COO.h	/^	CSR toCSR() const;$/;"	p	class:COO	access:public	signature:() const
+COO_H_	COO.h	2;"	d
+CPU_CSR_KERNEL_H_	cpu_csr_kernel.h	2;"	d
+CSR	CSR.h	/^	CSR() {$/;"	f	struct:CSR	access:public	signature:()
+CSR	CSR.h	/^	CSR(double* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {$/;"	f	struct:CSR	access:public	signature:(double* values, int* colInd, int* rowPtr, int rows, int cols, int nnz)
+CSR	CSR.h	/^struct CSR {$/;"	s
+CSR::CSR	CSR.h	/^	CSR() {$/;"	f	struct:CSR	access:public	signature:()
+CSR::CSR	CSR.h	/^	CSR(double* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {$/;"	f	struct:CSR	access:public	signature:(double* values, int* colInd, int* rowPtr, int rows, int cols, int nnz)
+CSR::averAndNormRowValue	CSR.cc	/^void CSR::averAndNormRowValue() {$/;"	f	class:CSR	signature:()
+CSR::averAndNormRowValue	CSR.h	/^  void averAndNormRowValue();$/;"	p	struct:CSR	access:public	signature:()
+CSR::colInd	CSR.h	/^	int* colInd;$/;"	m	struct:CSR	access:public
+CSR::cols	CSR.h	/^	int rows, cols, nnz;$/;"	m	struct:CSR	access:public
+CSR::deepCopy	CSR.cc	/^CSR CSR::deepCopy() {$/;"	f	class:CSR	signature:()
+CSR::deepCopy	CSR.h	/^ CSR deepCopy();$/;"	p	struct:CSR	access:public	signature:()
+CSR::differs	CSR.cc	/^double CSR::differs(const CSR& B) const {$/;"	f	class:CSR	signature:(const CSR& B) const
+CSR::differs	CSR.h	/^  double differs(const CSR& B) const;$/;"	p	struct:CSR	access:public	signature:(const CSR& B) const
+CSR::dispose	CSR.h	/^  void dispose() {$/;"	f	struct:CSR	access:public	signature:()
+CSR::isEqual	CSR.h	/^  bool isEqual(const CSR &B) const {$/;"	f	struct:CSR	access:public	signature:(const CSR &B) const
+CSR::makeOrdered	CSR.cc	/^void CSR::makeOrdered() {$/;"	f	class:CSR	signature:()
+CSR::makeOrdered	CSR.h	/^  void makeOrdered();$/;"	p	struct:CSR	access:public	signature:()
+CSR::matrixRowReorder	CSR.cc	/^void CSR::matrixRowReorder(const int* ranks) const {$/;"	f	class:CSR	signature:(const int* ranks) const
+CSR::matrixRowReorder	CSR.h	/^  void matrixRowReorder(const int* ranks) const;$/;"	p	struct:CSR	access:public	signature:(const int* ranks) const
+CSR::nnz	CSR.h	/^	int rows, cols, nnz;$/;"	m	struct:CSR	access:public
+CSR::omp_spmm	CSR.cc	/^CSR CSR::omp_spmm(const CSR& B) const {$/;"	f	class:CSR	signature:(const CSR& B) const
+CSR::omp_spmm	CSR.h	/^  CSR omp_spmm(const CSR& B) const;$/;"	p	struct:CSR	access:public	signature:(const CSR& B) const
+CSR::output	CSR.h	/^  void output(const char* msg) const {$/;"	f	struct:CSR	access:public	signature:(const char* msg) const
+CSR::rmclOneStep	CSR.cc	/^CSR CSR::rmclOneStep(const CSR &B, thread_data_t *thread_datas) const {$/;"	f	class:CSR	signature:(const CSR &B, thread_data_t *thread_datas) const
+CSR::rmclOneStep	CSR.h	/^  CSR rmclOneStep(const CSR &B, thread_data_t *thread_datas) const;$/;"	p	struct:CSR	access:public	signature:(const CSR &B, thread_data_t *thread_datas) const
+CSR::rowCount	CSR.h	/^  inline int rowCount(int rowId) const {$/;"	f	struct:CSR	access:public	signature:(int rowId) const
+CSR::rowInflationR2	CSR.h	/^  void rowInflationR2(int rowId) const {$/;"	f	struct:CSR	access:public	signature:(int rowId) const
+CSR::rowMax	CSR.h	/^  inline double rowMax(int rowId) const {$/;"	f	struct:CSR	access:public	signature:(int rowId) const
+CSR::rowPtr	CSR.h	/^	int* rowPtr;$/;"	m	struct:CSR	access:public
+CSR::rowSum	CSR.h	/^  inline double rowSum(int rowId) const {$/;"	f	struct:CSR	access:public	signature:(int rowId) const
+CSR::rows	CSR.h	/^	int rows, cols, nnz;$/;"	m	struct:CSR	access:public
+CSR::spmm	CSR.cc	/^CSR CSR::spmm(const CSR& B) const {$/;"	f	class:CSR	signature:(const CSR& B) const
+CSR::spmm	CSR.h	/^  CSR spmm(const CSR& B) const;$/;"	p	struct:CSR	access:public	signature:(const CSR& B) const
+CSR::spmmFlops	CSR.cc	/^long CSR::spmmFlops(const CSR& B) const {$/;"	f	class:CSR	signature:(const CSR& B) const
+CSR::spmmFlops	CSR.h	/^  long spmmFlops(const CSR& B) const;$/;"	p	struct:CSR	access:public	signature:(const CSR& B) const
+CSR::values	CSR.h	/^	double* values;$/;"	m	struct:CSR	access:public
+CSR_H_	CSR.h	9;"	d
+INCLUDES	Makefile	/^INCLUDES = -I. $/;"	m
+KEY_VALUE_QSORT_	key_value_qsort.h	2;"	d
+LD	Makefile	/^LD = $(CC) -L. $/;"	m
+LEVEL1_DCACHE_LINESIZE	cpu_csr_kernel.h	/^const int LEVEL1_DCACHE_LINESIZE = 64;$/;"	v
+MLMCL_PRUNE_A	util.h	7;"	d
+MLMCL_PRUNE_B	util.h	8;"	d
+MM_ARRAY_STR	mm_io.h	118;"	d
+MM_COMPLEX_STR	mm_io.h	122;"	d
+MM_COORDINATE_STR	mm_io.h	120;"	d
+MM_COULD_NOT_READ_FILE	mm_io.h	92;"	d
+MM_COULD_NOT_WRITE_FILE	mm_io.h	98;"	d
+MM_DENSE_STR	mm_io.h	119;"	d
+MM_GENERAL_STR	mm_io.h	125;"	d
+MM_HERM_STR	mm_io.h	127;"	d
+MM_INT_STR	mm_io.h	124;"	d
+MM_IO_H	mm_io.h	10;"	d
+MM_LINE_TOO_LONG	mm_io.h	97;"	d
+MM_MAX_LINE_LENGTH	mm_io.h	17;"	d
+MM_MAX_TOKEN_LENGTH	mm_io.h	19;"	d
+MM_MTX_STR	mm_io.h	117;"	d
+MM_NOT_MTX	mm_io.h	94;"	d
+MM_NO_HEADER	mm_io.h	95;"	d
+MM_PATTERN_STR	mm_io.h	129;"	d
+MM_PREMATURE_EOF	mm_io.h	93;"	d
+MM_REAL_STR	mm_io.h	123;"	d
+MM_SKEW_STR	mm_io.h	128;"	d
+MM_SPARSE_STR	mm_io.h	121;"	d
+MM_SYMM_STR	mm_io.h	126;"	d
+MM_UNSUPPORTED_TYPE	mm_io.h	96;"	d
+MM_typecode	mm_io.h	/^typedef char MM_typecode[4];$/;"	t
+MatrixMarketBanner	mm_io.h	18;"	d
+NTIMER_H_	ntimer.h	2;"	d
+OBJS	Makefile	/^OBJS=$(shell echo $(SOURCES) | sed s\/.cc\/.o\/g)$/;"	m
+Options	process_args.h	/^struct Options {$/;"	s
+Options::calcChange	process_args.h	/^  bool calcChange = false;$/;"	m	struct:Options	access:public
+Options::inputFileName	process_args.h	/^  char inputFileName[200];$/;"	m	struct:Options	access:public
+Options::maxIters	process_args.h	/^  int maxIters = 5;$/;"	m	struct:Options	access:public
+PROCESS_ARGS_H	process_args.h	2;"	d
+SOURCES	Makefile	/^SOURCES=$(wildcard *.cc)$/;"	m
+TIME_SIZE	mm_io.cc	820;"	d	file:
+TIME_SIZE	mm_io.cc	835;"	d	file:
+UTIL_H_	util.h	2;"	d
+addSelfLoopIfNeeded	COO.cc	/^void COO::addSelfLoopIfNeeded() {$/;"	f	class:COO	signature:()
+addSelfLoopIfNeeded	COO.h	/^  void addSelfLoopIfNeeded();$/;"	p	class:COO	access:public	signature:()
+allocateThreadDatas	cpu_csr_kernel.h	/^thread_data_t* allocateThreadDatas(int nthreads, int n);$/;"	p	signature:(int nthreads, int n)
+allocateThreadDatas	omp_csr_kernel.cc	/^thread_data_t* allocateThreadDatas(int nthreads, int n) {$/;"	f	signature:(int nthreads, int n)
+arrayInflationR2	util.cc	/^void arrayInflationR2(const double ivalues[], const int count, double ovalues[]) {$/;"	f	signature:(const double ivalues[], const int count, double ovalues[])
+arrayInflationR2	util.h	/^void arrayInflationR2(const double ivalues[], const int count, double ovalues[]);$/;"	p	signature:(const double ivalues[], const int count, double ovalues[])
+arrayMax	util.cc	/^double arrayMax(const double values[], const int count) {$/;"	f	signature:(const double values[], const int count)
+arrayMax	util.h	/^double arrayMax(const double values[], const int count);$/;"	p	signature:(const double values[], const int count)
+arrayMaxSum	util.cc	/^pair<double, double> arrayMaxSum(const double values[], const int count) {$/;"	f	signature:(const double values[], const int count)
+arrayMaxSum	util.h	/^pair<double, double> arrayMaxSum(const double values[], const int count);$/;"	p	signature:(const double values[], const int count)
+arraySum	util.cc	/^double arraySum(const double values[], const int count) {$/;"	f	signature:(const double values[], const int count)
+arraySum	util.h	/^double arraySum(const double values[], const int count);$/;"	p	signature:(const double values[], const int count)
+arrayThreshPruneNormalize	util.cc	/^double arrayThreshPruneNormalize(const double thresh, const int rindices[], const double rvalues[],$/;"	f	signature:(const double thresh, const int rindices[], const double rvalues[], int* count, int indices[], double values[])
+arrayThreshPruneNormalize	util.h	/^double arrayThreshPruneNormalize(const double thresh, const int rindices[], const double rvalues[],$/;"	p	signature:(const double thresh, const int rindices[], const double rvalues[], int* count, int indices[], double values[])
+averAndNormRowValue	CSR.cc	/^void CSR::averAndNormRowValue() {$/;"	f	class:CSR	signature:()
+averAndNormRowValue	CSR.h	/^  void averAndNormRowValue();$/;"	p	struct:CSR	access:public	signature:()
+cRowiCount	omp_csr_kernel.cc	/^int cRowiCount(const int i, const int IA[], const int JA[], const int IB[], const int JB[], int iJC[], bool xb[]) {$/;"	f	signature:(const int i, const int IA[], const int JA[], const int IB[], const int JB[], int iJC[], bool xb[])
+calcChange	process_args.h	/^  bool calcChange = false;$/;"	m	struct:Options	access:public
+colInd	CSR.h	/^	int* colInd;$/;"	m	struct:CSR	access:public
+cols	COO.h	/^	int rows, cols, nnz;$/;"	m	class:COO	access:private
+cols	CSR.h	/^	int rows, cols, nnz;$/;"	m	struct:CSR	access:public
+computeThreshold	util.cc	/^double computeThreshold(double avg, double max) {$/;"	f	signature:(double avg, double max)
+computeThreshold	util.h	/^double computeThreshold(double avg, double max);$/;"	p	signature:(double avg, double max)
+cooColIndex	COO.h	/^	int * cooColIndex;$/;"	m	class:COO	access:private
+cooRowIndex	COO.h	/^	int * cooRowIndex;$/;"	m	class:COO	access:private
+cooVal	COO.h	/^	double * cooVal;$/;"	m	class:COO	access:private
+deepCopy	CSR.cc	/^CSR CSR::deepCopy() {$/;"	f	class:CSR	signature:()
+deepCopy	CSR.h	/^ CSR deepCopy();$/;"	p	struct:CSR	access:public	signature:()
+differs	CSR.cc	/^double CSR::differs(const CSR& B) const {$/;"	f	class:CSR	signature:(const CSR& B) const
+differs	CSR.h	/^  double differs(const CSR& B) const;$/;"	p	struct:CSR	access:public	signature:(const CSR& B) const
+dispose	COO.cc	/^void COO::dispose() {$/;"	f	class:COO	signature:()
+dispose	COO.h	/^  void dispose();$/;"	p	class:COO	access:public	signature:()
+dispose	CSR.h	/^  void dispose() {$/;"	f	struct:CSR	access:public	signature:()
+freeThreadDatas	cpu_csr_kernel.h	/^void freeThreadDatas(thread_data_t* thread_datas, int nthreads);$/;"	p	signature:(thread_data_t* thread_datas, int nthreads)
+freeThreadDatas	omp_csr_kernel.cc	/^void freeThreadDatas(thread_data_t* thread_datas, int nthreads) {$/;"	f	signature:(thread_data_t* thread_datas, int nthreads)
+getSpMMFlops	cpu_csr_kernel.cc	/^long long getSpMMFlops(const int IA[], const int JA[], const double A[], const int nnzA,$/;"	f	signature:(const int IA[], const int JA[], const double A[], const int nnzA, const int IB[], const int JB[], const double B[], const int nnzB, const int m, const int k, const int n)
+getSpMMFlops	cpu_csr_kernel.h	/^long long getSpMMFlops(const int IA[], const int JA[], const double A[], const int nnzA,$/;"	p	signature:(const int IA[], const int JA[], const double A[], const int nnzA, const int IB[], const int JB[], const double B[], const int nnzB, const int m, const int k, const int n)
+iJC	cpu_csr_kernel.h	/^  int *iJC;$/;"	m	struct:thread_data_t	access:public
+init	cpu_csr_kernel.h	/^  void init(const int n) {$/;"	f	struct:thread_data_t	access:public	signature:(const int n)
+inputFileName	process_args.h	/^  char inputFileName[200];$/;"	m	struct:Options	access:public
+isEqual	CSR.h	/^  bool isEqual(const CSR &B) const {$/;"	f	struct:CSR	access:public	signature:(const CSR &B) const
+key_value_qsort	key_value_qsort.h	/^void key_value_qsort (Key *keys, Value *values, int n) {$/;"	f	signature:(Key *keys, Value *values, int n)
+makeOrdered	COO.cc	/^void COO::makeOrdered() const {$/;"	f	class:COO	signature:() const
+makeOrdered	COO.h	/^  void makeOrdered() const;$/;"	p	class:COO	access:public	signature:() const
+makeOrdered	CSR.cc	/^void CSR::makeOrdered() {$/;"	f	class:CSR	signature:()
+makeOrdered	CSR.h	/^  void makeOrdered();$/;"	p	struct:CSR	access:public	signature:()
+matrixRowReorder	CSR.cc	/^void CSR::matrixRowReorder(const int* ranks) const {$/;"	f	class:CSR	signature:(const int* ranks) const
+matrixRowReorder	CSR.h	/^  void matrixRowReorder(const int* ranks) const;$/;"	p	struct:CSR	access:public	signature:(const int* ranks) const
+maxIters	process_args.h	/^  int maxIters = 5;$/;"	m	struct:Options	access:public
+mm_clear_typecode	mm_io.h	83;"	d
+mm_initialize_typecode	mm_io.h	86;"	d
+mm_is_array	mm_io.h	51;"	d
+mm_is_complex	mm_io.h	53;"	d
+mm_is_coordinate	mm_io.h	49;"	d
+mm_is_dense	mm_io.h	50;"	d
+mm_is_general	mm_io.h	59;"	d
+mm_is_hermitian	mm_io.h	61;"	d
+mm_is_integer	mm_io.h	56;"	d
+mm_is_matrix	mm_io.h	46;"	d
+mm_is_pattern	mm_io.h	55;"	d
+mm_is_real	mm_io.h	54;"	d
+mm_is_skew	mm_io.h	60;"	d
+mm_is_sparse	mm_io.h	48;"	d
+mm_is_symmetric	mm_io.h	58;"	d
+mm_is_valid	mm_io.cc	/^int mm_is_valid ( MM_typecode matcode )$/;"	f	signature:( MM_typecode matcode )
+mm_is_valid	mm_io.h	/^int mm_is_valid ( MM_typecode matcode );$/;"	p	signature:( MM_typecode matcode )
+mm_read_banner	mm_io.cc	/^int mm_read_banner ( FILE *f, MM_typecode *matcode )$/;"	f	signature:( FILE *f, MM_typecode *matcode )
+mm_read_banner	mm_io.h	/^int mm_read_banner ( FILE *f, MM_typecode *matcode );$/;"	p	signature:( FILE *f, MM_typecode *matcode )
+mm_read_mtx_array_size	mm_io.cc	/^int mm_read_mtx_array_size ( FILE *f, int *M, int *N )$/;"	f	signature:( FILE *f, int *M, int *N )
+mm_read_mtx_array_size	mm_io.h	/^int mm_read_mtx_array_size ( FILE *f, int *M, int *N );$/;"	p	signature:( FILE *f, int *M, int *N )
+mm_read_mtx_crd	mm_io.cc	/^int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J,$/;"	f	signature:(char *fname, int *M, int *N, int *nz, int **I, int **J, double **val, MM_typecode *matcode)
+mm_read_mtx_crd	mm_io.h	/^int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J,$/;"	p	signature:(char *fname, int *M, int *N, int *nz, int **I, int **J, double **val, MM_typecode *matcode)
+mm_read_mtx_crd_data	mm_io.cc	/^int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],$/;"	f	signature:(FILE *f, int M, int N, int nz, int I[], int J[], double val[], MM_typecode matcode)
+mm_read_mtx_crd_data	mm_io.h	/^int mm_read_mtx_crd_data ( FILE *f, int M, int N, int nz, int I[], int J[],$/;"	p	signature:( FILE *f, int M, int N, int nz, int I[], int J[], double val[], MM_typecode matcode )
+mm_read_mtx_crd_entry	mm_io.cc	/^int mm_read_mtx_crd_entry(FILE *f, int *I, int *J,$/;"	f	signature:(FILE *f, int *I, int *J, double *real, double *imag, MM_typecode matcode)
+mm_read_mtx_crd_entry	mm_io.h	/^int mm_read_mtx_crd_entry ( FILE *f, int *I, int *J, double *real, double *img,$/;"	p	signature:( FILE *f, int *I, int *J, double *real, double *img, MM_typecode matcode )
+mm_read_mtx_crd_size	mm_io.cc	/^int mm_read_mtx_crd_size(FILE *f, int *M, int *N, int *nz )$/;"	f	signature:(FILE *f, int *M, int *N, int *nz )
+mm_read_mtx_crd_size	mm_io.h	/^int mm_read_mtx_crd_size ( FILE *f, int *M, int *N, int *nz );$/;"	p	signature:( FILE *f, int *M, int *N, int *nz )
+mm_read_unsymmetric_sparse	mm_io.cc	/^int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,$/;"	f	signature:(const char *fname, int *M_, int *N_, int *nz_, double **val_, int **I_, int **J_)
+mm_read_unsymmetric_sparse	mm_io.h	/^extern "C" int mm_read_unsymmetric_sparse ( const char *fname, int *M_, int *N_, int *nz_,$/;"	p	signature:( const char *fname, int *M_, int *N_, int *nz_, double **val_, int **I_, int **J_ )
+mm_set_array	mm_io.h	68;"	d
+mm_set_complex	mm_io.h	72;"	d
+mm_set_coordinate	mm_io.h	67;"	d
+mm_set_dense	mm_io.h	69;"	d
+mm_set_general	mm_io.h	79;"	d
+mm_set_hermitian	mm_io.h	81;"	d
+mm_set_integer	mm_io.h	75;"	d
+mm_set_matrix	mm_io.h	66;"	d
+mm_set_pattern	mm_io.h	74;"	d
+mm_set_real	mm_io.h	73;"	d
+mm_set_skew	mm_io.h	80;"	d
+mm_set_sparse	mm_io.h	70;"	d
+mm_set_symmetric	mm_io.h	78;"	d
+mm_strdup	mm_io.cc	/^char *mm_strdup ( const char *s )$/;"	f	signature:( const char *s )
+mm_strdup	mm_io.h	/^char *mm_strdup ( const char *s );$/;"	p	signature:( const char *s )
+mm_typecode_to_str	mm_io.cc	/^char *mm_typecode_to_str ( MM_typecode matcode )$/;"	f	signature:( MM_typecode matcode )
+mm_typecode_to_str	mm_io.h	/^char *mm_typecode_to_str ( MM_typecode matcode );$/;"	p	signature:( MM_typecode matcode )
+mm_write_banner	mm_io.cc	/^int mm_write_banner ( FILE *f, MM_typecode matcode )$/;"	f	signature:( FILE *f, MM_typecode matcode )
+mm_write_banner	mm_io.h	/^int mm_write_banner ( FILE *f, MM_typecode matcode );$/;"	p	signature:( FILE *f, MM_typecode matcode )
+mm_write_mtx_array_size	mm_io.cc	/^int mm_write_mtx_array_size(FILE *f, int M, int N)$/;"	f	signature:(FILE *f, int M, int N)
+mm_write_mtx_array_size	mm_io.h	/^int mm_write_mtx_array_size ( FILE *f, int M, int N );$/;"	p	signature:( FILE *f, int M, int N )
+mm_write_mtx_crd	mm_io.cc	/^int mm_write_mtx_crd(char fname[], int M, int N, int nz, int I[], int J[],$/;"	f	signature:(char fname[], int M, int N, int nz, int I[], int J[], double val[], MM_typecode matcode)
+mm_write_mtx_crd	mm_io.h	/^int mm_write_mtx_crd ( char fname[], int M, int N, int nz, int I[], int J[],$/;"	p	signature:( char fname[], int M, int N, int nz, int I[], int J[], double val[], MM_typecode matcode )
+mm_write_mtx_crd_size	mm_io.cc	/^int mm_write_mtx_crd_size ( FILE *f, int M, int N, int nz )$/;"	f	signature:( FILE *f, int M, int N, int nz )
+mm_write_mtx_crd_size	mm_io.h	/^int mm_write_mtx_crd_size ( FILE *f, int M, int N, int nz );$/;"	p	signature:( FILE *f, int M, int N, int nz )
+nnz	COO.h	/^	int rows, cols, nnz;$/;"	m	class:COO	access:private
+nnz	CSR.h	/^	int rows, cols, nnz;$/;"	m	struct:CSR	access:public
+nthreads	omp_csr_kernel.cc	/^const int nthreads = 8;$/;"	v
+omp_CSR_IC_nnzC	cpu_csr_kernel.h	/^void omp_CSR_IC_nnzC(const int IA[], const int JA[],$/;"	p	signature:(const int IA[], const int JA[], const int IB[], const int JB[], const int m, const int n, const thread_data_t thread_datas[], int* IC, int& nnzC)
+omp_CSR_IC_nnzC	omp_csr_kernel.cc	/^void omp_CSR_IC_nnzC(const int IA[], const int JA[],$/;"	f	signature:(const int IA[], const int JA[], const int IB[], const int JB[], const int m, const int n, const thread_data_t thread_datas[], int* IC, int& nnzC)
+omp_CSR_SpMM	cpu_csr_kernel.h	/^void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,$/;"	p	signature:(const int IA[], const int JA[], const double A[], const int nnzA, const int IB[], const int JB[], const double B[], const int nnzB, int* &IC, int* &JC, double* &C, int& nnzC, const int m, const int k, const int n)
+omp_CSR_SpMM	omp_csr_kernel.cc	/^void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,$/;"	f	signature:(const int IA[], const int JA[], const double A[], const int nnzA, const int IB[], const int JB[], const double B[], const int nnzB, int* &IC, int* &JC, double* &C, int& nnzC, const int m, const int k, const int n)
+omp_CSR_SpMM	omp_csr_kernel.cc	/^void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,$/;"	f	signature:(const int IA[], const int JA[], const double A[], const int nnzA, const int IB[], const int JB[], const double B[], const int nnzB, int* &IC, int* &JC, double* &C, int& nnzC, const int m, const int k, const int n, const thread_data_t* thread_datas)
+omp_spmm	CSR.cc	/^CSR CSR::omp_spmm(const CSR& B) const {$/;"	f	class:CSR	signature:(const CSR& B) const
+omp_spmm	CSR.h	/^  CSR omp_spmm(const CSR& B) const;$/;"	p	struct:CSR	access:public	signature:(const CSR& B) const
+options	process_args.cc	/^Options options;$/;"	v
+output	COO.cc	/^void COO::output(const char* msg) {$/;"	f	class:COO	signature:(const char* msg)
+output	COO.h	/^	void output(const char* msg);$/;"	p	class:COO	access:public	signature:(const char* msg)
+output	CSR.h	/^  void output(const char* msg) const {$/;"	f	struct:CSR	access:public	signature:(const char* msg) const
+pad_data	cpu_csr_kernel.h	/^  char pad_data[LEVEL1_DCACHE_LINESIZE];$/;"	m	struct:thread_data_t	access:public
+processCRowI	cpu_csr_kernel.h	/^void processCRowI(double x[], bool* xb,$/;"	p	signature:(double x[], bool* xb, const int iAnnz, const int iJA[], const double iA[], const int IB[], const int JB[], const double B[], int* iJC, double* iC)
+processCRowI	omp_csr_kernel.cc	/^void processCRowI(double x[], bool* xb,$/;"	f	signature:(double x[], bool* xb, const int iAnnz, const int iJA[], const double iA[], const int IB[], const int JB[], const double B[], int* iJC, double* iC)
+process_args	process_args.cc	/^int process_args(int argc, char **argv) {$/;"	f	signature:(int argc, char **argv)
+process_args	process_args.h	/^int process_args(int argc, char **argv);$/;"	p	signature:(int argc, char **argv)
+readMatrixMarketFile	COO.cc	/^void COO::readMatrixMarketFile(const char fname[]) {$/;"	f	class:COO	signature:(const char fname[])
+readMatrixMarketFile	COO.h	/^	void readMatrixMarketFile(const char fname[]);$/;"	p	class:COO	access:public	signature:(const char fname[])
+readTransposedSNAPFile	COO.cc	/^void COO::readTransposedSNAPFile(const char fname[]) {$/;"	f	class:COO	signature:(const char fname[])
+readTransposedSNAPFile	COO.h	/^  void readTransposedSNAPFile(const char fname[]);$/;"	p	class:COO	access:public	signature:(const char fname[])
+rezero_xb	cpu_csr_kernel.cc	/^void rezero_xb(int i, const int IA[], const int JA[], const int IB[], const int JB[], int IC[], int iJC[], bool xb[]) {$/;"	f	signature:(int i, const int IA[], const int JA[], const int IB[], const int JB[], int IC[], int iJC[], bool xb[])
+rmclOneStep	CSR.cc	/^CSR CSR::rmclOneStep(const CSR &B, thread_data_t *thread_datas) const {$/;"	f	class:CSR	signature:(const CSR &B, thread_data_t *thread_datas) const
+rmclOneStep	CSR.h	/^  CSR rmclOneStep(const CSR &B, thread_data_t *thread_datas) const;$/;"	p	struct:CSR	access:public	signature:(const CSR &B, thread_data_t *thread_datas) const
+rowCount	CSR.h	/^  inline int rowCount(int rowId) const {$/;"	f	struct:CSR	access:public	signature:(int rowId) const
+rowInflationR2	CSR.h	/^  void rowInflationR2(int rowId) const {$/;"	f	struct:CSR	access:public	signature:(int rowId) const
+rowMax	CSR.h	/^  inline double rowMax(int rowId) const {$/;"	f	struct:CSR	access:public	signature:(int rowId) const
+rowPtr	CSR.h	/^	int* rowPtr;$/;"	m	struct:CSR	access:public
+rowSum	CSR.h	/^  inline double rowSum(int rowId) const {$/;"	f	struct:CSR	access:public	signature:(int rowId) const
+rows	COO.h	/^	int rows, cols, nnz;$/;"	m	class:COO	access:private
+rows	CSR.h	/^	int rows, cols, nnz;$/;"	m	struct:CSR	access:public
+sequential_CSR_IC_nnzC	cpu_csr_kernel.cc	/^void sequential_CSR_IC_nnzC(const int IA[], const int JA[],$/;"	f	signature:(const int IA[], const int JA[], const int IB[], const int JB[], const int m, const int n, bool xb[], int* IC, int& nnzC )
+sequential_CSR_IC_nnzC	cpu_csr_kernel.h	/^void sequential_CSR_IC_nnzC(const int IA[], const int JA[],$/;"	p	signature:(const int IA[], const int JA[], const int IB[], const int JB[], const int m, const int n, bool xb[], int* IC, int& nnzC)
+sequential_CSR_SpMM	cpu_csr_kernel.cc	/^void sequential_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,$/;"	f	signature:(const int IA[], const int JA[], const double A[], const int nnzA, const int IB[], const int JB[], const double B[], const int nnzB, int* &IC, int* &JC, double* &C, int& nnzC, const int m, const int k, const int n)
+sequential_CSR_SpMM	cpu_csr_kernel.h	/^void sequential_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,$/;"	p	signature:(const int IA[], const int JA[], const double A[], const int nnzA, const int IB[], const int JB[], const double B[], const int nnzB, int* &IC, int* &JC, double* &C, int& nnzC, const int m, const int k, const int n)
+spmm	CSR.cc	/^CSR CSR::spmm(const CSR& B) const {$/;"	f	class:CSR	signature:(const CSR& B) const
+spmm	CSR.h	/^  CSR spmm(const CSR& B) const;$/;"	p	struct:CSR	access:public	signature:(const CSR& B) const
+spmmFlops	CSR.cc	/^long CSR::spmmFlops(const CSR& B) const {$/;"	f	class:CSR	signature:(const CSR& B) const
+spmmFlops	CSR.h	/^  long spmmFlops(const CSR& B) const;$/;"	p	struct:CSR	access:public	signature:(const CSR& B) const
+thread_data_t	cpu_csr_kernel.h	/^  thread_data_t() {$/;"	f	struct:thread_data_t	access:public	signature:()
+thread_data_t	cpu_csr_kernel.h	/^  thread_data_t(const int n) {$/;"	f	struct:thread_data_t	access:public	signature:(const int n)
+thread_data_t	cpu_csr_kernel.h	/^struct thread_data_t {$/;"	s
+thread_data_t::iJC	cpu_csr_kernel.h	/^  int *iJC;$/;"	m	struct:thread_data_t	access:public
+thread_data_t::init	cpu_csr_kernel.h	/^  void init(const int n) {$/;"	f	struct:thread_data_t	access:public	signature:(const int n)
+thread_data_t::pad_data	cpu_csr_kernel.h	/^  char pad_data[LEVEL1_DCACHE_LINESIZE];$/;"	m	struct:thread_data_t	access:public
+thread_data_t::thread_data_t	cpu_csr_kernel.h	/^  thread_data_t() {$/;"	f	struct:thread_data_t	access:public	signature:()
+thread_data_t::thread_data_t	cpu_csr_kernel.h	/^  thread_data_t(const int n) {$/;"	f	struct:thread_data_t	access:public	signature:(const int n)
+thread_data_t::x	cpu_csr_kernel.h	/^  double* x;$/;"	m	struct:thread_data_t	access:public
+thread_data_t::xb	cpu_csr_kernel.h	/^  bool* xb;$/;"	m	struct:thread_data_t	access:public
+thread_data_t::~thread_data_t	cpu_csr_kernel.h	/^  ~thread_data_t() {$/;"	f	struct:thread_data_t	access:public	signature:()
+time_in_mill_now	ntimer.cc	/^double time_in_mill_now() {$/;"	f	signature:()
+time_in_mill_now	ntimer.h	/^double time_in_mill_now();$/;"	p	signature:()
+timestamp	mm_io.cc	/^void timestamp ( void )$/;"	f	signature:( void )
+timestamp	mm_io.h	/^void timestamp ( void );$/;"	p	signature:( void )
+toCSR	COO.cc	/^CSR COO::toCSR() const {$/;"	f	class:COO	signature:() const
+toCSR	COO.h	/^	CSR toCSR() const;$/;"	p	class:COO	access:public	signature:() const
+values	CSR.h	/^	double* values;$/;"	m	struct:CSR	access:public
+x	cpu_csr_kernel.h	/^  double* x;$/;"	m	struct:thread_data_t	access:public
+xb	cpu_csr_kernel.h	/^  bool* xb;$/;"	m	struct:thread_data_t	access:public
+~thread_data_t	cpu_csr_kernel.h	/^  ~thread_data_t() {$/;"	f	struct:thread_data_t	access:public	signature:()
