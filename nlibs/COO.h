@@ -1,6 +1,6 @@
 #ifndef COO_H_
 #define COO_H_
-#include "mm_io.h"
+#include "tools/mm_io.h"
 #include "CSR.h"
 
 class COO {

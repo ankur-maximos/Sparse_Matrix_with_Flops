@@ -13,13 +13,14 @@ int process_args(int argc, char **argv) {
          We distinguish them by their indices. */
       {"input",  required_argument, 0, 'i'},
       {"maxIters",  required_argument, 0, 'm'},
+      {"stats", no_argument, 0, 's'},
       {"help",   no_argument, 0, 'h'},
       {0, 0, 0, 0}
     };
     /* getopt_long stores the option index here. */
     int option_index = 0;
 
-    c = getopt_long (argc, argv, "cim:h",
+    c = getopt_long (argc, argv, "cim:sh",
         long_options, &option_index);
     /* Detect the end of the options. */
     if (c == -1)
@@ -38,6 +39,9 @@ int process_args(int argc, char **argv) {
 
       case 'c':
         options.calcChange = true;
+        break;
+      case 's':
+        options.stats = true;
         break;
       case 'i':
         strcpy(options.inputFileName, optarg);
@@ -65,4 +69,13 @@ int process_args(int argc, char **argv) {
     putchar ('\n');
   }
   return 0;
+}
+
+void print_args() {
+  printf("{\t");
+  printf("calcChange= %s\t", options.calcChange ? "true" : "false");
+  printf("stats= %s\t", options.stats ? "true" : "false");
+  printf("inputFileName= %s\t", options.inputFileName);
+  printf("maxIters= %d\t", options.maxIters);
+  printf("}\n");
 }

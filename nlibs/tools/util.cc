@@ -67,3 +67,29 @@ double arrayThreshPruneNormalize(const double thresh, const int rindices[], cons
 	return sum;
 }
 
+void arrayOutput(const char *msg, FILE* fp, const int datas[], int len) {
+  fprintf(fp, "%s", msg);
+  for (int i = 0; i < len; ++i) {
+    fprintf(fp, "%d ", datas[i]);
+  }
+  fprintf(fp, "\n");
+  fflush(fp);
+}
+
+void arrayOutput(const char *msg, FILE* fp, const vector<int> &datas) {
+  fprintf(fp, "%s", msg);
+  for (int i = 0; i < datas.size(); ++i) {
+    fprintf(fp, "%d ", datas[i]);
+  }
+  fprintf(fp, "\n");
+  fflush(fp);
+}
+
+void arrayOutput(const char *msg, FILE* fp, const vector<double> &datas) {
+  fprintf(fp, "%s", msg);
+  for (int i = 0; i < datas.size(); ++i) {
+    fprintf(fp, "%lf ", datas[i]);
+  }
+  fprintf(fp, "\n");
+  fflush(fp);
+}

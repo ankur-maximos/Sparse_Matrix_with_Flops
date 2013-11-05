@@ -8,6 +8,7 @@
 #include "ntimer.h"
 #endif
 #include <iostream>
+#include "qmalloc.h"
 
 const int LEVEL1_DCACHE_LINESIZE = 64;
 struct thread_data_t {
@@ -16,9 +17,9 @@ struct thread_data_t {
   int *iJC;
   char pad_data[LEVEL1_DCACHE_LINESIZE];
   void init(const int n) {
-    x = (double*)malloc(n * sizeof(double) + LEVEL1_DCACHE_LINESIZE);
+    x = (double*)qmalloc(n * sizeof(double) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
     iJC = (int*)x;
-    xb = (bool*)calloc(n + LEVEL1_DCACHE_LINESIZE, sizeof(bool));
+    xb = (bool*)qcalloc(n + LEVEL1_DCACHE_LINESIZE, sizeof(bool), __FUNCTION__, __LINE__);
   }
 
   thread_data_t() {
@@ -61,6 +62,10 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
 thread_data_t* allocateThreadDatas(int nthreads, int n);
 void freeThreadDatas(thread_data_t* thread_datas, int nthreads);
 void omp_CSR_IC_nnzC(const int IA[], const int JA[],
+    const int IB[], const int JB[],
+    const int m, const int n, const thread_data_t thread_datas[],
+    int* IC, int& nnzC);
+void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n, const thread_data_t thread_datas[],
     int* IC, int& nnzC);

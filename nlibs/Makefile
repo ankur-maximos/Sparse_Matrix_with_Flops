@@ -2,20 +2,26 @@ include ../Makefile.in
 
 INCLUDES = -I. 
 
-CFLAGS = $(COPTIONS) $(OPTFLAGS) $(INCLUDES)
+CFLAGS = $(COPTIONS) $(OPTFLAGS) $(CINCLUDES)
+CUFLAGS = $(CUOPTFLAGS) $(CUINCLUDES) -I.
 LD = $(CC) -L. 
 
-SOURCES=$(wildcard *.cc)
-OBJS=$(shell echo $(SOURCES) | sed s/.cc/.o/g)
-
-%.o: %.cc *.h
+#SOURCES=$(wildcard *.cc)
+SOURCES=$(shell find . -name "*.cc" -o -name "*.cu")
+OBJS=$(shell echo $(SOURCES) | sed "s/\.cc/\.o/g" | sed "s/\.cu/\.o/g")
+HEADERS=$(shell find . -name "*.h")
+%.o: %.cc $(HEADERS) ../Makefile.in
 	@echo $(CFLAGS)
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) $< -c -o $@
 
-$(LIBNAME): $(OBJS) *.h 
+%.o: %.cu ../Makefile.in
+	$(NVCC) $(CUFLAGS) $< -c -o $@
+
+$(LIBNAME): $(OBJS) $(HEADERS)
 	$(AR) $@ $(OBJS)
 	$(RANLIB) $@
 
 clean:
-	rm -f *.o ; rm -f $(LIBNAME)
+	rm -f *.o gpus/*.o tools/*.o
+	rm -f $(LIBNAME)
 

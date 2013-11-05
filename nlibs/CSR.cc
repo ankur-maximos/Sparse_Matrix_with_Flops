@@ -5,15 +5,16 @@
  *      Author: niuq
  */
 #include "CSR.h"
-#include "util.h"
+#include "tools/util.h"
+#include "qmalloc.h"
 #include <vector>
 #include <algorithm>
 #include <omp.h>
 
 void CSR::matrixRowReorder(const int* ranks) const {
-  int* nrowPtr = (int*)malloc((rows + 1) * sizeof(int));
-  int* ncolInd= (int*)malloc(nnz * sizeof(int));
-  double* nvalues = (double*)malloc(nnz * sizeof(double));
+  int* nrowPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
+  int* ncolInd= (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
+  double* nvalues = (double*)qmalloc(nnz * sizeof(double), __FUNCTION__, __LINE__);
   nrowPtr[0] = 0;
   for (int i = 0; i < rows; ++i) {
     int count = rowPtr[ranks[i] + 1] - rowPtr[ranks[i]];
@@ -76,9 +77,9 @@ void CSR::averAndNormRowValue() {
 }
 
 CSR CSR::deepCopy() {
-  int* browPtr = (int*)malloc((rows + 1) * sizeof(int));
-	double* bvalues = (double*)malloc(nnz * sizeof(double));
-  int* bcolInd = (int*)malloc(nnz * sizeof(int));;
+  int* browPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
+	double* bvalues = (double*)qmalloc(nnz * sizeof(double), __FUNCTION__, __LINE__);
+  int* bcolInd = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
   memcpy(browPtr, rowPtr, (rows + 1) * sizeof(int));
   memcpy(bvalues, values, nnz * sizeof(double));
   memcpy(bcolInd, colInd, nnz * sizeof(int));
@@ -147,3 +148,52 @@ CSR CSR::rmclOneStep(const CSR &B, thread_data_t *thread_datas) const {
   return csr;
 }
 
+CSR CSR::toGpuCSR() const {
+  CSR dA;
+  dA.rows = this->rows;
+  dA.cols = this->cols;
+  dA.nnz = this->nnz;
+  cudaMalloc((void**)&dA.rowPtr, sizeof(int) * (rows + 1));
+  cudaMemcpy(dA.rowPtr, rowPtr, sizeof(int) * (rows + 1), cudaMemcpyHostToDevice);
+  cudaMalloc((void**)&dA.colInd, sizeof(int) * nnz);
+  cudaMemcpy(dA.colInd, colInd, sizeof(int) * nnz, cudaMemcpyHostToDevice);
+  cudaMalloc((void**)&dA.values, sizeof(double) * nnz);
+  cudaMemcpy(dA.values, values, sizeof(double) * nnz, cudaMemcpyHostToDevice);
+  return dA;
+}
+
+vector<int> CSR::differsStats(const CSR& B, const vector<double> percents) const {
+  vector<int> counts(percents.size() + 4, 0);
+  const int PINFI = percents.size() + 1;
+  const int ZEROS = PINFI + 1;
+  const int EQUALS = ZEROS + 1;
+  for (int i = 0; i < rows; ++i) {
+    int acount = rowPtr[i + 1] - rowPtr[i];
+    int bcount = B.rowPtr[i + 1] - B.rowPtr[i];
+    if (acount == 0 && bcount > 0) {
+      ++counts[PINFI];
+    } else if (acount == 0 && bcount == 0) {
+      ++counts[ZEROS];
+    } else if (acount == bcount) {
+      ++counts[EQUALS];
+    } else {
+      double percent = (bcount - acount) / (double)acount;
+      int k;
+      for (k = 0; k < percents.size(); ++k) {
+        if (percent < percents[k]) {
+          ++counts[k];
+          break;
+        }
+      }
+      if (k == percents.size()) {
+        ++counts[percents.size()];
+      }
+    }
+  }
+  int countSum = 0;
+  for (int k = 0; k < counts.size(); ++k) {
+    countSum += counts[k];
+  }
+  assert(countSum == rows);
+  return counts;
+}

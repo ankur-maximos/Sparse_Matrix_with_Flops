@@ -13,9 +13,11 @@ struct Options {
   bool calcChange = false;
   int maxIters = 5;
   char inputFileName[200];
+  bool stats = false;
 };
 
 extern Options options;
 
 int process_args(int argc, char **argv);
+void print_args();
 #endif

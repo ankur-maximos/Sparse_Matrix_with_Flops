@@ -1,8 +1,8 @@
 #include <omp.h>
 #include <iostream>
-#include "ntimer.h"
+#include "tools/ntimer.h"
 #include "cpu_csr_kernel.h"
-#include "util.h"
+#include "tools/util.h"
 using namespace std;
 
 
@@ -41,6 +41,18 @@ int cRowiCount(const int i, const int IA[], const int JA[], const int IB[], cons
 }
 
 const int nthreads = 8;
+void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
+    const int IB[], const int JB[],
+    const int m, const int n, const thread_data_t thread_datas[],
+    int* IC, int& nnzC) {
+#pragma omp parallel
+  {
+    omp_CSR_IC_nnzC(IA, JA, IB, JB,
+    m, n, thread_datas,
+    IC, nnzC);
+  }
+}
+
 /*
  * omp_CSR_IC_nnzC reminder: this function must be called in #pragma omp parallel regions
  * to parallelly execution.

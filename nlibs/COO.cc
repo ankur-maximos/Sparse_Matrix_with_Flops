@@ -6,6 +6,7 @@
  */
 
 #include "COO.h"
+#include "qmalloc.h"
 #include <tuple>
 #include <vector>
 #include <algorithm>
@@ -25,9 +26,9 @@ COO::COO(const double* const cooVal, const int* const cooColIndex,
   this->rows = rows;
   this->cols = cols;
   this->nnz = nnz;
-  this->cooColIndex = (int*)malloc(nnz * sizeof(int));
-  this->cooRowIndex = (int*)malloc(nnz * sizeof(int));
-  this->cooVal = (double*)malloc(nnz * sizeof(double));
+  this->cooColIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
+  this->cooRowIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
+  this->cooVal = (double*)qmalloc(nnz * sizeof(double), __FUNCTION__, __LINE__);
   memcpy(this->cooColIndex, cooColIndex, nnz * sizeof(int));
   memcpy(this->cooRowIndex, cooRowIndex, nnz * sizeof(int));
   memcpy(this->cooVal, cooVal, nnz * sizeof(double));
@@ -61,9 +62,9 @@ void COO::readTransposedSNAPFile(const char fname[]) {
   }
   sscanf(line, "%d %d", &(this->rows), &(this->nnz));
   this->cols = this->rows;
-  cooRowIndex = (int*)malloc(nnz * sizeof(int));
-  cooColIndex = (int*)malloc(nnz * sizeof(int));
-  cooVal = (double*)malloc(nnz * sizeof(double));
+  cooRowIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
+  cooColIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
+  cooVal = (double*)qmalloc(nnz * sizeof(double), __FUNCTION__, __LINE__);
   int from, to;
   for (int i = 0; i < nnz; ++i) {
     fscanf(fpin, "%d%d", &from, &to);
@@ -129,7 +130,7 @@ void COO::makeOrdered() const {
 
 CSR COO::toCSR() const {
   int row = 0;
-	int* ocsrRowPtr = (int*)malloc(sizeof(int) * (rows + 1));
+	int* ocsrRowPtr = (int*)qmalloc(sizeof(int) * (rows + 1), __FUNCTION__, __LINE__);
 	memset(ocsrRowPtr, -1, sizeof(int) * (rows + 1));
 	for (int t = 0; t < nnz; ++t) {
 		while(row < cooRowIndex[t] && row < rows && ocsrRowPtr[row] == -1)
@@ -139,8 +140,8 @@ CSR COO::toCSR() const {
 	}
 	ocsrRowPtr[rows] = nnz;
 	int onnz = nnz;
-	int* ocsrColInd = (int*)malloc(sizeof(int) * onnz);
-	double* ocsrVals = (double*)malloc(sizeof(double) * onnz);
+	int* ocsrColInd = (int*)qmalloc(sizeof(int) * onnz, __FUNCTION__, __LINE__);
+	double* ocsrVals = (double*)qmalloc(sizeof(double) * onnz, __FUNCTION__, __LINE__);
 	memcpy(ocsrColInd, cooColIndex, sizeof(int) * onnz);
 	memcpy(ocsrVals, cooVal, sizeof(double) * onnz);
 	CSR csr(ocsrVals, ocsrColInd, ocsrRowPtr, rows, cols, onnz);

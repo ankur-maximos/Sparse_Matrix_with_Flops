@@ -2,6 +2,11 @@
 # Which compiler to use
 #CC = cc
 CC = icpc
+NVCC = nvcc
+
+CUINCLUDES = -I/home/niuq/code/gpu/cusplibrary -I/home/niuq/code/cub-1.0.2
+#CUOPTFLAGS = -arch sm_20 -O0 -g -G
+CUOPTFLAGS = -arch sm_20 -O3 
 
 # What optimization level to use
 OPTFLAGS = -O3 -openmp
@@ -17,10 +22,12 @@ COPTIONS= -Wno-write-strings -g -std=c++0x
 #COPTIONS = -g
 #COPTIONS = -Wno-write-strings
 
-INCLUDES = -I.
+CUDA_HOME = /opt/cuda/5.5
+CINCLUDES = -I. -I$(CUDA_HOME)/include
 
 # What options to be used by the loader
-LDOPTIONS = 
+#LDOPTIONS = -L$(CUDA_HOME)/lib -lcudart -Wl,-rpath,$(CUDA_HOME)/lib 
+LDOPTIONS =  -L$(CUDA_HOME)/lib64 -Wl,-rpath,$(CUDA_HOME)/lib64 -lcudart -lcusparse
 
 # What archiving to use
 AR = ar rv

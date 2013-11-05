@@ -12,6 +12,10 @@
 #include <stdio.h>
 #include "math.h"
 #include "cpu_csr_kernel.h"
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#include <vector>
+using namespace std;
 
 struct CSR {
 public:
@@ -145,5 +149,7 @@ public:
 
   CSR rmclOneStep(const CSR &B, thread_data_t *thread_datas) const;
   double differs(const CSR& B) const;
+  vector<int> differsStats(const CSR& B, vector<double> percents) const;
+  CSR toGpuCSR() const;
 };
 #endif /* CSR_CUH_ */
