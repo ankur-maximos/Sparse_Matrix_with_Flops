@@ -8,7 +8,7 @@
 #include "ntimer.h"
 #endif
 #include <iostream>
-#include "qmalloc.h"
+#include "tools/qmalloc.h"
 
 const int LEVEL1_DCACHE_LINESIZE = 64;
 struct thread_data_t {

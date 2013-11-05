@@ -6,7 +6,7 @@
  */
 
 #include "COO.h"
-#include "qmalloc.h"
+#include "tools/qmalloc.h"
 #include <tuple>
 #include <vector>
 #include <algorithm>

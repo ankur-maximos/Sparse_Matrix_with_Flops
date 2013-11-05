@@ -6,7 +6,7 @@
  */
 #include "CSR.h"
 #include "tools/util.h"
-#include "qmalloc.h"
+#include "tools/qmalloc.h"
 #include <vector>
 #include <algorithm>
 #include <omp.h>
