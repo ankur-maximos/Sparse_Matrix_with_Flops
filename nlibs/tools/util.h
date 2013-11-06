@@ -19,4 +19,5 @@ double arrayThreshPruneNormalize(const double thresh, const int rindices[], cons
 void arrayOutput(const char* msg, FILE* fp, const int datas[], int len);
 void arrayOutput(const char *msg, FILE* fp, const vector<int> &datas);
 void arrayOutput(const char *msg, FILE* fp, const vector<double> &datas);
+void prefixSumToCounts(const int prefixSum[], const int len, int *counts);
 #endif

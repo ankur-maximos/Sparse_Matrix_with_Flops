@@ -93,3 +93,10 @@ void arrayOutput(const char *msg, FILE* fp, const vector<double> &datas) {
   fprintf(fp, "\n");
   fflush(fp);
 }
+
+//len is the length of counts array
+void prefixSumToCounts(const int prefixSum[], const int len, int *counts) {
+  for (int i = 0; i < len; ++i) {
+    counts[i] = prefixSum[i + 1] - prefixSum[i];
+  }
+}
