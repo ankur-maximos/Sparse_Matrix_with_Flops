@@ -162,6 +162,20 @@ CSR CSR::toGpuCSR() const {
   return dA;
 }
 
+CSR CSR::toCpuCSR() const {
+  CSR hA;
+  hA.rows = this->rows;
+  hA.cols = this->cols;
+  hA.nnz = this->nnz;
+  hA.rowPtr = (int*)qmalloc(sizeof(int) * (rows + 1), __FUNCTION__, __LINE__);
+  cudaMemcpy(hA.rowPtr, rowPtr, sizeof(int) * (rows + 1), cudaMemcpyDeviceToHost);
+  hA.colInd = (int*)qmalloc(sizeof(int) * nnz, __FUNCTION__, __LINE__);
+  cudaMemcpy(hA.colInd, colInd, sizeof(int) * nnz, cudaMemcpyDeviceToHost);
+  hA.values = (double*)qmalloc(sizeof(double) * nnz, __FUNCTION__, __LINE__);
+  cudaMemcpy(hA.values, values, sizeof(double) * nnz, cudaMemcpyDeviceToHost);
+  return hA;
+}
+
 void CSR::deviceDispose() {
   cudaFree(values); values = NULL;
   cudaFree(colInd); colInd = NULL;

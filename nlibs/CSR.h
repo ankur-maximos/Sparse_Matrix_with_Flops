@@ -153,5 +153,6 @@ public:
   double differs(const CSR& B) const;
   vector<int> differsStats(const CSR& B, vector<double> percents) const;
   CSR toGpuCSR() const;
+  CSR toCpuCSR() const;
 };
 #endif /* CSR_CUH_ */
