@@ -118,6 +118,8 @@ public:
       free(rowPtr); rowPtr = NULL;
   }
 
+  void deviceDispose();
+
   /*Default rowInflation gamma is 2*/
   void rowInflationR2(int rowId) const {
     for (int i = rowPtr[rowId]; i < rowPtr[rowId + 1]; ++i) {

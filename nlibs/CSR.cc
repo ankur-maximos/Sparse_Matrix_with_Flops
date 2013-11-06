@@ -162,6 +162,12 @@ CSR CSR::toGpuCSR() const {
   return dA;
 }
 
+void CSR::deviceDispose() {
+  cudaFree(values); values = NULL;
+  cudaFree(colInd); colInd = NULL;
+  cudaFree(rowPtr); rowPtr = NULL;
+}
+
 vector<int> CSR::differsStats(const CSR& B, const vector<double> percents) const {
   vector<int> counts(percents.size() + 4, 0);
   const int PINFI = percents.size() + 1;
