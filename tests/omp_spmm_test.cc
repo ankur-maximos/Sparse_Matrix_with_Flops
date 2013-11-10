@@ -1,7 +1,7 @@
 #include "CSR.h"
 #include "COO.h"
 #include "iostream"
-#include "ntimer.h"
+#include "tools/ntimer.h"
 #include "omp.h"
 #include "cpu_csr_kernel.h"
 

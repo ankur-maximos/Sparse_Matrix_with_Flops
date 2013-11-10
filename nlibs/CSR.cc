@@ -87,7 +87,6 @@ CSR CSR::deepCopy() {
   return B;
 }
 
-
 CSR CSR::omp_spmm(const CSR& B) const {
   assert(this->cols == B.rows);
   int* IC;
