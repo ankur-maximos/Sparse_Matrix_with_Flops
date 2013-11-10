@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <cusparse_v2.h>
 #include "timer.h"
+#include "CSR.h"
 
 #define CLEANUP(s)                                   \
 do {                                                 \
@@ -26,5 +27,6 @@ void cusparseDcsrgemmWapper(const int* const dIA, const int dJA[], const double 
         const int dIB[], const int dJB[], const double dB[], const int nnzB,
         const int* dIC, int* dJC, const double* dC, const int nnzC,
         const int m, const int k, const int n);
+CSR cusparseSpMMWrapper(const CSR &dA, const CSR &dB);
 void cusparse_finalize(const char *msg);
 #endif

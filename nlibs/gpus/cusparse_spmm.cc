@@ -1,4 +1,5 @@
 #include "cusparse_spmm.h"
+#include "gpus/cuda_handle_error.h"
 
 bool isCusparseInit = false;
 cusparseStatus_t status;
@@ -52,7 +53,6 @@ void cusparseXcsrgemmNnzWrapper(const int dIA[], const int dJA[], const int nnzA
         const int dIB[], const int dJB[], const int nnzB,
         const int m, const int k, const int n,
         int* IC, int& nnzC) {
-  cudaMalloc((void**)&IC, sizeof(int) * (m + 1));
   cusparseOperation_t transA = CUSPARSE_OPERATION_NON_TRANSPOSE;
   cusparseOperation_t transB = CUSPARSE_OPERATION_NON_TRANSPOSE;
   status = cusparseXcsrgemmNnz(handle, transA, transB, m, n, k,
@@ -81,6 +81,37 @@ void cusparseDcsrgemmWapper(const int* const dIA, const int dJA[], const double 
   if (status != CUSPARSE_STATUS_SUCCESS) {
     CLEANUP("CSR Matrix-Matrix multiplication failed");
   }
+}
+
+CSR cusparseSpMMWrapper(const CSR &dA, const CSR &dB) {
+  //cusparse_init();
+  int m = dA.rows;
+  int k = dA.cols;
+  int n = dB.cols;
+  CSR dC;
+  int baseC, nnzC;
+  dC.rows = m; dC.cols = n;
+  cudaMalloc((void**)&dC.rowPtr, sizeof(int) * (m + 1));
+  timer t;
+  timer t2;
+  cusparseXcsrgemmNnzWrapper(dA.rowPtr, dA.colInd, dA.nnz,
+      dB.rowPtr, dB.colInd, dB.nnz,
+      m, k, n,
+      dC.rowPtr, nnzC);
+  double nnzTime = t2.milliseconds_elapsed();
+  HANDLE_ERROR(cudaMemcpy(&nnzC , dC.rowPtr + m, sizeof(int), cudaMemcpyDeviceToHost));
+  cudaMemcpy(&baseC, dC.rowPtr, sizeof(int), cudaMemcpyDeviceToHost);
+  nnzC -= baseC;
+  cudaMalloc((void**)&dC.colInd, sizeof(int) * nnzC);
+  cudaMalloc((void**)&dC.values, sizeof(double) * nnzC);
+  dC.nnz = nnzC;
+  cusparseDcsrgemmWapper(dA.rowPtr, dA.colInd, dA.values, dA.nnz,
+      dB.rowPtr, dB.colInd, dB.values, dB.nnz,
+      dC.rowPtr, dC.colInd, dC.values, dC.nnz,
+      m, k, n);
+  printf("cusparse time passed %lf nnzTime=%lf\n", t.milliseconds_elapsed(), nnzTime);
+  //cusparse_finalize("clear up cusparse");
+  return dC;
 }
 
 void cusparse_finalize(const char *msg) {
