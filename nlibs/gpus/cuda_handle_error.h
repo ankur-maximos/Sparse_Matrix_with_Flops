@@ -2,6 +2,7 @@
 #define CUDA_HANDLE_ERROR_H_
 
 #include<cuda.h>
+#include<stdio.h>
 
 static void HandleError(cudaError_t err, const char *file, int line) {
   if (err != cudaSuccess) {

@@ -104,7 +104,7 @@ CSR RMCL(const char iname[], int maxIters, RunOptions runOptions) {
   //Mt.output("CSR Mgt");
   double now = time_in_mill_now();
   if (runOptions == GPU) {
-    gpuRmclIter(maxIters, Mgt, Mt);
+    //gpuRmclIter(maxIters, Mgt, Mt);
   } else if (runOptions == OMP) {
     ompRmclIter(maxIters, Mgt, Mt);
   } else {

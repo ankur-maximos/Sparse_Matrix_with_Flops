@@ -1,16 +1,34 @@
-//using namespace cub;
-//CachingDeviceAllocator  g_allocator;
-#include "gpus/gpu_csr_kernel.h"
-#include <stdio.h>
-#include "tools/util.h"
-#include <cub/cub.cuh>
-#include "gpus/timer.h"
+#include "gpus/cuda_handle_error.h"
 #include "gpus/cusparse_spmm.h"
+#include "gpus/dutil.cuh"
+#include "gpus/gpu_csr_kernel.h"
+#include "gpus/timer.h"
 #include "tools/ntimer.h"
+#include <cub/cub.cuh>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <stdio.h>
+#include <thrust/device_ptr.h>
+#include <thrust/scan.h>
 
-//__device__ int gpu_cRowiCount
+__global__ void outputCSRKernel(const int *rowPtr, const int *colInd, const double *values, int rows) {
+  if (threadIdx.x == 0 && blockIdx.x == 0) {
+    for (int i = 0; i < rows; i++) {
+      for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+        int col = colInd[j];
+        double val = values[j];
+        printf("%d\t%d\t%.6lf\n", i, col, val);
+      }
+    }
+  }
+}
+
+void gpuOutputCSRWrapper(const CSR dA, const char* msg) {
+  printf("%s\n", msg);
+  printf("%d %d %d\n", dA.rows, dA.cols, dA.nnz);
+  outputCSRKernel<<<1, 1>>>(dA.rowPtr, dA.colInd, dA.values, dA.rows);
+  cudaDeviceSynchronize();
+}
 
 __global__ void gpu_CSR_IC_nnzC(const int IA[], const int JA[],
     const int IB[], const int JB[],
@@ -19,6 +37,9 @@ __global__ void gpu_CSR_IC_nnzC(const int IA[], const int JA[],
     bool *xbs, int *iJCs) {
   bool *xb = xbs + blockIdx.x * n;
   int *iJC = iJCs + blockIdx.x * n;
+  if (threadIdx.x == 0 && blockIdx.x ==0) {
+    IC[m] = 0;
+  }
   __shared__ int count;
   if (threadIdx.x == 0) {
     count = 0;
@@ -49,98 +70,93 @@ __global__ void gpu_CSR_IC_nnzC(const int IA[], const int JA[],
   }
 }
 
-void gpuRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
-  const int NBLOCKS = 512;
-  int m = Mgt.rows;
-  int n = Mt.cols;
-  int *IC=(int*)calloc(m+1, sizeof(int));
-  bool* xb=(bool*)calloc(n, sizeof(bool));
-  int nnzC = 0;
-  int nthreads = 8;
-  thread_data_t* thread_datas = allocateThreadDatas(nthreads, Mt.cols);
-  double now = time_in_mill_now();
-  omp_CSR_IC_nnzC_Wrapper(Mgt.rowPtr, Mgt.colInd, Mt.rowPtr, Mt.colInd, Mgt.rows, Mt.cols, thread_datas,
-            IC, nnzC);
-  printf("Time passed for omp %lf\n", time_in_mill_now() - now);
-  freeThreadDatas(thread_datas, nthreads);
-  now = time_in_mill_now();
-  sequential_CSR_IC_nnzC(Mgt.rowPtr, Mgt.colInd, Mt.rowPtr, Mt.colInd, Mgt.rows, Mt.cols, xb,
-            IC, nnzC);
-  printf("Time passed for sequential %lf\n", time_in_mill_now() - now);
-  //arrayOutput("cpu ic", stdout, IC, m + 1);
-  int *counts = (int*)calloc(m + 1, sizeof(int));
-  for (int i = 0; i < m; ++i) {
-    counts[i] = IC[i + 1] - IC[i];
+template <int BLOCK_THREADS>
+__global__ void gpuSpMMKernel(const int *IA, const int *JA, const double *A,
+    const int *IB, const int *JB, const double *B,
+    const int *IC, int *JC, double *C,
+    bool *xbs, double *xs,
+    const int m, const int k, const int n) {
+  __shared__ int dcount;
+  if (threadIdx.x == 0) {
+    dcount = 0;
   }
-    //arrayOutput("counts", stdout, counts, m);
-  CSR dMgt = Mgt.toGpuCSR();
-  CSR dMt = Mt.toGpuCSR();
-  CSR dNewMt;
-  bool *xbs = NULL;
-  int *iJCs = NULL;
-  now = time_in_mill_now();
-  timer t3;
-  cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(bool)); cudaMemset(xbs, 0, NBLOCKS * n * sizeof(bool));
-  cudaMalloc((void**)&iJCs, NBLOCKS * n * sizeof(int));
-  cudaMalloc((void**)&dNewMt.rowPtr, NBLOCKS * (m + 1) * sizeof(int));
-  //for (int iter = 0; iter < maxIter; ++iter) {
-  timer t;
-  gpu_CSR_IC_nnzC<<<NBLOCKS, 128>>>(dMgt.rowPtr, dMgt.colInd, dMt.rowPtr, dMt.colInd,
-        m, n, dNewMt.rowPtr, xbs, iJCs);
-  cudaDeviceSynchronize();
-  double timeUsed = t.milliseconds_elapsed();
-  printf("Time used in gpu = %lf\n", timeUsed);
-  printf("Total Time passed for gpu with cudaMalloc %lf\n", t3.milliseconds_elapsed());
-    //int *IC = (int*)malloc((m + 1) * sizeof(int));
-    cudaMemcpy(IC, dNewMt.rowPtr, (m + 1) * sizeof(int), cudaMemcpyDeviceToHost);
-    printf("Begin output array\n");
-    int flag = memcmp(IC, counts, m * sizeof(int));
-    if (flag == 0) {
-      printf("Same\n");
-    } else {
-      printf("Differs\n");
+  bool *xb = xbs + blockIdx.x * n;
+  double *x = xs + blockIdx.x * n;
+  __syncthreads();
+  for (int i = blockIdx.x; i < m; i += gridDim.x) {
+    const int ICi = IC[i];
+    int *iJC = JC + ICi;
+    for (int jp = IA[i]; jp < IA[i + 1]; ++jp) {
+      int j = JA[jp];
+      const double Ajp = A[jp];
+      for (int tp = IB[j] + threadIdx.x; tp < IB[j + 1]; tp += blockDim.x) {
+        int t = JB[tp];
+        if (xb[t] == false) {
+          iJC[atomicAdd(&dcount, 1)] = t;
+          xb[t] = true;
+          x[t] = Ajp * B[tp];
+        } else {
+          x[t] += Ajp * B[tp];
+        }
+      }
+      __syncthreads();
     }
-    //int m = dMgt.rows;
-    int k = dMgt.cols;
-    //int n = Mt.cols;
-    int* dICs = NULL;
-    cusparse_init();
-    timer t2;
-    cusparseXcsrgemmNnzWrapper(dMgt.rowPtr, dMgt.colInd, Mgt.nnz,
-        dMt.rowPtr, dMt.colInd, Mt.nnz,
-        m, k, n,
-        dICs, nnzC);
-  double timeUsed2 = t2.milliseconds_elapsed();
-  cudaMemcpy(IC, dICs, (m + 1) * sizeof(int), cudaMemcpyDeviceToHost);
-  cudaDeviceSynchronize();
-  //arrayOutput("cusparse ICs", stdout, IC, m);
-  //for (int i = 0; i < m; ++i) {
-    //IC[i] = IC[i + 1] - IC[i];
-  //}
-  printf("Time used in cusparse gpu = %lf\n", timeUsed2);
-    flag = memcmp(IC, counts, m * sizeof(int));
-    if (flag == 0) {
-      printf("cusparse Same\n");
-    } else {
-      printf("cusparse Differs\n");
+    for (int jp = threadIdx.x; jp < dcount; jp += blockDim.x) {
+      int j = iJC[jp];
+      C[jp + ICi] = x[j];
+      x[j] = 0.0;
+      xb[j] = false;
     }
-    cudaFree(xbs);
-    cudaFree(iJCs);
-    cudaFree(dNewMt.rowPtr);
-    //cusparse_finalize("clear up cusparse");
-    //arrayOutput("gpu ic", stdout, IC, m + 1);
-  //}
+    __syncthreads();
+    if (threadIdx.x == 0) {
+      dcount = 0;
+    }
+  }
 }
 
-void gpu_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
-        const int m, const int k, const int n, const thread_data_t* thread_datas) {
-    //JC = (int*)malloc(sizeof(int) * nnzC);
-    //C = (double*)malloc(sizeof(double) * nnzC);
-    //int *dIC = NULL, *dJC = NULL;
-    //double *dC = NULL;
-    //cudaMalloc((void**)&dIC, (m + 1) * sizeof(int));
-    //cudaMemcpy(dIC, IC, (m + 1) * sizeof(int), cudaMemcpyHostToDevice);
-    //cudaMalloc((void**)&dIC, (m + 1) * sizeof(int));
+CSR gpuSpMMWrapper(const CSR &dA, const CSR &dB) {
+  CSR dC;
+  //const int NBLOCKS = 1; const int NTHREADS = 1;
+  const int NBLOCKS = 512; const int NTHREADS = 128;
+  int m = dA.rows;
+  int k = dA.cols;
+  int n = dB.cols;
+  bool *xbs = NULL;
+  int *iJCs = NULL;
+  double *xs = NULL;
+  HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(bool))); cudaMemset(xbs, 0, NBLOCKS * n * sizeof(bool));
+  HANDLE_ERROR(cudaMalloc((void**)&xs, NBLOCKS * n * sizeof(double))); cudaMemset(xs, 0, NBLOCKS * n * sizeof(double));
+  HANDLE_ERROR(cudaMalloc((void**)&iJCs, NBLOCKS * n * sizeof(int)));
+
+  HANDLE_ERROR(cudaMalloc((void**)&dC.rowPtr, (m + 1) * sizeof(int)));
+  timer t;
+  timer t2;
+  gpu_CSR_IC_nnzC<<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd,
+      m, n, dC.rowPtr, xbs, iJCs);
+  HANDLE_ERROR(cudaGetLastError());
+  HANDLE_ERROR(cudaFree(iJCs));
+  thrust::device_ptr<int> dIC = thrust::device_pointer_cast(dC.rowPtr);
+  thrust::exclusive_scan(dIC, dIC + m + 1, dIC);
+  double nnzTime = t.milliseconds_elapsed();
+  int cNnz = dIC[m];
+  int hh = dIC[1];
+  printf("dIC[1] = %d\n", hh);
+  HANDLE_ERROR(cudaMalloc((void**)&dC.colInd, cNnz * sizeof(int)));
+  HANDLE_ERROR(cudaMalloc((void**)&dC.values, cNnz * sizeof(double)));
+  gpuSpMMKernel<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values,
+      dB.rowPtr, dB.colInd, dB.values,
+      dC.rowPtr, dC.colInd, dC.values,
+      xbs, xs,
+      m, k, n);
+  cudaDeviceSynchronize();
+  double timeUsed = t.milliseconds_elapsed();
+  printf("Time used for gpu spmm %lf nnzTime=%lf\n", timeUsed, nnzTime);
+  HANDLE_ERROR(cudaGetLastError());
+  //hh = dIC[1]; printf("dIC[1] = %d\n", hh);
+  dC.rows = m;
+  dC.cols = n;
+  dC.nnz = cNnz;
+  HANDLE_ERROR(cudaFree(xbs));
+  HANDLE_ERROR(cudaFree(xs));
+  return dC;
 }
