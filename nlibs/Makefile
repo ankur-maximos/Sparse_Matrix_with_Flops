@@ -14,7 +14,7 @@ HEADERS=$(shell find . -name "*.h")
 	@echo $(CFLAGS)
 	$(CC) $(CFLAGS) $< -c -o $@
 
-%.o: %.cu ../Makefile.in
+%.o: %.cu ../Makefile.in $(shell find . -name "*.cuh")
 	$(NVCC) $(CUFLAGS) $< -c -o $@
 
 $(LIBNAME): $(OBJS) $(HEADERS)

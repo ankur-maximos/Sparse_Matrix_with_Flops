@@ -10,6 +10,8 @@
 #include <vector>
 #include <algorithm>
 #include <omp.h>
+#include "gpus/cuda_handle_error.h"
+//#include "gpus/gpu_csr_kernel.h"
 
 void CSR::matrixRowReorder(const int* ranks) const {
   int* nrowPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
@@ -167,11 +169,11 @@ CSR CSR::toCpuCSR() const {
   hA.cols = this->cols;
   hA.nnz = this->nnz;
   hA.rowPtr = (int*)qmalloc(sizeof(int) * (rows + 1), __FUNCTION__, __LINE__);
-  cudaMemcpy(hA.rowPtr, rowPtr, sizeof(int) * (rows + 1), cudaMemcpyDeviceToHost);
+  HANDLE_ERROR(cudaMemcpy(hA.rowPtr, rowPtr, sizeof(int) * (rows + 1), cudaMemcpyDeviceToHost));
   hA.colInd = (int*)qmalloc(sizeof(int) * nnz, __FUNCTION__, __LINE__);
-  cudaMemcpy(hA.colInd, colInd, sizeof(int) * nnz, cudaMemcpyDeviceToHost);
+  HANDLE_ERROR(cudaMemcpy(hA.colInd, colInd, sizeof(int) * nnz, cudaMemcpyDeviceToHost));
   hA.values = (double*)qmalloc(sizeof(double) * nnz, __FUNCTION__, __LINE__);
-  cudaMemcpy(hA.values, values, sizeof(double) * nnz, cudaMemcpyDeviceToHost);
+  HANDLE_ERROR(cudaMemcpy(hA.values, values, sizeof(double) * nnz, cudaMemcpyDeviceToHost));
   return hA;
 }
 

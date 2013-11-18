@@ -5,13 +5,13 @@ CC = icpc
 NVCC = nvcc
 
 CUINCLUDES = -I/home/niuq/code/gpu/cusplibrary -I/home/niuq/code/cub-1.0.2
-#CUOPTFLAGS = -arch sm_20 -O0 -g -G
+CUOPTFLAGS = -arch sm_20 -O0 -g -G
 CUOPTFLAGS = -arch sm_20 -O3 
 
 # What optimization level to use
-OPTFLAGS = -O3 -openmp
 #OPTFLAGS = -fast -openmp
-#OPTFLAGS = -O0 -openmp
+OPTFLAGS = -O0 -openmp
+OPTFLAGS = -O3 -openmp -vec-report1 -restrict
 
 LIBDIR=nlibs
 LIBNAME=libnrmcl.a

@@ -18,9 +18,10 @@ void ompRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
     arrayOutput("percent\t", fp, percents);
   }
 
-  double now = time_in_mill_now();
+  double nowTotal = time_in_mill_now();
   thread_data_t* thread_datas = allocateThreadDatas(nthreads, Mt.cols);
   for (int iter = 0; iter < maxIter; ++iter) {
+    double now = time_in_mill_now();
 #ifdef debugging
     Mgt.output("Mgt iter");
     Mt.output("Mt iter");
@@ -36,17 +37,18 @@ void ompRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
 
     Mt.dispose();
     Mt = newMt;
-    printf("iter %d done\n", iter);
+    printf("OMP iter %d done in %lf milliseconds\n", iter, time_in_mill_now() - now);
   }
   freeThreadDatas(thread_datas, nthreads);
   if (options.stats) {
     fclose(fp);
   }
-  cout << "iter finish in " << time_in_mill_now() - now << "\n";
+  printf("time pass cpu OMP rmcl iters = %lf\n", time_in_mill_now() - nowTotal);
 }
 
 void rmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
   CSR newMt;
+  double nowTotal = time_in_mill_now();
   double tsum = 0.0;
   for (int iter = 0; iter < maxIter; ++iter) {
   double now = time_in_mill_now();
@@ -78,9 +80,10 @@ void rmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
     newMt.nnz = pos;
     Mt.dispose();
     Mt = newMt;
-    printf("iter %d done\n", iter);
+    printf("seq iter %d done in %lf milliseconds\n", iter, time_in_mill_now() - now);
   }
   printf("time pass tsum spmm = %lf\n", tsum);
+  printf("time pass cpu seq rmcl iters = %lf\n", time_in_mill_now() - nowTotal);
 }
 
 CSR rmclInit(COO &cooAt) {
@@ -93,7 +96,6 @@ CSR rmclInit(COO &cooAt) {
   return At;
 }
 
-
 CSR RMCL(const char iname[], int maxIters, RunOptions runOptions) {
   COO cooAt;
   cooAt.readTransposedSNAPFile(iname);
@@ -102,15 +104,15 @@ CSR RMCL(const char iname[], int maxIters, RunOptions runOptions) {
   cooAt.dispose();
   CSR Mgt = Mt.deepCopy();
   //Mt.output("CSR Mgt");
-  double now = time_in_mill_now();
+  //double now = time_in_mill_now();
   if (runOptions == GPU) {
-    //gpuRmclIter(maxIters, Mgt, Mt);
+    gpuRmclIter(maxIters, Mgt, Mt);
   } else if (runOptions == OMP) {
     ompRmclIter(maxIters, Mgt, Mt);
   } else {
     rmclIter(maxIters, Mgt, Mt);
   }
-  printf("time pass iters = %lf\n", time_in_mill_now() - now);
+  //printf("total time pass with RMCL iters = %lf\n", time_in_mill_now() - now);
   Mgt.dispose();
   return Mt;
 }
