@@ -89,7 +89,7 @@ CSR CSR::deepCopy() {
   return B;
 }
 
-CSR CSR::omp_spmm(const CSR& B) const {
+CSR CSR::omp_spmm(const CSR& B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
@@ -98,7 +98,7 @@ CSR CSR::omp_spmm(const CSR& B) const {
   omp_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
       IC, JC, C, nnzC,
-      this->rows, this->cols, B.cols);
+      this->rows, this->cols, B.cols, stride);
   CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
   return csr;
 }
@@ -135,7 +135,7 @@ double CSR::differs(const CSR& B) const {
   return sum;
 }
 
-CSR CSR::rmclOneStep(const CSR &B, thread_data_t *thread_datas) const {
+CSR CSR::ompRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
@@ -144,7 +144,21 @@ CSR CSR::rmclOneStep(const CSR &B, thread_data_t *thread_datas) const {
   omp_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
       IC, JC, C, nnzC,
-      this->rows, this->cols, B.cols, thread_datas);
+      this->rows, this->cols, B.cols, thread_datas, stride);
+  CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
+  return csr;
+}
+
+CSR CSR::cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const {
+  assert(this->cols == B.rows);
+  int* IC;
+  int* JC;
+  double* C;
+  int nnzC;
+  cilk_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz,
+      IC, JC, C, nnzC,
+      this->rows, this->cols, B.cols, thread_datas, stride);
   CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
   return csr;
 }

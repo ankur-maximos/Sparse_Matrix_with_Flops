@@ -31,6 +31,7 @@ pair<double, double> arrayMaxSum(const double values[], const int count) {
 
 double arraySum(const double values[], const int count) {
   double rsum = 0.0;
+#pragma simd reduction(+:rsum)
   for (int i = 0; i < count; ++i) {
     rsum += values[i];
   }
@@ -38,6 +39,7 @@ double arraySum(const double values[], const int count) {
 }
 
 void arrayInflationR2(const double ivalues[], const int count, double ovalues[]) {
+#pragma simd
   for (int i = 0; i < count; ++i) {
     ovalues[i] = ivalues[i] * ivalues[i];
   }
@@ -57,6 +59,7 @@ double arrayThreshPruneNormalize(const double thresh, const int rindices[], cons
 		}
 	}
   //normalize
+#pragma simd
 	for (i = 0; i < j; ++i) {
 		//indices[i] = rindices[indicesToRetain[i]];
 		//values[i] = rvalues[indicesToRetain[i]] / sum;

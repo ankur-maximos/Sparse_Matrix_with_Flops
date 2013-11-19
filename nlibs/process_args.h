@@ -14,6 +14,7 @@ struct Options {
   int maxIters = 5;
   char inputFileName[200];
   bool stats = false;
+  int stride = 512;
 };
 
 extern Options options;

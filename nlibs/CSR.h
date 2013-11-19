@@ -60,7 +60,7 @@ public:
   void averAndNormRowValue();
   long spmmFlops(const CSR& B) const;
   CSR spmm(const CSR& B) const;
-  CSR omp_spmm(const CSR& B) const;
+  CSR omp_spmm(const CSR& B, const int stride = 512) const;
   void output(const char* msg) const {
     printf("%s\n", msg);
     for (int i = 0; i < rows; i++) {
@@ -149,7 +149,8 @@ public:
     return rowPtr[rowId + 1] - rowPtr[rowId];
   }
 
-  CSR rmclOneStep(const CSR &B, thread_data_t *thread_datas) const;
+  CSR ompRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
+  CSR cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
   double differs(const CSR& B) const;
   vector<int> differsStats(const CSR& B, vector<double> percents) const;
   CSR toGpuCSR() const;

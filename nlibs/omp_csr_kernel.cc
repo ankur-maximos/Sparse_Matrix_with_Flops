@@ -5,7 +5,6 @@
 #include "tools/util.h"
 using namespace std;
 
-
 thread_data_t* allocateThreadDatas(int nthreads, int n) {
   thread_data_t* thread_datas = (thread_data_t*)calloc(nthreads, sizeof(thread_data_t));
   for(int i = 0; i < nthreads; i++) {
@@ -21,7 +20,7 @@ void freeThreadDatas(thread_data_t* thread_datas, int nthreads) {
   free(thread_datas);
 }
 
-int cRowiCount(const int i, const int IA[], const int JA[], const int IB[], const int JB[], int iJC[], bool xb[]) {
+inline int cRowiCount(const int i, const int IA[], const int JA[], const int IB[], const int JB[], int iJC[], bool xb[]) {
     int count = 0;
     for (int vp = IA[i]; vp < IA[i + 1]; ++vp) {
         int v = JA[vp];
@@ -33,6 +32,7 @@ int cRowiCount(const int i, const int IA[], const int JA[], const int IB[], cons
             }
         }
     }
+#pragma simd
     for(int jp = 0; jp < count; ++jp) {
         int j = iJC[jp];
         xb[j] = false;
@@ -44,12 +44,12 @@ const int nthreads = 8;
 void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n, const thread_data_t thread_datas[],
-    int* IC, int& nnzC) {
+    int* IC, int& nnzC, const int stride) {
 #pragma omp parallel
   {
     omp_CSR_IC_nnzC(IA, JA, IB, JB,
     m, n, thread_datas,
-    IC, nnzC);
+    IC, nnzC, stride);
   }
 }
 
@@ -60,8 +60,7 @@ void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
 void omp_CSR_IC_nnzC(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n, const thread_data_t thread_datas[],
-    int* IC, int& nnzC) {
-  const int stride = 128;
+    int* IC, int& nnzC, const int stride) {
   double now;
   int tid = omp_get_thread_num();
   int *iJC = thread_datas[tid].iJC;
@@ -89,7 +88,7 @@ void omp_CSR_IC_nnzC(const int IA[], const int JA[],
   //std::cout << "time passed prefix sum " << time_in_mill_now() - now << std::endl;
 }
 
-int processCRowI(double x[], bool* xb,
+inline int processCRowI(double x[], bool* xb,
     const int iAnnz, const int iJA[], const double iA[],
         const int IB[], const int JB[], const double B[],
         int* iJC, double* iC) {
@@ -115,16 +114,47 @@ int processCRowI(double x[], bool* xb,
   return ip;
 }
 
+int simdProcessCRowI(double x[], bool* xb,
+    const int iAnnz, const int iJA[], const double iA[],
+        const int IB[], const int JB[], const double B[],
+        int* iJC, double* iC) {
+  int ip = 0;
+  for(int jp = 0; jp < iAnnz; ++jp) {
+    int j = iJA[jp];
+    int IBj = IB[j], IBj1 = IB[j + 1];
+//#pragma simd
+    for(int tp = IB[j]; tp < IB[j + 1]; ++tp) {
+      int t = JB[tp];
+      if(xb[t] == false) {
+        iJC[ip++] = t;
+        xb[t] = true;
+        x[t] = iA[jp] * B[tp];
+      } else {
+        x[t] += iA[jp] * B[tp];
+      }
+    }
+    //x[JB[IBj : IBj1 - IBj]] += iA[jp] * B[IBj : IBj1 - IBj];
+    //xb[JB[IBj : IBj1 - IBj]] = true;
+  }
+#pragma simd
+  for(int vp = 0; vp < ip; ++vp) {
+    int v = iJC[vp];
+    iC[vp] = x[v];
+    x[v] = 0;
+    xb[v] = false;
+  }
+  return ip;
+}
+
 void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
-        const int m, const int k, const int n, const thread_data_t* thread_datas) {
+        const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
     IC = (int*)calloc(m + 1, sizeof(int));
     int *rowsNnz = (int*)calloc(m + 1, sizeof(int));
-    const int stride = 128;
 #pragma omp parallel firstprivate(stride) //num_threads(1)
     {
-      omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas, IC, nnzC);
+      omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas, IC, nnzC, stride);
 #pragma omp master
       {
         JC = (int*)malloc(sizeof(int) * nnzC);
@@ -140,7 +170,8 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
         for (int i = it; i < up; ++i) {
           double *cValues = C + IC[i];
           int *cColInd = JC + IC[i];
-          processCRowI(x, xb,
+          //processCRowI(x, xb,
+          simdProcessCRowI(x, xb,
               IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
               IB, JB, B,
               cColInd, cValues);
@@ -158,7 +189,8 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
     int top = rowsNnz[0];
     for (int i = 1; i < m; ++i) {
       int up = IC[i] + rowsNnz[i];
-      int preTop = top;
+      const int preTop = top;
+#pragma simd
       for (int j = IC[i]; j < up; ++j) {
         JC[top] = JC[j];
         C[top++] = C[j];
@@ -175,9 +207,8 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
 void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
-        const int m, const int k, const int n, const thread_data_t* thread_datas) {
+        const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
     IC = (int*)calloc(m + 1, sizeof(int));
-    const int stride = 128;
     double now = time_in_mill_now();
 #pragma omp parallel firstprivate(stride) private(now)
     {
@@ -187,7 +218,7 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
         now = time_in_mill_now();
       }
 #endif
-      omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas, IC, nnzC);
+      omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas, IC, nnzC, stride);
 #pragma omp master
       {
 #ifdef profiling
@@ -219,11 +250,11 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
 void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
-        const int m, const int k, const int n) {
+        const int m, const int k, const int n, const int stride) {
     thread_data_t* thread_datas = allocateThreadDatas(nthreads, n);
     omp_CSR_SpMM(IA, JA, A, nnzA,
         IB, JB, B, nnzB,
         IC, JC, C, nnzC,
-        m, k, n, thread_datas);
+        m, k, n, thread_datas, stride);
     freeThreadDatas(thread_datas, nthreads);
 }

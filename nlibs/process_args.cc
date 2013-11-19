@@ -13,6 +13,7 @@ int process_args(int argc, char **argv) {
          We distinguish them by their indices. */
       {"input",  required_argument, 0, 'i'},
       {"maxIters",  required_argument, 0, 'm'},
+      {"stride",  required_argument, 0, 'd'},
       {"stats", no_argument, 0, 's'},
       {"help",   no_argument, 0, 'h'},
       {0, 0, 0, 0}
@@ -49,6 +50,9 @@ int process_args(int argc, char **argv) {
       case 'm':
         options.maxIters = atol(optarg);
         break;
+      case 'd':
+        options.stride = atol(optarg);
+        break;
       case 'h':
         break;
       case '?':
@@ -77,5 +81,6 @@ void print_args() {
   printf("stats= %s\t", options.stats ? "true" : "false");
   printf("inputFileName= %s\t", options.inputFileName);
   printf("maxIters= %d\t", options.maxIters);
+  printf("stride = %d\t", options.stride);
   printf("}\n");
 }

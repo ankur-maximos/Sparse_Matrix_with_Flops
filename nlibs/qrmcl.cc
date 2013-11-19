@@ -4,7 +4,7 @@
 #include "gpus/gpu_csr_kernel.h"
 #include "process_args.h"
 
-void ompRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
+void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, const RunOptions runOptions) {
   CSR newMt;
   double tsum = 0.0;
   int nthreads = 8;
@@ -26,7 +26,15 @@ void ompRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
     Mgt.output("Mgt iter");
     Mt.output("Mt iter");
 #endif
-    newMt = Mgt.rmclOneStep(Mt, thread_datas);
+
+    if (runOptions == OMP) {
+      newMt = Mgt.ompRmclOneStep(Mt, thread_datas, stride);
+    } else if (runOptions == CILK) {
+      newMt = Mgt.cilkRmclOneStep(Mt, thread_datas, stride);
+    } else {
+      printf("Multithreaded RunOptions should be either OMP or CILK\n");
+      exit(-1);
+    }
 
     if (options.stats) {
       vector<int> counts = Mt.differsStats(newMt, percents);
@@ -37,7 +45,8 @@ void ompRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
 
     Mt.dispose();
     Mt = newMt;
-    printf("OMP iter %d done in %lf milliseconds\n", iter, time_in_mill_now() - now);
+    printf("%s with stride %d iter %d done in %lf milliseconds\n",
+        runOptions == OMP ? "OMP" : "CILK", stride, iter, time_in_mill_now() - now);
   }
   freeThreadDatas(thread_datas, nthreads);
   if (options.stats) {
@@ -46,7 +55,7 @@ void ompRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
   printf("time pass cpu OMP rmcl iters = %lf\n", time_in_mill_now() - nowTotal);
 }
 
-void rmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
+void seqRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
   CSR newMt;
   double nowTotal = time_in_mill_now();
   double tsum = 0.0;
@@ -107,10 +116,10 @@ CSR RMCL(const char iname[], int maxIters, RunOptions runOptions) {
   //double now = time_in_mill_now();
   if (runOptions == GPU) {
     gpuRmclIter(maxIters, Mgt, Mt);
-  } else if (runOptions == OMP) {
-    ompRmclIter(maxIters, Mgt, Mt);
+  } else if (runOptions == SEQ) {
+    seqRmclIter(maxIters, Mgt, Mt);
   } else {
-    rmclIter(maxIters, Mgt, Mt);
+    mtRmclIter(maxIters, Mgt, Mt, options.stride, runOptions);
   }
   //printf("total time pass with RMCL iters = %lf\n", time_in_mill_now() - now);
   Mgt.dispose();

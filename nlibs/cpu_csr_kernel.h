@@ -18,6 +18,7 @@ struct thread_data_t {
   char pad_data[LEVEL1_DCACHE_LINESIZE];
   void init(const int n) {
     x = (double*)qmalloc(n * sizeof(double) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
+    memset(x, 0, n * sizeof(double) + LEVEL1_DCACHE_LINESIZE);
     iJC = (int*)x;
     xb = (bool*)qcalloc(n + LEVEL1_DCACHE_LINESIZE, sizeof(bool), __FUNCTION__, __LINE__);
   }
@@ -58,17 +59,17 @@ void sequential_CSR_IC_nnzC(const int IA[], const int JA[],
 void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
-        const int m, const int k, const int n);
+        const int m, const int k, const int n, const int stride);
 thread_data_t* allocateThreadDatas(int nthreads, int n);
 void freeThreadDatas(thread_data_t* thread_datas, int nthreads);
 void omp_CSR_IC_nnzC(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n, const thread_data_t thread_datas[],
-    int* IC, int& nnzC);
+    int* IC, int& nnzC, const int stride);
 void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n, const thread_data_t thread_datas[],
-    int* IC, int& nnzC);
+    int* IC, int& nnzC, const int stride);
 /*void processCRowI(
     //x and xb are used for temp use only and will have the same value when back.
     //xb must be all zeros before calling this functions.
@@ -81,8 +82,16 @@ int processCRowI(double x[], bool* xb,
     const int iAnnz, const int iJA[], const double iA[],
         const int IB[], const int JB[], const double B[],
         int* iJC, double* iC);
+int simdProcessCRowI(double x[], bool* xb,
+    const int iAnnz, const int iJA[], const double iA[],
+        const int IB[], const int JB[], const double B[],
+        int* iJC, double* iC);
 void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
-        const int m, const int k, const int n, const thread_data_t* thread_datas);
+        const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
+void cilk_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
+        const int IB[], const int JB[], const double B[], const int nnzB,
+        int* &IC, int* &JC, double* &C, int& nnzC,
+        const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
 #endif
