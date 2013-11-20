@@ -32,7 +32,7 @@ inline int cRowiCount(const int i, const int IA[], const int JA[], const int IB[
             }
         }
     }
-#pragma simd
+//#pragma simd
     for(int jp = 0; jp < count; ++jp) {
         int j = iJC[jp];
         xb[j] = false;
@@ -63,7 +63,7 @@ void omp_CSR_IC_nnzC(const int IA[], const int JA[],
     int* IC, int& nnzC, const int stride) {
   double now;
   int tid = omp_get_thread_num();
-  int *iJC = thread_datas[tid].iJC;
+  int *iJC = (int*)thread_datas[tid].x;
   bool *xb = thread_datas[tid].xb;
 #pragma omp for schedule(dynamic)
   for (int it = 0; it < m; it += stride) {
@@ -104,6 +104,8 @@ inline int processCRowI(double x[], bool* xb,
       } else
         x[t] += iA[jp] * B[tp];
     }
+    //x[JB[IBj : IBj1 - IBj]] += iA[jp] * B[IBj : IBj1 - IBj];
+    //xb[JB[IBj : IBj1 - IBj]] = true;
   }
   for(int vp = 0; vp < ip; ++vp) {
     int v = iJC[vp];
@@ -114,34 +116,29 @@ inline int processCRowI(double x[], bool* xb,
   return ip;
 }
 
-int simdProcessCRowI(double x[], bool* xb,
+int indexProcessCRowI(int *restrict index, // index array must be initilized with -1
     const int iAnnz, const int iJA[], const double iA[],
         const int IB[], const int JB[], const double B[],
-        int* iJC, double* iC) {
+        int* restrict iJC, double* restrict iC) {
   int ip = 0;
   for(int jp = 0; jp < iAnnz; ++jp) {
     int j = iJA[jp];
     int IBj = IB[j], IBj1 = IB[j + 1];
-//#pragma simd
     for(int tp = IB[j]; tp < IB[j + 1]; ++tp) {
       int t = JB[tp];
-      if(xb[t] == false) {
-        iJC[ip++] = t;
-        xb[t] = true;
-        x[t] = iA[jp] * B[tp];
+      if(index[t] == -1) {
+        iJC[ip] = t;
+        index[t] = ip;
+        iC[ip++] = iA[jp] * B[tp];
       } else {
-        x[t] += iA[jp] * B[tp];
+        iC[index[t]] += iA[jp] * B[tp];
       }
     }
-    //x[JB[IBj : IBj1 - IBj]] += iA[jp] * B[IBj : IBj1 - IBj];
-    //xb[JB[IBj : IBj1 - IBj]] = true;
   }
 #pragma simd
   for(int vp = 0; vp < ip; ++vp) {
     int v = iJC[vp];
-    iC[vp] = x[v];
-    x[v] = 0;
-    xb[v] = false;
+    index[v] = -1;
   }
   return ip;
 }
@@ -163,6 +160,7 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
       int thread_id = omp_get_thread_num();
       double *x = thread_datas[thread_id].x;
       bool *xb = thread_datas[thread_id].xb;
+      int *index = thread_datas[thread_id].index;
 #pragma omp barrier
 #pragma omp for schedule(dynamic)
       for (int it = 0; it < m; it += stride) {
@@ -171,7 +169,7 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
           double *cValues = C + IC[i];
           int *cColInd = JC + IC[i];
           //processCRowI(x, xb,
-          simdProcessCRowI(x, xb,
+          indexProcessCRowI(index,
               IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
               IB, JB, B,
               cColInd, cValues);

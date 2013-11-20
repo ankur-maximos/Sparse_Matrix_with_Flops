@@ -24,13 +24,14 @@ void cilk_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], con
     cilk_for (int it = 0; it < m; it += stride) {
       int thread_id = __cilkrts_get_worker_number();
       double *x = thread_datas[thread_id].x;
+      int *index = thread_datas[thread_id].index;
       bool *xb = thread_datas[thread_id].xb;
         int up = it + stride < m ? it + stride : m;
         for (int i = it; i < up; ++i) {
           double *cValues = C + IC[i];
           int *cColInd = JC + IC[i];
           //processCRowI(x, xb,
-          simdProcessCRowI(x, xb,
+          indexProcessCRowI(index,
               IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
               IB, JB, B,
               cColInd, cValues);
