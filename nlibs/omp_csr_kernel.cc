@@ -228,12 +228,14 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
       int thread_id = omp_get_thread_num();
       double *x = thread_datas[thread_id].x;
       bool *xb = thread_datas[thread_id].xb;
+      int *index = thread_datas[thread_id].index;
 #pragma omp barrier
 #pragma omp for schedule(dynamic)
       for (int it = 0; it < m; it += stride) {
         int up = it + stride < m ? it + stride : m;
         for (int i = it; i < up; ++i) {
           processCRowI(x, xb,
+          //indexProcessCRowI(index,
               IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
               IB, JB, B,
               JC + IC[i], C + IC[i]);

@@ -14,19 +14,19 @@ const int LEVEL1_DCACHE_LINESIZE = 64;
 struct thread_data_t {
   double* x;
   bool* xb;
-  int *iJC;
+  int* index;
   char pad_data[LEVEL1_DCACHE_LINESIZE];
   void init(const int n) {
     x = (double*)qmalloc(n * sizeof(double) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
-    memset(x, 0, n * sizeof(double) + LEVEL1_DCACHE_LINESIZE);
-    iJC = (int*)x;
     xb = (bool*)qcalloc(n + LEVEL1_DCACHE_LINESIZE, sizeof(bool), __FUNCTION__, __LINE__);
+    index = (int*)qmalloc(n * sizeof(int) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
+    memset(index, -1, n * sizeof(int) + LEVEL1_DCACHE_LINESIZE);
   }
 
   thread_data_t() {
     x = NULL;
-    iJC = NULL;
     xb = NULL;
+    index = NULL;
   }
 
   thread_data_t(const int n) {
@@ -36,9 +36,10 @@ struct thread_data_t {
   ~thread_data_t() {
     free(xb);
     free(x);
+    free(index);
     xb = NULL;
     x = NULL;
-    iJC = NULL;
+    index = NULL;
   }
 };
 
@@ -82,10 +83,10 @@ int processCRowI(double x[], bool* xb,
     const int iAnnz, const int iJA[], const double iA[],
         const int IB[], const int JB[], const double B[],
         int* iJC, double* iC);
-int simdProcessCRowI(double x[], bool* xb,
+int indexProcessCRowI(int * index,
     const int iAnnz, const int iJA[], const double iA[],
         const int IB[], const int JB[], const double B[],
-        int* iJC, double* iC);
+        int *iJC, double *iC);
 void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
