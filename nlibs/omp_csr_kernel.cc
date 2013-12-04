@@ -124,6 +124,7 @@ int indexProcessCRowI(int *restrict index, // index array must be initilized wit
   for(int jp = 0; jp < iAnnz; ++jp) {
     int j = iJA[jp];
     int IBj = IB[j], IBj1 = IB[j + 1];
+#pragma unroll(8)
     for(int tp = IB[j]; tp < IB[j + 1]; ++tp) {
       int t = JB[tp];
       if(index[t] == -1) {
@@ -230,12 +231,12 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
       bool *xb = thread_datas[thread_id].xb;
       int *index = thread_datas[thread_id].index;
 #pragma omp barrier
-#pragma omp for schedule(dynamic)
+#pragma omp for schedule(dynamic) nowait
       for (int it = 0; it < m; it += stride) {
         int up = it + stride < m ? it + stride : m;
         for (int i = it; i < up; ++i) {
-          processCRowI(x, xb,
-          //indexProcessCRowI(index,
+          //processCRowI(x, xb,
+          indexProcessCRowI(index,
               IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
               IB, JB, B,
               JC + IC[i], C + IC[i]);

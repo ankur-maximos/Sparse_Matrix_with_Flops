@@ -61,16 +61,49 @@ public:
   long spmmFlops(const CSR& B) const;
   CSR spmm(const CSR& B) const;
   CSR omp_spmm(const CSR& B, const int stride = 512) const;
-  void output(const char* msg) const {
+  void output(const char* msg, bool isZeroBased = true) const {
     printf("%s\n", msg);
-    for (int i = 0; i < rows; i++) {
-      for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
-        int col=colInd[j];
-        double val=values[j];
-        printf("%d\t%d\t%.6lf\n", i, col, val);
+    if (isZeroBased) {
+      for (int i = 0; i < rows; i++) {
+        for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+          int col=colInd[j];
+          double val=values[j];
+          printf("%d\t%d\t%.6lf\n", i, col, val);
+        }
+      }
+    } else {
+      for (int i = 0; i < rows; i++) {
+        for (int j = rowPtr[i] - 1; j < rowPtr[i+1] - 1; j++) {
+          int col=colInd[j];
+          double val=values[j];
+          printf("%d\t%d\t%.6lf\n", i + 1, col, val);
+        }
       }
     }
   }
+
+  void toOneBasedCSR() {
+    for (int i = 0; i < rows; i++) {
+      for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+        ++colInd[j];
+      }
+    }
+    for (int i = 0; i < rows + 1; i++) {
+      ++rowPtr[i];
+    }
+  }
+
+  void toZeroBasedCSR() {
+    for (int i = 0; i < rows + 1; i++) {
+      --rowPtr[i];
+    }
+    for (int i = 0; i < rows; i++) {
+      for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+        --colInd[j];
+      }
+    }
+  }
+
   void makeOrdered();
   void matrixRowReorder(const int* ranks) const;
 
