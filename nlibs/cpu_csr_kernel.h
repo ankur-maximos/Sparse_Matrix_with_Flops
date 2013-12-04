@@ -9,6 +9,7 @@
 #endif
 #include <iostream>
 #include "tools/qmalloc.h"
+#include "tools/stats.h"
 
 const int LEVEL1_DCACHE_LINESIZE = 64;
 struct thread_data_t {

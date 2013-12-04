@@ -6,6 +6,7 @@
  */
 #include "CSR.h"
 #include "tools/util.h"
+#include "tools/stats.h"
 #include "tools/qmalloc.h"
 #include <vector>
 #include <algorithm>
@@ -39,6 +40,13 @@ long CSR::spmmFlops(const CSR& B) const {
       B.rowPtr, B.colInd, B.values, B.nnz, rows, cols, B.cols);
   return flops;
 }
+
+std::vector<int> CSR::multiFlopsStats(const CSR& B) const {
+  std::vector<int> stats = flopsStats(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz, rows, cols, B.cols);
+  return stats;
+}
+
 
 CSR CSR::spmm(const CSR& B) const {
   assert(this->cols == B.rows);
@@ -133,6 +141,15 @@ double CSR::differs(const CSR& B) const {
     }
   }
   return sum;
+}
+
+vector<int> CSR::nnzStats() const {
+  std::vector<int> stats(13, 0);
+  for (int i = 0; i < rows; ++i) {
+    long stat = rowPtr[i + 1] - rowPtr[i];
+    pushToStats(rowPtr[i + 1] - rowPtr[i], stats);
+  }
+  return stats;
 }
 
 CSR CSR::ompRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const {

@@ -59,6 +59,8 @@ public:
 
   void averAndNormRowValue();
   long spmmFlops(const CSR& B) const;
+  std::vector<int> multiFlopsStats(const CSR& B) const;
+  vector<int> nnzStats() const;
   CSR spmm(const CSR& B) const;
   CSR omp_spmm(const CSR& B, const int stride = 512) const;
   void output(const char* msg, bool isZeroBased = true) const {
