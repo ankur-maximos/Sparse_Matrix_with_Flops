@@ -21,23 +21,33 @@ void freeThreadDatas(thread_data_t* thread_datas, int nthreads) {
 }
 
 inline int cRowiCount(const int i, const int IA[], const int JA[], const int IB[], const int JB[], int iJC[], bool xb[]) {
-    int count = 0;
-    for (int vp = IA[i]; vp < IA[i + 1]; ++vp) {
-        int v = JA[vp];
-        for (int kp = IB[v]; kp < IB[v+1]; ++kp) {
-            int k = JB[kp];
-            if(xb[k] == false) {
-                iJC[count++]=k;
-                xb[k]=true;
-            }
-        }
+  if (IA[i] == IA[i + 1]) {
+    return 0;
+  }
+  int count = -1;
+  int vp = IA[i];
+  int v = JA[vp];
+  for (int kp = IB[v]; kp < IB[v+1]; ++kp) {
+    int k = JB[kp];
+    iJC[++count]=k;
+    xb[k] = true;
+  }
+  for (int vp = IA[i] + 1; vp < IA[i + 1]; ++vp) {
+    int v = JA[vp];
+    for (int kp = IB[v]; kp < IB[v+1]; ++kp) {
+      int k = JB[kp];
+      if(xb[k] == false) {
+        iJC[++count] = k;
+        xb[k] = true;
+      }
     }
-//#pragma simd
-    for(int jp = 0; jp < count; ++jp) {
-        int j = iJC[jp];
-        xb[j] = false;
-    }
-    return count;
+  }
+  ++count;
+  for(int jp = 0; jp < count; ++jp) {
+    int j = iJC[jp];
+    xb[j] = false;
+  }
+  return count;
 }
 
 const int nthreads = 8;
@@ -84,8 +94,8 @@ void omp_CSR_IC_nnzC(const int IA[], const int JA[],
       t0 = t1;
     }
     nnzC = IC[m];
+    //std::cout << "time passed prefix sum " << time_in_mill_now() - now << std::endl;
   }
-  //std::cout << "time passed prefix sum " << time_in_mill_now() - now << std::endl;
 }
 
 inline int processCRowI(double x[], bool* xb,
@@ -120,23 +130,33 @@ int indexProcessCRowI(int *restrict index, // index array must be initilized wit
     const int iAnnz, const int iJA[], const double iA[],
         const int IB[], const int JB[], const double B[],
         int* restrict iJC, double* restrict iC) {
-  int ip = 0;
-  for(int jp = 0; jp < iAnnz; ++jp) {
+  if (iAnnz == 0) {
+    return 0;
+  }
+  int ip = -1;
+  int jp = 0;
+  int j = iJA[jp];
+  for(int tp = IB[j]; tp < IB[j + 1]; ++tp) {
+    int t = JB[tp];
+    iJC[++ip] = t;
+    index[t] = ip;
+    iC[ip] = iA[jp] * B[tp];
+  }
+  for(int jp = 1; jp < iAnnz; ++jp) {
     int j = iJA[jp];
-    int IBj = IB[j], IBj1 = IB[j + 1];
-#pragma unroll(8)
+#pragma unroll(2)
     for(int tp = IB[j]; tp < IB[j + 1]; ++tp) {
       int t = JB[tp];
       if(index[t] == -1) {
-        iJC[ip] = t;
+        iJC[++ip] = t;
         index[t] = ip;
-        iC[ip++] = iA[jp] * B[tp];
+        iC[ip] = iA[jp] * B[tp];
       } else {
         iC[index[t]] += iA[jp] * B[tp];
       }
     }
   }
-#pragma simd
+  ++ip;
   for(int vp = 0; vp < ip; ++vp) {
     int v = iJC[vp];
     index[v] = -1;
