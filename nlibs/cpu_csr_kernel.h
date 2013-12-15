@@ -21,7 +21,13 @@ struct thread_data_t {
     x = (double*)qmalloc(n * sizeof(double) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
     xb = (bool*)qcalloc(n + LEVEL1_DCACHE_LINESIZE, sizeof(bool), __FUNCTION__, __LINE__);
     index = (int*)qmalloc(n * sizeof(int) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
-    memset(index, -1, n * sizeof(int) + LEVEL1_DCACHE_LINESIZE);
+    //memset(index, -1, n * sizeof(int) + LEVEL1_DCACHE_LINESIZE);
+  }
+
+  void init(double *x, bool* xb, int *index) {
+    this->x = x;
+    this->xb = xb;
+    this->index = index;
   }
 
   thread_data_t() {

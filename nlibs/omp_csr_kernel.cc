@@ -7,17 +7,36 @@ using namespace std;
 
 thread_data_t* allocateThreadDatas(int nthreads, int n) {
   thread_data_t* thread_datas = (thread_data_t*)calloc(nthreads, sizeof(thread_data_t));
+#ifdef AGGR
+  double *xs = (double*)qmalloc((n * sizeof(double) + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
+  bool *xbs = (bool*)qcalloc((n + LEVEL1_DCACHE_LINESIZE) * nthreads, sizeof(bool), __FUNCTION__, __LINE__);
+  int *indices = (int*)qmalloc((n * sizeof(int) + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
+  memset(indices, -1, (n * sizeof(int) + LEVEL1_DCACHE_LINESIZE) * nthreads);
+#endif
   for(int i = 0; i < nthreads; i++) {
+#ifndef AGGR
     thread_datas[i].init(n);
+#else
+    double *x = (double*)((char*)xs + i * (n * sizeof(double) + LEVEL1_DCACHE_LINESIZE));
+    bool *xb = (bool*)((char*)xbs + i * (n + LEVEL1_DCACHE_LINESIZE));
+    int *index = (int*)((char*)indices + i * (n * sizeof(int) + LEVEL1_DCACHE_LINESIZE));
+    thread_datas[i].init(x, xb, index);
+#endif
   }
   return thread_datas;
 }
 
 void freeThreadDatas(thread_data_t* thread_datas, int nthreads) {
+#ifndef AGGR
   for(int i = 0; i < nthreads; i++) {
     thread_datas[i].~thread_data_t();
   }
+#else
+  free(thread_datas[0].x);
+  free(thread_datas[0].xb);
+  free(thread_datas[0].index);
   free(thread_datas);
+#endif
 }
 
 inline int cRowiCount(const int i, const int IA[], const int JA[], const int IB[], const int JB[], int iJC[], bool xb[]) {
@@ -29,7 +48,7 @@ inline int cRowiCount(const int i, const int IA[], const int JA[], const int IB[
   int v = JA[vp];
   for (int kp = IB[v]; kp < IB[v+1]; ++kp) {
     int k = JB[kp];
-    iJC[++count]=k;
+    iJC[++count] = k;
     xb[k] = true;
   }
   for (int vp = IA[i] + 1; vp < IA[i + 1]; ++vp) {
@@ -73,7 +92,7 @@ void omp_CSR_IC_nnzC(const int IA[], const int JA[],
     int* IC, int& nnzC, const int stride) {
   double now;
   int tid = omp_get_thread_num();
-  int *iJC = (int*)thread_datas[tid].x;
+  int *iJC = (int*)thread_datas[tid].index;
   bool *xb = thread_datas[tid].xb;
 #pragma omp for schedule(dynamic)
   for (int it = 0; it < m; it += stride) {
@@ -182,6 +201,7 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
       double *x = thread_datas[thread_id].x;
       bool *xb = thread_datas[thread_id].xb;
       int *index = thread_datas[thread_id].index;
+      memset(index, -1, n * sizeof(int));
 #pragma omp barrier
 #pragma omp for schedule(dynamic)
       for (int it = 0; it < m; it += stride) {
@@ -250,6 +270,7 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
       double *x = thread_datas[thread_id].x;
       bool *xb = thread_datas[thread_id].xb;
       int *index = thread_datas[thread_id].index;
+      memset(index, -1, n * sizeof(int));
 #pragma omp barrier
 #pragma omp for schedule(dynamic) nowait
       for (int it = 0; it < m; it += stride) {

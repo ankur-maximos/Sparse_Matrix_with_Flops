@@ -11,7 +11,7 @@ CUOPTFLAGS = -arch sm_20 -O3
 # What optimization level to use
 #OPTFLAGS = -fast -openmp
 OPTFLAGS = -O0 -openmp -vec-report1 -restrict
-OPTFLAGS = -O3 -openmp -vec-report1 -restrict 
+OPTFLAGS = -O3 -openmp -vec-report1 -restrict #-DAGGR
 
 LIBDIR=nlibs
 LIBNAME=libnrmcl.a
