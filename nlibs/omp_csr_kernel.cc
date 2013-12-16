@@ -76,8 +76,9 @@ void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
     int* IC, int& nnzC, const int stride) {
 #pragma omp parallel
   {
+    int tid = omp_get_thread_num();
     omp_CSR_IC_nnzC(IA, JA, IB, JB,
-    m, n, thread_datas,
+    m, n, thread_datas[tid],
     IC, nnzC, stride);
   }
 }
@@ -88,12 +89,11 @@ void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
  * */
 void omp_CSR_IC_nnzC(const int IA[], const int JA[],
     const int IB[], const int JB[],
-    const int m, const int n, const thread_data_t thread_datas[],
+    const int m, const int n, const thread_data_t& thread_data,
     int* IC, int& nnzC, const int stride) {
-  double now;
-  int tid = omp_get_thread_num();
-  int *iJC = (int*)thread_datas[tid].index;
-  bool *xb = thread_datas[tid].xb;
+  int *iJC = (int*)thread_data.index;
+  bool *xb = thread_data.xb;
+  memset(xb, 0, n);
 #pragma omp for schedule(dynamic)
   for (int it = 0; it < m; it += stride) {
     int up = it + stride < m ? it + stride : m;
@@ -191,16 +191,16 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
     int *rowsNnz = (int*)calloc(m + 1, sizeof(int));
 #pragma omp parallel firstprivate(stride) //num_threads(1)
     {
-      omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas, IC, nnzC, stride);
+      int tid = omp_get_thread_num();
+      omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas[tid], IC, nnzC, stride);
 #pragma omp master
       {
         JC = (int*)malloc(sizeof(int) * nnzC);
         C = (double*)malloc(sizeof(double) * nnzC);
       }
-      int thread_id = omp_get_thread_num();
-      double *x = thread_datas[thread_id].x;
-      bool *xb = thread_datas[thread_id].xb;
-      int *index = thread_datas[thread_id].index;
+      double *x = thread_datas[tid].x;
+      bool *xb = thread_datas[tid].xb;
+      int *index = thread_datas[tid].index;
       memset(index, -1, n * sizeof(int));
 #pragma omp barrier
 #pragma omp for schedule(dynamic)
@@ -251,13 +251,14 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
     double now = time_in_mill_now();
 #pragma omp parallel firstprivate(stride) private(now)
     {
+      int tid = omp_get_thread_num();
 #ifdef profiling
 #pragma omp master
       {
         now = time_in_mill_now();
       }
 #endif
-      omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas, IC, nnzC, stride);
+      omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas[tid], IC, nnzC, stride);
 #pragma omp master
       {
 #ifdef profiling
@@ -266,10 +267,9 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
         JC = (int*)malloc(sizeof(int) * nnzC);
         C = (double*)malloc(sizeof(double) * nnzC);
       }
-      int thread_id = omp_get_thread_num();
-      double *x = thread_datas[thread_id].x;
-      bool *xb = thread_datas[thread_id].xb;
-      int *index = thread_datas[thread_id].index;
+      double *x = thread_datas[tid].x;
+      //bool *xb = thread_datas[tid].xb;
+      int *index = thread_datas[tid].index;
       memset(index, -1, n * sizeof(int));
 #pragma omp barrier
 #pragma omp for schedule(dynamic) nowait

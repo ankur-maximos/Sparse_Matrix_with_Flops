@@ -14,7 +14,8 @@ void cilk_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], con
     int *rowsNnz = (int*)calloc(m + 1, sizeof(int));
 #pragma omp parallel firstprivate(stride) //num_threads(1)
     {
-      omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas, IC, nnzC, stride);
+      int tid = omp_get_thread_num();
+      omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas[tid], IC, nnzC, stride);
 #pragma omp master
       {
         JC = (int*)malloc(sizeof(int) * nnzC);
@@ -22,10 +23,10 @@ void cilk_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], con
       }
     }
     cilk_for (int it = 0; it < m; it += stride) {
-      int thread_id = __cilkrts_get_worker_number();
-      double *x = thread_datas[thread_id].x;
-      int *index = thread_datas[thread_id].index;
-      bool *xb = thread_datas[thread_id].xb;
+      int tid = __cilkrts_get_worker_number();
+      double *x = thread_datas[tid].x;
+      int *index = thread_datas[tid].index;
+      bool *xb = thread_datas[tid].xb;
         int up = it + stride < m ? it + stride : m;
         for (int i = it; i < up; ++i) {
           double *cValues = C + IC[i];

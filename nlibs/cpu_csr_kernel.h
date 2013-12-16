@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <assert.h>
 #ifdef profiling
-#include "ntimer.h"
+#include "tools/ntimer.h"
 #endif
 #include <iostream>
 #include "tools/qmalloc.h"
@@ -19,7 +19,8 @@ struct thread_data_t {
   char pad_data[LEVEL1_DCACHE_LINESIZE];
   void init(const int n) {
     x = (double*)qmalloc(n * sizeof(double) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
-    xb = (bool*)qcalloc(n + LEVEL1_DCACHE_LINESIZE, sizeof(bool), __FUNCTION__, __LINE__);
+    //xb = (bool*)qcalloc(n + LEVEL1_DCACHE_LINESIZE, sizeof(bool), __FUNCTION__, __LINE__);
+    xb = (bool*)qmalloc(n + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
     index = (int*)qmalloc(n * sizeof(int) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
     //memset(index, -1, n * sizeof(int) + LEVEL1_DCACHE_LINESIZE);
   }
@@ -72,7 +73,7 @@ thread_data_t* allocateThreadDatas(int nthreads, int n);
 void freeThreadDatas(thread_data_t* thread_datas, int nthreads);
 void omp_CSR_IC_nnzC(const int IA[], const int JA[],
     const int IB[], const int JB[],
-    const int m, const int n, const thread_data_t thread_datas[],
+    const int m, const int n, const thread_data_t& thread_data,
     int* IC, int& nnzC, const int stride);
 void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
     const int IB[], const int JB[],
