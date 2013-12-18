@@ -2,6 +2,7 @@
 #define QMALLOC_H_
 
 #include<stdlib.h>
+#include<stdio.h>
 #include<errno.h>
 
 inline void *qmalloc(size_t size,

@@ -3,6 +3,7 @@
 #include "tools/ntimer.h"
 #include "cpu_csr_kernel.h"
 #include "tools/util.h"
+#include "tools/prefixSum.h"
 using namespace std;
 
 thread_data_t* allocateThreadDatas(int nthreads, int n) {
@@ -101,19 +102,12 @@ void omp_CSR_IC_nnzC(const int IA[], const int JA[],
       IC[i] = cRowiCount(i, IA, JA, IB, JB, iJC, xb);
     }
   }
-#pragma omp master
+#pragma omp barrier
+  noTileOmpPrefixSum(IC, IC, m);
+  //ompPrefixSum(IC, IC, m);
+#pragma omp single
   {
-    //double now = time_in_mill_now();
-    int t0 = IC[0];
-    int t1;
-    IC[0] = 0;
-    for (int i = 0; i < m; ++i) {
-      t1 = IC[i + 1];
-      IC[i + 1] = IC[i] + t0;
-      t0 = t1;
-    }
     nnzC = IC[m];
-    //std::cout << "time passed prefix sum " << time_in_mill_now() - now << std::endl;
   }
 }
 
