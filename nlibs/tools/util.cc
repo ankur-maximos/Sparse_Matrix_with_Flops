@@ -1,4 +1,5 @@
 #include "util.h"
+#include <algorithm>
 
 double computeThreshold(double avg, double max) {
 	double ret = MLMCL_PRUNE_A * avg * (1 - MLMCL_PRUNE_B * (max - avg));
@@ -99,4 +100,18 @@ void prefixSumToCounts(const int prefixSum[], const int len, int *counts) {
   for (int i = 0; i < len; ++i) {
     counts[i] = prefixSum[i + 1] - prefixSum[i];
   }
+}
+
+void arrayEqualPartition(int prefixSum[], const int n, const int nthreads, int ends[]) {
+  const int chunk_size = (prefixSum[n] + nthreads - 1) / nthreads;
+  ends[0] = 0;
+  for (int i = 0, now = 0; i < nthreads - 1; ++i) {
+    const int target = std::min((i + 1) * chunk_size, prefixSum[n]);
+    int* begin = prefixSum + now;
+    int* upper = std::upper_bound(begin, prefixSum + n + 1, target);
+    ends[i + 1] = std::max((int)(upper - prefixSum - 1), now + 1);
+    ends[i + 1] = std::min(ends[i + 1], n);
+    now = ends[i + 1];
+  }
+  ends[nthreads] = n;
 }

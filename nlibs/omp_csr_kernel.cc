@@ -241,7 +241,7 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
-    IC = (int*)calloc(m + 1, sizeof(int));
+    IC = (int*)malloc((m + 1) * sizeof(int));
     double now = time_in_mill_now();
 #pragma omp parallel firstprivate(stride) private(now)
     {
@@ -278,6 +278,15 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
         }
       }
     }
+// #pragma omp for schedule(static, ((m + nthreads - 1) / nthreads)) nowait
+//         for (int i = 0; i < m; ++i) {
+//           //processCRowI(x, xb,
+//           indexProcessCRowI(index,
+//               IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
+//               IB, JB, B,
+//               JC + IC[i], C + IC[i]);
+//         }
+//      }
 #ifdef profiling
     std::cout << "time passed without memory allocate" << time_in_mill_now() - now << std::endl;
 #endif
@@ -288,7 +297,8 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const int stride) {
     thread_data_t* thread_datas = allocateThreadDatas(nthreads, n);
-    omp_CSR_SpMM(IA, JA, A, nnzA,
+    static_omp_CSR_SpMM(IA, JA, A, nnzA,
+    //omp_CSR_SpMM(IA, JA, A, nnzA,
         IB, JB, B, nnzB,
         IC, JC, C, nnzC,
         m, k, n, thread_datas, stride);
