@@ -167,6 +167,13 @@ int indexProcessCRowI(int *restrict index, // index array must be initilized wit
       } else {
         iC[index[t]] += iA[jp] * B[tp];
       }
+      // This hack will remove if condition but it will make program slightly slow due to more operations.
+      // This may worth a try on Xeon Phi machines.
+      // int f = index[t] >> 31;
+      // ip += f & 1;
+      // index[t] += f & (ip + 1);
+      // iJC[index[t]] = t;
+      // iC[index[t]] += iA[jp] * B[tp];
     }
   }
   ++ip;
@@ -242,8 +249,10 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
     IC = (int*)malloc((m + 1) * sizeof(int));
+#ifdef profiling
     double now = time_in_mill_now();
-#pragma omp parallel firstprivate(stride) private(now)
+#endif
+#pragma omp parallel firstprivate(stride)
     {
       int tid = omp_get_thread_num();
 #ifdef profiling
@@ -296,6 +305,9 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const int stride) {
+#ifdef profiling
+    double now = time_in_mill_now();
+#endif
     thread_data_t* thread_datas = allocateThreadDatas(nthreads, n);
     static_omp_CSR_SpMM(IA, JA, A, nnzA,
     //omp_CSR_SpMM(IA, JA, A, nnzA,
@@ -303,4 +315,7 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
         IC, JC, C, nnzC,
         m, k, n, thread_datas, stride);
     freeThreadDatas(thread_datas, nthreads);
+#ifdef profiling
+    std::cout << "time passed for omp_CSR_SpMM total " <<  time_in_mill_now() - now << std::endl;
+#endif
 }

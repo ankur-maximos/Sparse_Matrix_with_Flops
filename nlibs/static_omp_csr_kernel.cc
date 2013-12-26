@@ -55,7 +55,9 @@ inline int footPrintsCrowiCount(const int i, const int IA[], const int JA[], con
     int j = iJC[jp];
     xb[j] = false;
   }
-  footPrints += count + 1;
+  footPrints += count + 32 + (IA[i + 1] - IA[i]);
+  //footPrints += count + 1;
+  footPrints >>= 1; // The way to remove integer overflow in later prefix sum.
   return count;
 }
 
@@ -93,6 +95,7 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
   IC = (int*)malloc((m + 1) * sizeof(int));
   int* footPrints = (int*)malloc((m + 1) * sizeof(int));
   static int ends[65];
+  double now;
 #pragma omp parallel firstprivate(stride)
   {
     const int tid = omp_get_thread_num();
@@ -101,20 +104,36 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
 #pragma omp barrier
 #pragma omp single
     {
+#ifdef profiling
       double now = time_in_mill_now();
+#endif
       //spmmFootPrints(IA, JA, IB, IC, m, footPrints);
       arrayEqualPartition(footPrints, m, nthreads, ends);
-      //std::cout << "time passed for just partition " << time_in_mill_now() - now << std::endl;
+#ifdef profiling
+      std::cout << "time passed for just partition " << time_in_mill_now() - now << std::endl;
+      arrayOutput("ends partitions ", stdout, ends, nthreads + 1);
+      printf("Footprints partitions\n");
+      for (int i = 0; i < nthreads; ++i) {
+        printf("%d ", footPrints[ends[i + 1]] - footPrints[ends[i]]);
+      }
+      printf("\n");
       //std::cout << "time passed for footPrints and partition " << time_in_mill_now() - now << std::endl;
+#endif
     }
 #pragma omp master
     {
       JC = (int*)malloc(sizeof(int) * nnzC);
       C = (double*)malloc(sizeof(double) * nnzC);
+#ifdef profiling
+      now = time_in_mill_now();
+#endif
     }
     double *x = thread_datas[tid].x;
     int *index = thread_datas[tid].index;
     memset(index, -1, n * sizeof(int));
+#ifdef profiling
+      double tnow = time_in_mill_now();
+#endif
 #pragma omp barrier
     int low = ends[tid];
     int high = ends[tid + 1];
@@ -124,6 +143,12 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
           IB, JB, B,
           JC + IC[i], C + IC[i]);
     }
+#ifdef profiling
+     printf("Time passed for thread %d indexProcessCRowI with %lf milliseconds\n", tid, time_in_mill_now() - tnow);
+#endif
   }
+#ifdef profiling
+    std::cout << "time passed without memory allocate" << time_in_mill_now() - now << std::endl;
+#endif
 }
 
