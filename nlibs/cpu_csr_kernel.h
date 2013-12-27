@@ -99,10 +99,52 @@ int processCRowI(double x[], bool* xb,
     const int iAnnz, const int iJA[], const double iA[],
         const int IB[], const int JB[], const double B[],
         int* iJC, double* iC);
-int indexProcessCRowI(int * index,
+
+inline int indexProcessCRowI(int *restrict index, // index array must be initilized with -1
     const int iAnnz, const int iJA[], const double iA[],
         const int IB[], const int JB[], const double B[],
-        int *iJC, double *iC);
+        int* restrict iJC, double* restrict iC) {
+  if (iAnnz == 0) {
+    return 0;
+  }
+  int ip = -1;
+  int jp = 0;
+  int j = iJA[jp];
+  for(int tp = IB[j]; tp < IB[j + 1]; ++tp) {
+    int t = JB[tp];
+    iJC[++ip] = t;
+    index[t] = ip;
+    iC[ip] = iA[jp] * B[tp];
+  }
+  for(int jp = 1; jp < iAnnz; ++jp) {
+    int j = iJA[jp];
+#pragma unroll(2)
+    for(int tp = IB[j]; tp < IB[j + 1]; ++tp) {
+      int t = JB[tp];
+      if(index[t] == -1) {
+        iJC[++ip] = t;
+        index[t] = ip;
+        iC[ip] = iA[jp] * B[tp];
+      } else {
+        iC[index[t]] += iA[jp] * B[tp];
+      }
+      // This hack will remove if condition but it will make program slightly slow due to more operations.
+      // This may worth a try on Xeon Phi machines.
+      // int f = index[t] >> 31;
+      // ip += f & 1;
+      // index[t] += f & (ip + 1);
+      // iJC[index[t]] = t;
+      // iC[index[t]] += iA[jp] * B[tp];
+    }
+  }
+  ++ip;
+  for(int vp = 0; vp < ip; ++vp) {
+    int v = iJC[vp];
+    index[v] = -1;
+  }
+  return ip;
+}
+
 void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
