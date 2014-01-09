@@ -12,8 +12,10 @@
 #include <stdio.h>
 #include "math.h"
 #include "cpu_csr_kernel.h"
+#ifdef enable_GPU
 #include <cuda.h>
 #include <cuda_runtime_api.h>
+#endif
 #include <vector>
 using namespace std;
 

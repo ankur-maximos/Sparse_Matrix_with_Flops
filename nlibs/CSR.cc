@@ -11,7 +11,9 @@
 #include <vector>
 #include <algorithm>
 #include <omp.h>
+#ifdef enable_GPU
 #include "gpus/cuda_handle_error.h"
+#endif
 //#include "gpus/gpu_csr_kernel.h"
 
 void CSR::matrixRowReorder(const int* ranks) const {
@@ -180,6 +182,7 @@ CSR CSR::cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int st
   return csr;
 }
 
+#ifdef enable_GPU
 CSR CSR::toGpuCSR() const {
   CSR dA;
   dA.rows = this->rows;
@@ -193,7 +196,9 @@ CSR CSR::toGpuCSR() const {
   cudaMemcpy(dA.values, values, sizeof(double) * nnz, cudaMemcpyHostToDevice);
   return dA;
 }
+#endif
 
+#ifdef enable_GPU
 CSR CSR::toCpuCSR() const {
   CSR hA;
   hA.rows = this->rows;
@@ -207,12 +212,15 @@ CSR CSR::toCpuCSR() const {
   HANDLE_ERROR(cudaMemcpy(hA.values, values, sizeof(double) * nnz, cudaMemcpyDeviceToHost));
   return hA;
 }
+#endif
 
+#ifdef enable_GPU
 void CSR::deviceDispose() {
   cudaFree(values); values = NULL;
   cudaFree(colInd); colInd = NULL;
   cudaFree(rowPtr); rowPtr = NULL;
 }
+#endif
 
 vector<int> CSR::differsStats(const CSR& B, const vector<double> percents) const {
   vector<int> counts(percents.size() + 4, 0);

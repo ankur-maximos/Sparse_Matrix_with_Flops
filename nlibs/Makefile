@@ -7,7 +7,12 @@ CUFLAGS = $(CUOPTFLAGS) $(CUINCLUDES) -I.
 LD = $(CC) -L. 
 
 #SOURCES=$(wildcard *.cc)
-SOURCES=$(shell find . -name "*.cc" -o -name "*.cu")
+SOURCES=$(shell find . -path ./gpus -prune -o -name '*.cc' -print) 
+
+ifeq ($(hasGPU), 1)
+SOURCES+= $(shell find gpus -name "*.cc" -o -name "*.cu")
+endif
+
 OBJS=$(shell echo $(SOURCES) | sed "s/\.cc/\.o/g" | sed "s/\.cu/\.o/g")
 HEADERS=$(shell find . -name "*.h")
 %.o: %.cc $(HEADERS) ../Makefile.in

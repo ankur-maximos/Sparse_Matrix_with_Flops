@@ -1,6 +1,6 @@
-
 # Which compiler to use
 #CC = cc
+hasGPU=0
 CC = icpc
 NVCC = nvcc
 
@@ -13,6 +13,8 @@ CUOPTFLAGS = -arch sm_20 -O3
 OPTFLAGS = -O0 -openmp -vec-report1 -restrict -Dprofiling
 OPTFLAGS = -O3 -openmp -vec-report1 -restrict #-Dprofiling #-DAGGR
 
+
+
 LIBDIR=nlibs
 LIBNAME=libnrmcl.a
 
@@ -23,11 +25,15 @@ COPTIONS= -Wno-write-strings -g -std=c++0x
 #COPTIONS = -Wno-write-strings
 
 CUDA_HOME = /opt/cuda/5.5
-CINCLUDES = -I. -I$(CUDA_HOME)/include
+CINCLUDES = -I.
 
 # What options to be used by the loader
 #LDOPTIONS = -L$(CUDA_HOME)/lib -lcudart -Wl,-rpath,$(CUDA_HOME)/lib 
-LDOPTIONS =  -L$(CUDA_HOME)/lib64 -Wl,-rpath,$(CUDA_HOME)/lib64 -lcudart -lcusparse
+ifeq ($(hasGPU), 1)
+OPTFLAGS+=-Denable_gpu
+LDOPTIONS= -L$(CUDA_HOME)/lib64 -Wl,-rpath,$(CUDA_HOME)/lib64 -lcudart -lcusparse
+CINCLUDES+= -I$(CUDA_HOME)/include
+endif
 
 # What archiving to use
 AR = ar rv

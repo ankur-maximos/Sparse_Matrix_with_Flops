@@ -100,10 +100,18 @@ int processCRowI(double x[], bool* xb,
         const int IB[], const int JB[], const double B[],
         int* iJC, double* iC);
 
-inline int indexProcessCRowI(int *restrict index, // index array must be initilized with -1
+//inline int indexProcessCRowI(int *restrict index, // index array must be initilized with -1
+#ifdef __CUDACC__
+inline int indexProcessCRowI(int *index,
     const int iAnnz, const int iJA[], const double iA[],
-        const int IB[], const int JB[], const double B[],
-        int* restrict iJC, double* restrict iC) {
+    const int IB[], const int JB[], const double B[],
+    int* iJC, double* iC) {
+#else
+inline int indexProcessCRowI(int *restrict index,
+    const int iAnnz, const int iJA[], const double iA[],
+    const int IB[], const int JB[], const double B[],
+    int* restrict iJC, double* restrict iC) {
+#endif
   if (iAnnz == 0) {
     return 0;
   }
