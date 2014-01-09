@@ -27,7 +27,10 @@ void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, con
     Mt.output("Mt iter");
 #endif
 
-    if (runOptions == OMP) {
+    if (runOptions == SOMP) {
+      newMt = Mgt.staticOmpRmclOneStep(Mt, thread_datas, stride);
+    }
+    else if (runOptions == OMP) {
       newMt = Mgt.ompRmclOneStep(Mt, thread_datas, stride);
     } else if (runOptions == CILK) {
       newMt = Mgt.cilkRmclOneStep(Mt, thread_datas, stride);
@@ -46,7 +49,7 @@ void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, con
     Mt.dispose();
     Mt = newMt;
     printf("%s with stride %d iter %d done in %lf milliseconds\n",
-        runOptions == OMP ? "OMP" : "CILK", stride, iter, time_in_mill_now() - now);
+        runOptions == OMP ? "OMP" : "SOMP", stride, iter, time_in_mill_now() - now);
   }
   freeThreadDatas(thread_datas, nthreads);
   if (options.stats) {
@@ -113,7 +116,7 @@ CSR RMCL(const char iname[], int maxIters, RunOptions runOptions) {
   cooAt.dispose();
   CSR Mgt = Mt.deepCopy();
   //Mt.output("CSR Mgt");
-  //double now = time_in_mill_now();
+  double now = time_in_mill_now();
   if (runOptions == GPU) {
 #ifdef enable_GPU
     gpuRmclIter(maxIters, Mgt, Mt);
@@ -123,7 +126,7 @@ CSR RMCL(const char iname[], int maxIters, RunOptions runOptions) {
   } else {
     mtRmclIter(maxIters, Mgt, Mt, options.stride, runOptions);
   }
-  //printf("total time pass with RMCL iters = %lf\n", time_in_mill_now() - now);
+  printf("total time pass with RMCL iters = %lf\n", time_in_mill_now() - now);
   Mgt.dispose();
   return Mt;
 }

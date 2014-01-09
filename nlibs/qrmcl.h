@@ -3,7 +3,7 @@
 #include "CSR.h"
 #include "COO.h"
 
-enum RunOptions {SEQ, OMP, GPU, CILK};
+enum RunOptions {SEQ, OMP, GPU, CILK, SOMP};
 
 CSR rmclInit(COO &cooAt);
 CSR RMCL(const char iname[], int maxIters, RunOptions runOptions);
