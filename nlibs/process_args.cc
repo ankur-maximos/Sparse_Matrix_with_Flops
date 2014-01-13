@@ -12,6 +12,7 @@ int process_args(int argc, char **argv) {
       /* These options don't set a flag.
          We distinguish them by their indices. */
       {"input",  required_argument, 0, 'i'},
+      {"rmclOptions",  required_argument, 0, 'r'},
       {"maxIters",  required_argument, 0, 'm'},
       {"stride",  required_argument, 0, 'd'},
       {"stats", no_argument, 0, 's'},
@@ -21,12 +22,12 @@ int process_args(int argc, char **argv) {
     /* getopt_long stores the option index here. */
     int option_index = 0;
 
-    c = getopt_long (argc, argv, "cim:sh",
+    c = getopt_long (argc, argv, "cr:i:m:sh",
         long_options, &option_index);
     /* Detect the end of the options. */
     if (c == -1)
       break;
-
+    string runString;
     switch (c) {
       case 0:
         /* If this option set a flag, do nothing else now. */
@@ -46,6 +47,10 @@ int process_args(int argc, char **argv) {
         break;
       case 'i':
         strcpy(options.inputFileName, optarg);
+        break;
+      case 'r':
+        runString = optarg;
+        options.rmclOption = runMap[runString];
         break;
       case 'm':
         options.maxIters = atol(optarg);
@@ -81,6 +86,7 @@ void print_args() {
   printf("stats= %s\t", options.stats ? "true" : "false");
   printf("inputFileName= %s\t", options.inputFileName);
   printf("maxIters= %d\t", options.maxIters);
-  printf("stride = %d\t", options.stride);
+  printf("stride= %d\t", options.stride);
+  printf("rmclOption= %s\t", runOptionsStr[options.rmclOption]);
   printf("}\n");
 }

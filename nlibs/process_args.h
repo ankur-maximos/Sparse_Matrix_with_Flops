@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "qrmcl.h"
 
 struct Options {
   bool calcChange = false;
@@ -15,6 +16,7 @@ struct Options {
   char inputFileName[200];
   bool stats = false;
   int stride = 512;
+  RunOptions rmclOption;
 };
 
 extern Options options;
