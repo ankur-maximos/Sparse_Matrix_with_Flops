@@ -161,4 +161,12 @@ void cilk_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], con
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
+void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
+        const int IB[], const int JB[], const double B[], const int nnzB,
+        int* &IC, int* &JC, double* &C, int& nnzC,
+        const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
+void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
+        const int IB[], const int JB[], const double B[], const int nnzB,
+        int* &IC, int* &JC, double* &C, int& nnzC,
+        const int m, const int k, const int n, const int stride);
 #endif

@@ -8,6 +8,13 @@ CUINCLUDES = -I/home/niuq/code/gpu/cusplibrary -I/home/niuq/code/cub-1.0.2
 CUOPTFLAGS = -arch sm_20 -O0 -g -G
 CUOPTFLAGS = -arch sm_20 -O3 
 
+MKL_FLAGS=-m64 -w -I"/opt/intel/composer_xe_2013.4.183/mkl/include"
+MKL_LDFLAGS=-Wl,--start-group "/opt/intel/composer_xe_2013.4.183/mkl/lib/intel64/libmkl_intel_lp64.a" "/opt/intel/composer_xe_2013.4.183/mkl/lib/intel64/libmkl_intel_thread.a" "/opt/intel/composer_xe_2013.4.183/mkl/lib/intel64/libmkl_core.a" -Wl,--end-group -L"/opt/intel/composer_xe_2013.4.183/mkl/../compiler/lib/intel64" -liomp5 -lpthread -lm -ldl 
+
+GPERF_HOME=/home/niuq/tools/gperftools-2.1/build
+GPERF_FLAGS=-I$(GPERF_HOME)/include
+GPERF_LDFLAGS=$(GPERF_HOME)/lib/libprofiler.a $(GPERF_HOME)/lib/libtcmalloc.a
+
 # What optimization level to use
 #OPTFLAGS = -fast -openmp
 OPTFLAGS = -O0 -openmp -vec-report1 -restrict -Dprofiling

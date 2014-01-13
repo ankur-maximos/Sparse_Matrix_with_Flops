@@ -152,6 +152,25 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
 #endif
 }
 
+void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
+        const int IB[], const int JB[], const double B[], const int nnzB,
+        int* &IC, int* &JC, double* &C, int& nnzC,
+        const int m, const int k, const int n, const int stride) {
+#ifdef profiling
+    double now = time_in_mill_now();
+#endif
+    const int nthreads = 8;
+    thread_data_t* thread_datas = allocateThreadDatas(nthreads, n);
+    static_omp_CSR_SpMM(IA, JA, A, nnzA,
+        IB, JB, B, nnzB,
+        IC, JC, C, nnzC,
+        m, k, n, thread_datas, stride);
+    freeThreadDatas(thread_datas, nthreads);
+#ifdef profiling
+    std::cout << "time passed for static_omp_CSR_SpMM total " <<  time_in_mill_now() - now << std::endl;
+#endif
+}
+
 void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
@@ -239,4 +258,51 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
 #endif
     JC = (int*)realloc(JC, sizeof(int) * nnzC);
     C = (double*)realloc(C, sizeof(double) * nnzC);
+}
+
+void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
+        const int IB[], const int JB[], const double B[], const int nnzB,
+        int* &IC, int* &JC, double* &C, int& nnzC,
+        const int m, const int k, const int n, const int stride) {
+  double now;
+  static_omp_CSR_SpMM(IA, JA, A, nnzA,
+      IB, JB, B, nnzB,
+      IC, JC, C, nnzC,
+      m, k, n, stride);
+  int* rowsNnz = (int*)malloc((m + 1) * sizeof(int));
+#pragma omp parallel
+  {
+    const int tid = omp_get_thread_num();
+#pragma omp for schedule(dynamic, stride)
+    for (int i = 0; i < m; ++i) {
+        double *cValues = C + IC[i]; //-1 for one based IC index
+        int *cColInd = JC + IC[i];
+        int count = IC[i + 1] - IC[i];
+        arrayInflationR2(cValues, count, cValues);
+        pair<double, double> maxSum = arrayMaxSum(cValues, count);
+        double rmax = maxSum.first, rsum = maxSum.second;
+        double thresh = computeThreshold(rsum / count, rmax);
+        arrayThreshPruneNormalize(thresh, cColInd, cValues,
+            &count, cColInd, cValues);
+        rowsNnz[i] = count;
+    }
+  }
+    int top = rowsNnz[0];
+    for (int i = 1; i < m; ++i) {
+      int up = IC[i] + rowsNnz[i];
+      const int preTop = top;
+      for (int j = IC[i]; j < up; ++j) {
+        JC[top] = JC[j];
+        C[top++] = C[j];
+      }
+      IC[i] = preTop;
+    }
+    IC[m] = top;
+    free(rowsNnz);
+    nnzC = top;
+#ifdef profiling
+    std::cout << "time passed without memory allocate" << time_in_mill_now() - now << std::endl;
+#endif
+  JC = (int*)realloc(JC, sizeof(int) * nnzC);
+  C = (double*)realloc(C, sizeof(double) * nnzC);
 }

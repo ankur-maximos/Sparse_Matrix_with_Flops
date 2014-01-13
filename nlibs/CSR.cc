@@ -8,6 +8,7 @@
 #include "tools/util.h"
 #include "tools/stats.h"
 #include "tools/qmalloc.h"
+#include "mkls/mkl_csr_kernel.h"
 #include <vector>
 #include <algorithm>
 #include <omp.h>
@@ -178,6 +179,35 @@ CSR CSR::staticOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const i
       B.rowPtr, B.colInd, B.values, B.nnz,
       IC, JC, C, nnzC,
       this->rows, this->cols, B.cols, thread_datas, stride);
+  CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
+  return csr;
+}
+
+CSR CSR::staticFairRmclOneStep(const CSR &B, const int stride) const {
+  assert(this->cols == B.rows);
+  int* IC;
+  int* JC;
+  double* C;
+  int nnzC;
+  static_fair_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz,
+      IC, JC, C, nnzC,
+      this->rows, this->cols, B.cols, stride);
+  CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
+  return csr;
+}
+
+//Input A and B matrix are one based index. Output C is also one based index.
+CSR CSR::mklRmclOneStep(const CSR &B, const int stride) const {
+  assert(this->cols == B.rows);
+  int* IC;
+  int* JC;
+  double* C;
+  int nnzC;
+  mkl_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz,
+      IC, JC, C, nnzC,
+      this->rows, this->cols, B.cols, stride);
   CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
   return csr;
 }

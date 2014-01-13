@@ -144,7 +144,7 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
     IC = (int*)calloc(m + 1, sizeof(int));
-    int *rowsNnz = (int*)calloc(m + 1, sizeof(int));
+    int* rowsNnz = (int*)malloc((m + 1) * sizeof(int));
 #pragma omp parallel firstprivate(stride) //num_threads(1)
     {
       int tid = omp_get_thread_num();
