@@ -243,7 +243,6 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
     for (int i = 1; i < m; ++i) {
       int up = IC[i] + rowsNnz[i];
       const int preTop = top;
-#pragma simd
       for (int j = IC[i]; j < up; ++j) {
         JC[top] = JC[j];
         C[top++] = C[j];
