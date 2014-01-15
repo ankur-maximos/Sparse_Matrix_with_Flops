@@ -181,4 +181,21 @@ void hybrid_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
+inline void matrix_relocation(const int rowsNnz[], const int m,
+        int* &IC, int* &JC, double* &C, int& nnzC) {
+    int top = rowsNnz[0];
+    for (int i = 1; i < m; ++i) {
+      int up = IC[i] + rowsNnz[i];
+      const int preTop = top;
+      for (int j = IC[i]; j < up; ++j) {
+        JC[top] = JC[j];
+        C[top++] = C[j];
+      }
+      IC[i] = preTop;
+    }
+    IC[m] = top;
+    nnzC = top;
+    JC = (int*)realloc(JC, sizeof(int) * nnzC);
+    C = (double*)realloc(C, sizeof(double) * nnzC);
+}
 #endif

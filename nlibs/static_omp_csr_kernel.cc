@@ -240,25 +240,12 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
       printf("Time passed for thread %d indexProcessCRowI with %lf milliseconds\n", tid, time_in_mill_now() - tnow);
 #endif
     }
-    int top = rowsNnz[0];
-    for (int i = 1; i < m; ++i) {
-      int up = IC[i] + rowsNnz[i];
-      const int preTop = top;
-      for (int j = IC[i]; j < up; ++j) {
-        JC[top] = JC[j];
-        C[top++] = C[j];
-      }
-      IC[i] = preTop;
-    }
-    IC[m] = top;
-    free(rowsNnz);
     free(footPrints);
-    nnzC = top;
+    matrix_relocation(rowsNnz, m, IC, JC, C, nnzC);
+    free(rowsNnz);
 #ifdef profiling
     std::cout << "time passed without memory allocate" << time_in_mill_now() - now << std::endl;
 #endif
-    JC = (int*)realloc(JC, sizeof(int) * nnzC);
-    C = (double*)realloc(C, sizeof(double) * nnzC);
 }
 
 void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
@@ -288,22 +275,9 @@ void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A
         rowsNnz[i] = count;
     }
   }
-    int top = rowsNnz[0];
-    for (int i = 1; i < m; ++i) {
-      int up = IC[i] + rowsNnz[i];
-      const int preTop = top;
-      for (int j = IC[i]; j < up; ++j) {
-        JC[top] = JC[j];
-        C[top++] = C[j];
-      }
-      IC[i] = preTop;
-    }
-    IC[m] = top;
-    free(rowsNnz);
-    nnzC = top;
+  matrix_relocation(rowsNnz, m, IC, JC, C, nnzC);
+  free(rowsNnz);
 #ifdef profiling
     std::cout << "time passed without memory allocate" << time_in_mill_now() - now << std::endl;
 #endif
-  JC = (int*)realloc(JC, sizeof(int) * nnzC);
-  C = (double*)realloc(C, sizeof(double) * nnzC);
 }
