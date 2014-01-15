@@ -87,6 +87,14 @@ void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n, const thread_data_t thread_datas[],
     int* IC, int& nnzC, const int stride);
+void dynamic_omp_CSR_IC_nnzC_footprints(const int IA[], const int JA[],
+    const int IB[], const int JB[],
+    const int m, const int n, const thread_data_t& thread_data,
+    int* IC, int& nnzC, int* footPrints, const int stride);
+void static_omp_CSR_IC_nnzC(const int IA[], const int JA[],
+    const int IB[], const int JB[],
+    const int m, const int n, const thread_data_t& thread_data,
+    int* IC, int& nnzC, const int stride, const int ends[], const int tid);
 /*void processCRowI(
     //x and xb are used for temp use only and will have the same value when back.
     //xb must be all zeros before calling this functions.
@@ -169,4 +177,8 @@ void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const int stride);
+void hybrid_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
+        const int IB[], const int JB[], const double B[], const int nnzB,
+        int* &IC, int* &JC, double* &C, int& nnzC,
+        const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
 #endif

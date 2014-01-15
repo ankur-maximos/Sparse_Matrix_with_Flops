@@ -189,6 +189,7 @@ public:
   CSR ompRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
   CSR mklRmclOneStep(const CSR &B, const int stride) const;
   CSR staticOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
+  CSR hybridOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
   CSR staticFairRmclOneStep(const CSR &B, const int stride) const;
   CSR cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
   double differs(const CSR& B) const;

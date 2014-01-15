@@ -62,10 +62,10 @@ inline int footPrintsCrowiCount(const int i, const int IA[], const int JA[], con
 }
 
 /*
- * omp_CSR_IC_nnzC reminder: this function must be called in #pragma omp parallel regions
+ * dynamic_omp_CSR_IC_nnzC_footprints reminder: this function must be called in #pragma omp parallel regions
  * to parallelly execution.
  * */
-void static_omp_CSR_IC_nnzC(const int IA[], const int JA[],
+void dynamic_omp_CSR_IC_nnzC_footprints(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n, const thread_data_t& thread_data,
     int* IC, int& nnzC, int* footPrints, const int stride) {
@@ -100,7 +100,7 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
   {
     const int tid = omp_get_thread_num();
     const int nthreads = omp_get_num_threads();
-    static_omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas[tid], IC, nnzC, footPrints, stride);
+    dynamic_omp_CSR_IC_nnzC_footprints(IA, JA, IB, JB, m, n, thread_datas[tid], IC, nnzC, footPrints, stride);
 #pragma omp barrier
 #pragma omp single
     {
@@ -147,6 +147,7 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
      printf("Time passed for thread %d indexProcessCRowI with %lf milliseconds\n", tid, time_in_mill_now() - tnow);
 #endif
   }
+  free(footPrints);
 #ifdef profiling
     std::cout << "time passed without memory allocate" << time_in_mill_now() - now << std::endl;
 #endif
@@ -184,7 +185,7 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
     {
       const int tid = omp_get_thread_num();
       const int nthreads = omp_get_num_threads();
-      static_omp_CSR_IC_nnzC(IA, JA, IB, JB, m, n, thread_datas[tid], IC, nnzC, footPrints, stride);
+      dynamic_omp_CSR_IC_nnzC_footprints(IA, JA, IB, JB, m, n, thread_datas[tid], IC, nnzC, footPrints, stride);
 #pragma omp barrier
 #pragma omp single
       {
@@ -213,10 +214,10 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
       double *x = thread_datas[tid].x;
       int *index = thread_datas[tid].index;
       memset(index, -1, n * sizeof(int));
+#pragma omp barrier
 #ifdef profiling
       double tnow = time_in_mill_now();
 #endif
-#pragma omp barrier
       int low = ends[tid];
       int high = ends[tid + 1];
       for (int i = low; i < high; ++i) {
@@ -251,6 +252,7 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
     }
     IC[m] = top;
     free(rowsNnz);
+    free(footPrints);
     nnzC = top;
 #ifdef profiling
     std::cout << "time passed without memory allocate" << time_in_mill_now() - now << std::endl;

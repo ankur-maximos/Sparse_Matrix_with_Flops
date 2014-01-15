@@ -183,6 +183,20 @@ CSR CSR::staticOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const i
   return csr;
 }
 
+CSR CSR::hybridOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const {
+  assert(this->cols == B.rows);
+  int* IC;
+  int* JC;
+  double* C;
+  int nnzC;
+  hybrid_omp_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz,
+      IC, JC, C, nnzC,
+      this->rows, this->cols, B.cols, thread_datas, stride);
+  CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
+  return csr;
+}
+
 CSR CSR::staticFairRmclOneStep(const CSR &B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;

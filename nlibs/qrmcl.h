@@ -5,8 +5,8 @@
 #include <map>
 #include <string>
 
-enum RunOptions {SEQ, OMP, GPU, CILK, SOMP, MKL, SFOMP};
-static char *runOptionsStr[] = {"SEQ", "OMP", "GPU", "CILK", "SOMP", "MKL", "SFOMP"};
+enum RunOptions {SEQ, OMP, GPU, CILK, SOMP, MKL, SFOMP, HYBRID};
+static char *runOptionsStr[] = {"SEQ", "OMP", "GPU", "CILK", "SOMP", "MKL", "SFOMP", "HYBRID"};
 static std::pair<string, RunOptions> map_data[] = {
     std::make_pair("SEQ", SEQ),
     std::make_pair("OMP", OMP),
@@ -15,6 +15,7 @@ static std::pair<string, RunOptions> map_data[] = {
     std::make_pair("SOMP", SOMP),
     std::make_pair("MKL", MKL),
     std::make_pair("SFOMP", SFOMP),
+    std::make_pair("HYBRID", HYBRID),
 };
 static std::map<std::string, RunOptions> runMap(map_data,
         map_data + sizeof map_data / sizeof map_data[0]);

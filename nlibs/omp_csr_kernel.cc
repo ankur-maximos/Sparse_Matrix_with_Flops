@@ -85,6 +85,31 @@ void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
 }
 
 /*
+ * static_omp_CSR_IC_nnzC reminder: this function must be called in #pragma omp parallel regions
+ * to parallelly execution.
+ * */
+void static_omp_CSR_IC_nnzC(const int IA[], const int JA[],
+    const int IB[], const int JB[],
+    const int m, const int n, const thread_data_t& thread_data,
+    int* IC, int& nnzC, const int stride, const int ends[], const int tid) {
+  int *iJC = (int*)thread_data.index;
+  bool *xb = thread_data.xb;
+  memset(xb, 0, n);
+#pragma omp barrier
+  int low = ends[tid];
+  int high = ends[tid + 1];
+  for (int i = low; i < high; ++i) {
+    IC[i] = cRowiCount(i, IA, JA, IB, JB, iJC, xb);
+  }
+#pragma omp barrier
+  noTileOmpPrefixSum(IC, IC, m);
+#pragma omp single
+  {
+    nnzC = IC[m];
+  }
+}
+
+/*
  * omp_CSR_IC_nnzC reminder: this function must be called in #pragma omp parallel regions
  * to parallelly execution.
  * */
