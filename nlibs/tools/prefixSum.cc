@@ -36,6 +36,7 @@ void noTileOmpPrefixSum(int a[], int s[], int n) {
   const int tchunk = (n + nthreads - 1) / nthreads;
   const int tstart = tchunk * ithread;
   const int tlen = std::min(tchunk, n - tchunk * ithread);
+#pragma omp barrier
   suma[(ithread + 1)] = pass1_scalar(&a[tstart], &s[tstart], tlen);
 #pragma omp barrier
 #pragma omp single
@@ -54,6 +55,7 @@ void noTileOmpPrefixSum(int a[], int s[], int n) {
     {
       s[n] = s[n - 1] + ta;
     }
+#pragma omp barrier
 }
 
 //Called inside omp parallel region
