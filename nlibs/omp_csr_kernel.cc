@@ -218,7 +218,6 @@ void omp_matrix_relocation(int rowsNnz[], const int m, const int tid, const int 
 #endif
  int *oJC = JC;
  double *oC = C;
-#pragma omp barrier
  noTileOmpPrefixSum(rowsNnz, rowsNnz, m);
 #pragma omp master
   {
@@ -226,6 +225,7 @@ void omp_matrix_relocation(int rowsNnz[], const int m, const int tid, const int 
     JC = (int*)qmalloc(sizeof(int) * nnzC, __FUNCTION__, __LINE__);
     C = (double*)qmalloc(sizeof(double) * nnzC, __FUNCTION__, __LINE__);
   }
+#pragma omp barrier
 #pragma omp for schedule(dynamic, stride)
   for (int i = 0; i < m; ++i) {
     int up = IC[i] + rowsNnz[i + 1] - rowsNnz[i];

@@ -237,14 +237,16 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
         rowsNnz[i] = count;
       }
 #ifdef profiling
-      printf("Time passed for thread %d indexProcessCRowI with %lf milliseconds\n", tid, time_in_mill_now() - tnow);
+      printf("SOMP time passed for thread %d indexProcessCRowI with %lf milliseconds\n", tid, time_in_mill_now() - tnow);
 #endif
+#pragma omp barrier
+      omp_matrix_relocation(rowsNnz, m, tid, stride, IC, JC, C, nnzC);
     }
     free(footPrints);
-    matrix_relocation(rowsNnz, m, IC, JC, C, nnzC);
+    //matrix_relocation(rowsNnz, m, IC, JC, C, nnzC);
     free(rowsNnz);
 #ifdef profiling
-    std::cout << "time passed without memory allocate" << time_in_mill_now() - now << std::endl;
+    std::cout << "static_omp_CSR_RMCL_OneStep(SOMP) time passed " << time_in_mill_now() - now << std::endl;
 #endif
 }
 
@@ -252,7 +254,9 @@ void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const int stride) {
-  double now;
+#ifdef profiling
+  double now = time_in_mill_now();
+#endif
   static_omp_CSR_SpMM(IA, JA, A, nnzA,
       IB, JB, B, nnzB,
       IC, JC, C, nnzC,
@@ -274,10 +278,11 @@ void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A
             &count, cColInd, cValues);
         rowsNnz[i] = count;
     }
+    omp_matrix_relocation(rowsNnz, m, tid, stride, IC, JC, C, nnzC);
   }
-  matrix_relocation(rowsNnz, m, IC, JC, C, nnzC);
+  //matrix_relocation(rowsNnz, m, IC, JC, C, nnzC);
   free(rowsNnz);
 #ifdef profiling
-    std::cout << "time passed without memory allocate" << time_in_mill_now() - now << std::endl;
+    std::cout << "static_fair_CSR_RMCL_OneStep(SFOMP) time passed " << time_in_mill_now() - now << std::endl;
 #endif
 }
