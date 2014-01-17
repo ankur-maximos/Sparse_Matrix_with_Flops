@@ -210,6 +210,44 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
     free(rowsNnz);
 }
 
+//This function must be called in OpenMP parallel region
+void omp_matrix_relocation(int rowsNnz[], const int m, const int tid, const int stride,
+        int* &IC, int* &JC, double* &C, int& nnzC) {
+#ifdef profiling
+    double rnow = time_in_mill_now();
+#endif
+ int *oJC = JC;
+ double *oC = C;
+#pragma omp barrier
+ noTileOmpPrefixSum(rowsNnz, rowsNnz, m);
+#pragma omp master
+  {
+    nnzC = rowsNnz[m];
+    JC = (int*)qmalloc(sizeof(int) * nnzC, __FUNCTION__, __LINE__);
+    C = (double*)qmalloc(sizeof(double) * nnzC, __FUNCTION__, __LINE__);
+  }
+#pragma omp for schedule(dynamic, stride)
+  for (int i = 0; i < m; ++i) {
+    int up = IC[i] + rowsNnz[i + 1] - rowsNnz[i];
+    int top = rowsNnz[i] - 1;
+    for (int j = IC[i]; j < up; ++j) {
+      JC[++top] = oJC[j];
+      C[top] = oC[j];
+    }
+    IC[i] = rowsNnz[i];
+  }
+#pragma omp barrier
+#pragma omp master
+  {
+    IC[m] = rowsNnz[m];
+    free(oJC);
+    free(oC);
+  }
+#ifdef profiling
+    printf("time passed for omp relocate IC, JC and C %lf on thread %d\n", time_in_mill_now() - rnow, tid);
+#endif
+}
+
 void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,

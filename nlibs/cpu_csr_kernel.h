@@ -183,6 +183,9 @@ void hybrid_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
 inline void matrix_relocation(const int rowsNnz[], const int m,
         int* &IC, int* &JC, double* &C, int& nnzC) {
+#ifdef profiling
+    double rnow = time_in_mill_now();
+#endif
     int top = rowsNnz[0];
     for (int i = 1; i < m; ++i) {
       int up = IC[i] + rowsNnz[i];
@@ -197,5 +200,12 @@ inline void matrix_relocation(const int rowsNnz[], const int m,
     nnzC = top;
     JC = (int*)realloc(JC, sizeof(int) * nnzC);
     C = (double*)realloc(C, sizeof(double) * nnzC);
+#ifdef profiling
+    printf("time passed for seq relocate IC, JC and C %lf with nnzC=%d\n", time_in_mill_now() - rnow, nnzC);
+#endif
 }
+
+//This function must be called in OpenMP parallel region
+void omp_matrix_relocation(int rowsNnz[], const int m, const int tid, const int stride,
+        int* &IC, int* &JC, double* &C, int& nnzC);
 #endif
