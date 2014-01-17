@@ -17,6 +17,7 @@ void arrayInflationR2(const double ivalues[], const int count, double ovalues[])
 double arrayThreshPruneNormalize(const double thresh, const int rindices[], const double rvalues[],
     int* count, int indices[], double values[]);
 void arrayOutput(const char* msg, FILE* fp, const int datas[], int len);
+void arrayOutput(const char* msg, FILE* fp, const double datas[], int len);
 void arrayOutput(const char *msg, FILE* fp, const vector<int> &datas);
 void arrayOutput(const char *msg, FILE* fp, const vector<double> &datas);
 void prefixSumToCounts(const int prefixSum[], const int len, int *counts);
