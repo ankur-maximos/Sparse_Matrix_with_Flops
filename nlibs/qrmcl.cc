@@ -20,7 +20,7 @@ void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, con
 
   double nowTotal = time_in_mill_now();
   thread_data_t* thread_datas = NULL;
-  if (runOptions == SOMP || runOptions == OMP || runOptions == CILK || runOptions == HYBRID) {
+  if (runOptions == SOMP || runOptions == OMP || runOptions == CILK || runOptions == HYB) {
     thread_datas = allocateThreadDatas(nthreads, Mt.cols);
   }
   for (int iter = 0; iter < maxIter; ++iter) {
@@ -32,7 +32,7 @@ void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, con
 
     if (runOptions == SOMP) {
       newMt = Mgt.staticOmpRmclOneStep(Mt, thread_datas, stride);
-    } else if (runOptions == HYBRID) {
+    } else if (runOptions == HYB) {
       newMt = Mgt.hybridOmpRmclOneStep(Mt, thread_datas, stride);
     } else if (runOptions == SFOMP) {
       newMt = Mgt.staticFairRmclOneStep(Mt, stride);
@@ -59,7 +59,7 @@ void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, con
     printf("%s with stride %d iter %d done in %lf milliseconds\n",
         runOptionsStr[runOptions], stride, iter, time_in_mill_now() - now);
   }
-  if (runOptions == SOMP || runOptions == OMP || runOptions == CILK || runOptions == HYBRID) {
+  if (runOptions == SOMP || runOptions == OMP || runOptions == CILK || runOptions == HYB) {
     freeThreadDatas(thread_datas, nthreads);
   }
   if (options.stats) {
