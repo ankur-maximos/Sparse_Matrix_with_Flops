@@ -113,40 +113,44 @@ public:
 
   //Both CSR should be called makeOrdered before call isEqual
   bool isEqual(const CSR &B) const {
+    bool flag = true;
     if (rows != B.rows) {
       printf("rows = %d\tB_rows = %d\n", rows, B.rows);
-      return false;
+      flag = false;
     }
     if (cols != B.cols) {
       printf("cols = %d\tB_cols = %d\n", cols, B.cols);
-      return false;
+      flag = false;
     }
     if (nnz != B.nnz) {
       printf("nnz = %d\tB_nnz = %d\n", nnz, B.nnz);
-      return false;
+      flag = false;
     }
 
     for (int i = 0; i < (rows + 1); ++i) {
       if (rowPtr[i] != B.rowPtr[i]) {
         printf("rowPtr[%d] %d\t%d\n", i, rowPtr[i], B.rowPtr[i]);
-        return false;
+        flag = false;
+        break;
       }
     }
 
     for (int i = 0; i < nnz; ++i) {
       if (colInd[i] != B.colInd[i]) {
         printf("colInd[%d] %d\t%d\n", i, colInd[i], B.colInd[i]);
-        return false;
+        flag = false;
+        break;
       }
     }
 
     for (int i = 0; i < nnz; ++i) {
       if (fabs(values[i] - B.values[i]) > 1e7) {
         printf("values[%d] %lf\t%lf\n", i, values[i], B.values[i]);
-        return false;
+        flag = false;
+        break;
       }
     }
-    return true;
+    return flag;
   }
 
   void dispose() {
