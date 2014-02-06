@@ -86,6 +86,27 @@ public:
     }
   }
 
+  void output_int(const char* msg) const {
+    printf("%s\n", msg);
+    for (int i = 0; i < rows; i++) {
+      for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+        int col=colInd[j];
+        int val=((int*)values)[j];
+        printf("%d\t%d\t%d\n", i, col, val);
+      }
+    }
+  }
+
+  void output_structure(const char* msg) const {
+    printf("%s\n", msg);
+    for (int i = 0; i < rows; i++) {
+      for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+        int col=colInd[j];
+        printf("%d\t%d\n", i, col);
+      }
+    }
+  }
+
   void toOneBasedCSR() {
     for (int i = 0; i < rows; i++) {
       for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
