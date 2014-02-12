@@ -2,6 +2,7 @@
 #include "tools/ntimer.h"
 #include "tools/util.h"
 #include <cilk/cilk.h>
+#include <cilk/cilk_api.h>
 #include <iostream>
 #include <omp.h>
 using namespace std;
