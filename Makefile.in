@@ -12,7 +12,7 @@ CUOPTFLAGS = -arch sm_20 -O3
 INTEL_PATH=$(shell cd "$(shell dirname `which icc`)/../.." && pwd)
 
 MKL_FLAGS=-m64 -w -I"$(INTEL_PATH)/mkl/include"
-MKL_LDFLAGS=-Wl,--start-group "$(INTEL_PATH)/mkl/lib/intel64/libmkl_intel_lp64.a" "$(INTEL_PATH)/mkl/lib/intel64/libmkl_intel_thread.a" "$(INTEL_PATH)/mkl/lib/intel64/libmkl_core.a" -Wl,--end-group -L"$(INTEL_PATH)/mkl/../compiler/lib/intel64" -liomp5 -lpthread -lm -ldl 
+MKL_LDFLAGS=-Wl,--start-group "$(INTEL_PATH)/mkl/lib/intel64/libmkl_intel_lp64.a" "$(INTEL_PATH)/mkl/lib/intel64/libmkl_intel_thread.a" "$(INTEL_PATH)/mkl/lib/intel64/libmkl_core.a" -Wl,--end-group -lpthread -lm 
 
 GPERF_HOME=/home/niuq/tools/gperftools-2.1/build
 GPERF_FLAGS=-I$(GPERF_HOME)/include
@@ -49,6 +49,7 @@ endif
 AR = ar rv
 ifeq ($(hasMIC), 1)
 AR = xiar -qoffload-build rcs
+OPTFLAGS+=-DUSE_MIC -opt-report-phase=offload
 endif
 
 # What to use for indexing the archive
