@@ -1,6 +1,7 @@
 # Which compiler to use
 #CC = cc
 hasGPU=0
+hasMIC=1
 CC = icpc
 NVCC = nvcc
 
@@ -8,8 +9,10 @@ CUINCLUDES = -I/home/niuq/code/gpu/cusplibrary -I/home/niuq/code/cub-1.0.2
 CUOPTFLAGS = -arch sm_20 -O0 -g -G
 CUOPTFLAGS = -arch sm_20 -O3 
 
-MKL_FLAGS=-m64 -w -I"/opt/intel/composer_xe_2013.4.183/mkl/include"
-MKL_LDFLAGS=-Wl,--start-group "/opt/intel/composer_xe_2013.4.183/mkl/lib/intel64/libmkl_intel_lp64.a" "/opt/intel/composer_xe_2013.4.183/mkl/lib/intel64/libmkl_intel_thread.a" "/opt/intel/composer_xe_2013.4.183/mkl/lib/intel64/libmkl_core.a" -Wl,--end-group -L"/opt/intel/composer_xe_2013.4.183/mkl/../compiler/lib/intel64" -liomp5 -lpthread -lm -ldl 
+INTEL_PATH=$(shell cd "$(shell dirname `which icc`)/../.." && pwd)
+
+MKL_FLAGS=-m64 -w -I"$(INTEL_PATH)/mkl/include"
+MKL_LDFLAGS=-Wl,--start-group "$(INTEL_PATH)/mkl/lib/intel64/libmkl_intel_lp64.a" "$(INTEL_PATH)/mkl/lib/intel64/libmkl_intel_thread.a" "$(INTEL_PATH)/mkl/lib/intel64/libmkl_core.a" -Wl,--end-group -L"$(INTEL_PATH)/mkl/../compiler/lib/intel64" -liomp5 -lpthread -lm -ldl 
 
 GPERF_HOME=/home/niuq/tools/gperftools-2.1/build
 GPERF_FLAGS=-I$(GPERF_HOME)/include
@@ -44,6 +47,9 @@ endif
 
 # What archiving to use
 AR = ar rv
+ifeq ($(hasMIC), 1)
+AR = xiar -qoffload-build rcs
+endif
 
 # What to use for indexing the archive
 RANLIB = ranlib
