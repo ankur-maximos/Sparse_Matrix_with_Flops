@@ -23,8 +23,6 @@ GPERF_LDFLAGS=$(GPERF_HOME)/lib/libprofiler.a $(GPERF_HOME)/lib/libtcmalloc.a
 OPTFLAGS = -O0 -openmp -vec-report1 -restrict -Dprofiling
 OPTFLAGS = -O3 -openmp -vec-report1 -restrict #-Dprofiling #-DAGGR
 
-
-
 LIBDIR=nlibs
 LIBNAME=libnrmcl.a
 

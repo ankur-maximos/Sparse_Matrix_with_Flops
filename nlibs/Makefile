@@ -28,5 +28,5 @@ $(LIBNAME): $(OBJS) $(HEADERS)
 
 clean:
 	rm -f *.o gpus/*.o tools/*.o
-	rm -f $(LIBNAME)
+	rm -f *.a
 

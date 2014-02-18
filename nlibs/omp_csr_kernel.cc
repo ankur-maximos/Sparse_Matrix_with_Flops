@@ -6,6 +6,10 @@
 #include "tools/prefixSum.h"
 using namespace std;
 
+#ifdef USE_MIC
+#define AGGR
+#endif
+
 thread_data_t* allocateThreadDatas(int nthreads, int n) {
   thread_data_t* thread_datas = (thread_data_t*)calloc(nthreads, sizeof(thread_data_t));
 #ifdef AGGR
