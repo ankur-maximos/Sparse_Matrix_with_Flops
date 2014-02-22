@@ -315,3 +315,18 @@ vector<int> CSR::differsStats(const CSR& B, const vector<double> percents) const
   assert(countSum == rows);
   return counts;
 }
+
+long long CSR::spMMFlops(const CSR &B) const {
+  return getSpMMFlops(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz,
+      this->rows, this->cols, B.cols);
+}
+
+void CSR::outputSpMMStats(const CSR &B) const {
+  long long flops = this->spMMFlops(B);
+  CSR C = this->omp_spmm(B, 512);
+  int cNnz = C.nnz;
+  C.dispose();
+  printf("flops=%lld\tcNnz=%d\trows=%d\tflops/rows=%lf cnnz/rows=%lf\n", flops, cNnz, rows, (double)(flops) / rows, (double)(cNnz) / rows);
+}
+

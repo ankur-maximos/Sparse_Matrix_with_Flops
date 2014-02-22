@@ -16,7 +16,6 @@ endif
 OBJS=$(shell echo $(SOURCES) | sed "s/\.cc/\.o/g" | sed "s/\.cu/\.o/g")
 HEADERS=$(shell find . -name "*.h")
 %.o: %.cc $(HEADERS) ../Makefile.in
-	@echo $(CFLAGS)
 	$(CC) $(CFLAGS) $< -c -o $@
 
 %.o: %.cu ../Makefile.in $(shell find . -name "*.cuh")
