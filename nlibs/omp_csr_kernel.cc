@@ -74,7 +74,6 @@ inline int cRowiCount(const int i, const int IA[], const int JA[], const int IB[
   return count;
 }
 
-const int nthreads = 8;
 void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n, const thread_data_t thread_datas[],
@@ -316,6 +315,10 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nn
 #ifdef profiling
     double now = time_in_mill_now();
 #endif
+    int nthreads = 8;
+#pragma omp parallel
+#pragma omp master
+    nthreads = omp_get_num_threads();
     thread_data_t* thread_datas = allocateThreadDatas(nthreads, n);
     static_omp_CSR_SpMM(IA, JA, A, nnzA,
     //omp_CSR_SpMM(IA, JA, A, nnzA,

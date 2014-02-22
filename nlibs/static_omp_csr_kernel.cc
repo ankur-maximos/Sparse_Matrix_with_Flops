@@ -160,7 +160,10 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
 #ifdef profiling
     double now = time_in_mill_now();
 #endif
-    const int nthreads = 8;
+    int nthreads = 8;
+#pragma omp parallel
+#pragma omp master
+    nthreads = omp_get_num_threads();
     thread_data_t* thread_datas = allocateThreadDatas(nthreads, n);
     static_omp_CSR_SpMM(IA, JA, A, nnzA,
         IB, JB, B, nnzB,
