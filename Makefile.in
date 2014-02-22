@@ -1,7 +1,7 @@
 # Which compiler to use
 #CC = cc
 hasGPU=0
-hasMIC=1
+hasMIC=2
 CC = icpc
 NVCC = nvcc
 
@@ -12,7 +12,11 @@ CUOPTFLAGS = -arch sm_20 -O3
 INTEL_PATH=$(shell cd "$(shell dirname `which icc`)/../.." && pwd)
 
 MKL_FLAGS=-m64 -w -I"$(INTEL_PATH)/mkl/include"
-MKL_LDFLAGS=-Wl,--start-group "$(INTEL_PATH)/mkl/lib/intel64/libmkl_intel_lp64.a" "$(INTEL_PATH)/mkl/lib/intel64/libmkl_intel_thread.a" "$(INTEL_PATH)/mkl/lib/intel64/libmkl_core.a" -Wl,--end-group -lpthread -lm 
+arch=intel64
+ifeq ($(hasMIC), 2)
+arch=mic
+endif
+MKL_LDFLAGS=-Wl,--start-group "$(INTEL_PATH)/mkl/lib/$(arch)/libmkl_intel_lp64.a" "$(INTEL_PATH)/mkl/lib/$(arch)/libmkl_intel_thread.a" "$(INTEL_PATH)/mkl/lib/$(arch)/libmkl_core.a" -Wl,--end-group -lpthread -lm 
 
 GPERF_HOME=/home/niuq/tools/gperftools-2.1/build
 GPERF_FLAGS=-I$(GPERF_HOME)/include
@@ -48,6 +52,10 @@ AR = ar rv
 ifeq ($(hasMIC), 1)
 AR = xiar -qoffload-build rcs
 OPTFLAGS+=-DUSE_MIC -opt-report-phase=offload
+endif
+ifeq ($(hasMIC), 2)
+OPTFLAGS+=-mmic
+LDOPTIONS+=-mmic
 endif
 
 # What to use for indexing the archive
