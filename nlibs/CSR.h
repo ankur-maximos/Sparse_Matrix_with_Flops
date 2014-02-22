@@ -221,5 +221,7 @@ public:
   vector<int> differsStats(const CSR& B, vector<double> percents) const;
   CSR toGpuCSR() const;
   CSR toCpuCSR() const;
+  long long spMMFlops(const CSR& B) const;
+  void outputSpMMStats(const CSR& B) const;
 };
 #endif /* CSR_CUH_ */

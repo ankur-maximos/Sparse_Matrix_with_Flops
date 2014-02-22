@@ -50,7 +50,6 @@ long long getSpMMFlops(const int IA[], const int JA[], const double A[], const i
     if(row_flops > 2) printf("rowid=%d : %ld row_nnz=%d\n", i, row_flops, IA[i + 1] - IA[i]);
 #endif
   }
-  printf("lld flops=%lld", flops);
   return flops;
 }
 
