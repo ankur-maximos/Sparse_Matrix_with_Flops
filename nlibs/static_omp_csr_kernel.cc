@@ -131,10 +131,10 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
     double *x = thread_datas[tid].x;
     int *index = thread_datas[tid].index;
     memset(index, -1, n * sizeof(int));
+#pragma omp barrier
 #ifdef profiling
       double tnow = time_in_mill_now();
 #endif
-#pragma omp barrier
     int low = ends[tid];
     int high = ends[tid + 1];
     for (int i = low; i < high; ++i) {
