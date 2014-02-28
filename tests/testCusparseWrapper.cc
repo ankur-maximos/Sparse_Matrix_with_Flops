@@ -1,10 +1,13 @@
+#ifdef enable_gpu
 #include "gpus/cusparse_spmm.h"
 #include "CSR.h"
 #include "qrmcl.h"
 #include "process_args.h"
 #include "tools/ntimer.h"
+#endif
 
 int main(int argc, char *argv[]) {
+#ifdef enable_gpu
   process_args(argc, argv);
   print_args();
   COO cooAt;
@@ -41,5 +44,6 @@ int main(int argc, char *argv[]) {
   B.dispose();
   hC.dispose();
   ompC.dispose();
+#endif
   return 0;
 }
