@@ -1,5 +1,6 @@
 #include "tools/prefixSum.h"
 #include "tools/qmalloc.h"
+#define MAX_THREADS_NUM 250
 
 int pass1_scalar(int a[], int s[], int n) {
   if (n <= 0) {
@@ -29,13 +30,15 @@ void pass2_scalar(int *s, int offset, const int n) {
 }
 
 void noTileOmpPrefixSum(int a[], int s[], int n) {
-  static int suma[64];
+  static int suma[MAX_THREADS_NUM];
   const int ta = a[n - 1];
   const int ithread = omp_get_thread_num();
   const int nthreads = omp_get_num_threads();
   const int tchunk = (n + nthreads - 1) / nthreads;
   const int tstart = tchunk * ithread;
   const int tlen = std::min(tchunk, n - tchunk * ithread);
+#pragma omp single
+  suma[0] = 0;
 #pragma omp barrier
   suma[(ithread + 1)] = pass1_scalar(&a[tstart], &s[tstart], tlen);
 #pragma omp barrier
@@ -60,7 +63,7 @@ void noTileOmpPrefixSum(int a[], int s[], int n) {
 
 //Called inside omp parallel region
 void ompPrefixSum(int a[], int s[], int n) {
-  static int suma[64];
+  static int suma[MAX_THREADS_NUM];
   //int *suma;
   const int chunk_size = 1 << 18;
   const int nchunks = n % chunk_size == 0 ? n / chunk_size : n / chunk_size + 1;
