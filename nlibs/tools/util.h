@@ -23,5 +23,7 @@ void arrayOutput(const char *msg, FILE* fp, const vector<int> &datas);
 void arrayOutput(const char *msg, FILE* fp, const vector<double> &datas);
 void prefixSumToCounts(const int prefixSum[], const int len, int *counts);
 void arrayEqualPartition(int prefixSum[], const int n, const int nthreads, int ends[]);
-void randomPermutationVector(int* &pvector, int len);
+void randomPermutationVector(int* &pvector, const int len);
+int* permutationTranspose(const int P[], const int len);
+
 #endif

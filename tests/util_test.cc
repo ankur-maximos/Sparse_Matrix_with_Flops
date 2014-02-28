@@ -34,11 +34,22 @@ void randomPermutationVectorTest() {
   arrayOutput("P5=", stdout, P, 5);
 }
 
+void permutationTransposeTest() {
+  int P[] = {1, 5, 4, 2, 3, 0};
+  int *rPt = permutationTranspose(P, 6);
+  int Pt[] = {5,0, 3, 4, 2, 1};
+  for (int i = 0; i < 6; ++i) {
+    assert(rPt[i] == Pt[i]);
+  }
+  printf("%s Passed\n", __func__);
+}
+
 int main() {
   arrayMaxTest();
   arraySumTest();
   arrayInflationR2Test();
   randomPermutationVectorTest();
+  permutationTransposeTest();
   printf("Passed\n");
   return 0;
 }
