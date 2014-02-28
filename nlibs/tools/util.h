@@ -4,6 +4,7 @@
 #include <utility>
 #include <stdio.h>
 #include <vector>
+#include <time.h>
 using namespace std;
 
 #define MLMCL_PRUNE_A	(0.90) /* pruning parameter */
@@ -22,4 +23,5 @@ void arrayOutput(const char *msg, FILE* fp, const vector<int> &datas);
 void arrayOutput(const char *msg, FILE* fp, const vector<double> &datas);
 void prefixSumToCounts(const int prefixSum[], const int len, int *counts);
 void arrayEqualPartition(int prefixSum[], const int n, const int nthreads, int ends[]);
+void randomPermutationVector(int* &pvector, int len);
 #endif

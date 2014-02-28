@@ -28,10 +28,17 @@ void arrayInflationR2Test() {
   printf("%s Passed\n", __func__);
 }
 
+void randomPermutationVectorTest() {
+  int* P = NULL;
+  randomPermutationVector(P, 5);
+  arrayOutput("P5=", stdout, P, 5);
+}
+
 int main() {
   arrayMaxTest();
   arraySumTest();
   arrayInflationR2Test();
+  randomPermutationVectorTest();
   printf("Passed\n");
   return 0;
 }

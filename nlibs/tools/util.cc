@@ -124,3 +124,13 @@ void arrayEqualPartition(int prefixSum[], const int n, const int nthreads, int e
   }
   ends[nthreads] = n;
 }
+
+void randomPermutationVector(int* &P, int len) {
+  srand(time(NULL));
+  P = (int*)malloc(len * sizeof(int));
+  for (int i = 0; i < len; ++i) {
+    int pos = rand() % (i + 1);
+    P[i] = P[pos];
+    P[pos] = i;
+  }
+}
