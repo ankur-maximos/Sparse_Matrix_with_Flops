@@ -11,12 +11,12 @@ using namespace std;
 #endif
 
 thread_data_t* allocateThreadDatas(int nthreads, int n) {
-  thread_data_t* thread_datas = (thread_data_t*)calloc(nthreads, sizeof(thread_data_t));
+  thread_data_t* thread_datas = (thread_data_t*)malloc(nthreads * sizeof(thread_data_t));
 #ifdef AGGR
   double *xs = (double*)qmalloc((n * sizeof(double) + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
   bool *xbs = (bool*)qcalloc((n + LEVEL1_DCACHE_LINESIZE) * nthreads, sizeof(bool), __FUNCTION__, __LINE__);
   int *indices = (int*)qmalloc((n * sizeof(int) + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
-  memset(indices, -1, (n * sizeof(int) + LEVEL1_DCACHE_LINESIZE) * nthreads);
+  //memset(indices, -1, (n * sizeof(int) + LEVEL1_DCACHE_LINESIZE) * nthreads);
 #endif
   for(int i = 0; i < nthreads; i++) {
 #ifndef AGGR
