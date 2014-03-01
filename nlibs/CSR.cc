@@ -330,3 +330,37 @@ void CSR::outputSpMMStats(const CSR &B) const {
   printf("flops=%lld\tcNnz=%d\trows=%d\tflops/rows=%lf cnnz/rows=%lf\n", flops, cNnz, rows, (double)(flops) / rows, (double)(cNnz) / rows);
 }
 
+CSR CSR::PXM(const int P[]) const {
+  int* browPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
+	double* bvalues = (double*)qmalloc(nnz * sizeof(double), __FUNCTION__, __LINE__);
+  int* bcolInd = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
+  browPtr[0] = 0;
+  for (int i = 0; i < rows; ++i) {
+    int target = P[i];
+    int count = rowPtr[target + 1] - rowPtr[target];
+    memcpy(bvalues + browPtr[i], values + rowPtr[target], count * sizeof(double));
+    memcpy(bcolInd + browPtr[i], colInd + rowPtr[target], count * sizeof(int));
+    browPtr[i + 1] = browPtr[i] + count;
+  }
+  CSR PM(bvalues, bcolInd, browPtr, rows, cols, nnz);
+  return PM;
+}
+
+CSR CSR::MXP(const int P[]) const {
+  int* browPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
+  memcpy(browPtr, rowPtr, (rows + 1) * sizeof(int));
+	double* bvalues = (double*)qmalloc(nnz * sizeof(double), __FUNCTION__, __LINE__);
+  memcpy(bvalues, values, nnz * sizeof(double));
+  int* bcolInd = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
+  for (int i = 0; i < rows; ++i) {
+    for (int j = rowPtr[i]; j < rowPtr[i + 1]; ++j) {
+      bcolInd[j] = P[colInd[j]];
+#ifdef DEBUG
+      printf("row %d %d->%d\t", i, colInd[j], P[colInd[j]]);
+      printf("%d %d %lf\n", i, bcolInd[j], bvalues[j]);
+#endif
+    }
+  }
+  CSR MP(bvalues, bcolInd, browPtr, rows, cols, nnz);
+  return MP;
+}
