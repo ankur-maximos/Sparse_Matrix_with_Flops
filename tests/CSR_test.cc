@@ -1,7 +1,7 @@
 #include "CSR.h"
 #include "COO.h"
 
-void CSR_PXM_Test() {
+void CSR_PM_Test() {
   int rows = 4, cols = 4, nnz = 5;
   const int rowIndex[] = {0, 1, 2, 3, 3};
   const int colIndex[] = {1, 2, 0, 1, 3};
@@ -11,8 +11,8 @@ void CSR_PXM_Test() {
   coo.dispose();
   M.output("\nM");
   int P[] = {1, 3, 0, 2};
-  CSR PM = M.PXM(P);
-  PM.output("\nPM");
+  CSR pM = M.PM(P);
+  pM.output("\nPM");
   int prowPtr[] = {0, 1, 2, 3, 4};
   int pcolInd[] = {1, 3, 0, 2};
   double pValues[] = {1.0, 1.0, 1.0, 1.0};
@@ -21,15 +21,15 @@ void CSR_PXM_Test() {
   CSR mPM = csrP.spmm(M);
   M.dispose();
   mPM.makeOrdered();
-  PM.makeOrdered();
-  bool isSame = mPM.isEqual(PM);
+  pM.makeOrdered();
+  bool isSame = mPM.isEqual(pM);
   mPM.output("mPM");
-  PM.dispose();
+  pM.dispose();
   assert(isSame == true);
   printf("%s Passed\n", __func__);
 }
 
-void CSR_MXP_Test() {
+void CSR_MP_Test() {
   int rows = 4, cols = 4, nnz = 5;
   const int rowIndex[] = {0, 1, 2, 3, 3};
   const int colIndex[] = {1, 2, 0, 1, 3};
@@ -38,10 +38,10 @@ void CSR_MXP_Test() {
   CSR M = coo.toCSR();
   coo.dispose();
   int P[] = {1, 3, 0, 2};
-  CSR MP = M.MXP(P);
+  CSR mP = M.MP(P);
 #ifdef DEBUG
   M.output("\nM");
-  MP.output("\nMP");
+  mP.output("\nMP");
 #endif
   int prowPtr[] = {0, 1, 2, 3, 4};
   int pcolInd[] = {1, 3, 0, 2};
@@ -51,12 +51,12 @@ void CSR_MXP_Test() {
   CSR mMP = M.spmm(csrP);
   M.dispose();
   mMP.makeOrdered();
-  MP.makeOrdered();
-  bool isSame = mMP.isEqual(MP);
+  mP.makeOrdered();
+  bool isSame = mMP.isEqual(mP);
 #ifdef DEBUG
   mMP.output("mMP");
 #endif
-  MP.dispose();
+  mP.dispose();
   assert(isSame == true);
   printf("%s Passed\n", __func__);
 }
@@ -70,7 +70,7 @@ int main() {
   CSR csr = coo.toCSR();
   csr.averAndNormRowValue();
   csr.output("csr");
-  CSR_PXM_Test();
-  CSR_MXP_Test();
+  CSR_PM_Test();
+  CSR_MP_Test();
   return 0;
 }

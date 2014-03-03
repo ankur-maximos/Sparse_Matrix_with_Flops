@@ -330,7 +330,7 @@ void CSR::outputSpMMStats(const CSR &B) const {
   printf("flops=%lld\tcNnz=%d\trows=%d\tflops/rows=%lf cnnz/rows=%lf\n", flops, cNnz, rows, (double)(flops) / rows, (double)(cNnz) / rows);
 }
 
-CSR CSR::PXM(const int P[]) const {
+CSR CSR::PM(const int P[]) const {
   int* browPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
 	double* bvalues = (double*)qmalloc(nnz * sizeof(double), __FUNCTION__, __LINE__);
   int* bcolInd = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
@@ -342,11 +342,11 @@ CSR CSR::PXM(const int P[]) const {
     memcpy(bcolInd + browPtr[i], colInd + rowPtr[target], count * sizeof(int));
     browPtr[i + 1] = browPtr[i] + count;
   }
-  CSR PM(bvalues, bcolInd, browPtr, rows, cols, nnz);
-  return PM;
+  CSR pM(bvalues, bcolInd, browPtr, rows, cols, nnz);
+  return pM;
 }
 
-CSR CSR::MXP(const int P[]) const {
+CSR CSR::MP(const int P[]) const {
   int* browPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
   memcpy(browPtr, rowPtr, (rows + 1) * sizeof(int));
 	double* bvalues = (double*)qmalloc(nnz * sizeof(double), __FUNCTION__, __LINE__);
@@ -361,6 +361,6 @@ CSR CSR::MXP(const int P[]) const {
 #endif
     }
   }
-  CSR MP(bvalues, bcolInd, browPtr, rows, cols, nnz);
-  return MP;
+  CSR mP(bvalues, bcolInd, browPtr, rows, cols, nnz);
+  return mP;
 }
