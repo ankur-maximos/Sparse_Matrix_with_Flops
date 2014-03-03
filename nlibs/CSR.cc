@@ -364,3 +364,21 @@ CSR CSR::MP(const int P[]) const {
   CSR mP(bvalues, bcolInd, browPtr, rows, cols, nnz);
   return mP;
 }
+
+CSR CSR::PMPt(const int P[]) const {
+  CSR pm = PM(P);
+  int *Pt = permutationTranspose(P, rows);
+  CSR pMPt = pm.MP(Pt);
+  pm.dispose();
+  free(Pt);
+  return pMPt;
+}
+
+CSR CSR::PtMP(const int P[]) const {
+  CSR mP = MP(P);
+  int *Pt = permutationTranspose(P, rows);
+  CSR ptMP = mP.PM(Pt);
+  mP.dispose();
+  free(Pt);
+  return ptMP;
+}
