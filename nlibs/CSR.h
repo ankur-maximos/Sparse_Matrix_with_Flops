@@ -223,5 +223,9 @@ public:
   CSR toCpuCSR() const;
   long long spMMFlops(const CSR& B) const;
   void outputSpMMStats(const CSR& B) const;
+  CSR PM(const int P[]) const;
+  CSR MP(const int P[]) const;
+  CSR PMPt(const int P[]) const;
+  CSR PtMP(const int P[]) const;
 };
 #endif /* CSR_CUH_ */
