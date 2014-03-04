@@ -1,6 +1,5 @@
 #include "tools/prefixSum.h"
 #include "tools/qmalloc.h"
-#define MAX_THREADS_NUM 250
 
 int pass1_scalar(int a[], int s[], int n) {
   if (n <= 0) {

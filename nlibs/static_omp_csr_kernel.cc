@@ -98,10 +98,10 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
   IC = (int*)malloc((m + 1) * sizeof(int));
   int* footPrints = (int*)malloc((m + 1) * sizeof(int));
 #ifdef profiling
-  printf("Time passed for malloc IC and footprints with %lf milliseconds\n", tid, time_in_mill_now() - now);
+  printf("Time passed for malloc IC and footprints with %lf milliseconds\n", time_in_mill_now() - now);
   now = time_in_mill_now();
 #endif
-  static int ends[65];
+  static int ends[MAX_THREADS_NUM];
 #pragma omp parallel firstprivate(stride)
   {
     const int tid = omp_get_thread_num();
@@ -198,7 +198,7 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
   IC = (int*)malloc((m + 1) * sizeof(int));
   int* rowsNnz = (int*)malloc((m + 1) * sizeof(int));
   int* footPrints = (int*)malloc((m + 1) * sizeof(int));
-  static int ends[65];
+  static int ends[MAX_THREADS_NUM];
   double now;
 #pragma omp parallel firstprivate(stride)
     {

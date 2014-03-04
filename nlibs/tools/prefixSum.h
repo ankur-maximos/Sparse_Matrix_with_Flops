@@ -3,6 +3,7 @@
 #include <omp.h>
 #include <string.h>
 #include <algorithm>
+#define MAX_THREADS_NUM 250
 
 void ompPrefixSum(int a[], int s[], int n);
 void noTileOmpPrefixSum(int a[], int s[], int n);
