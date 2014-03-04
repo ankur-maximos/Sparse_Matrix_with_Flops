@@ -11,6 +11,9 @@ using namespace std;
 #endif
 
 thread_data_t* allocateThreadDatas(int nthreads, int n) {
+#ifdef profiling
+  double now = time_in_mill_now();
+#endif
   thread_data_t* thread_datas = (thread_data_t*)malloc(nthreads * sizeof(thread_data_t));
 #ifdef AGGR
   double *xs = (double*)qmalloc((n * sizeof(double) + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
@@ -28,10 +31,16 @@ thread_data_t* allocateThreadDatas(int nthreads, int n) {
     thread_datas[i].init(x, xb, index);
 #endif
   }
+#ifdef profiling
+  printf("Time passed for %s in %lf milliseconds\n", __func__, time_in_mill_now() - now);
+#endif
   return thread_datas;
 }
 
 void freeThreadDatas(thread_data_t* thread_datas, int nthreads) {
+#ifdef profiling
+  double now = time_in_mill_now();
+#endif
 #ifndef AGGR
   for(int i = 0; i < nthreads; i++) {
     thread_datas[i].~thread_data_t();
@@ -41,6 +50,9 @@ void freeThreadDatas(thread_data_t* thread_datas, int nthreads) {
   free(thread_datas[0].xb);
   free(thread_datas[0].index);
   free(thread_datas);
+#endif
+#ifdef profiling
+  printf("Time passed for %s in %lf milliseconds\n", __func__, time_in_mill_now() - now);
 #endif
 }
 

@@ -92,15 +92,27 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
+#ifdef profiling
+  double now = time_in_mill_now();
+#endif
   IC = (int*)malloc((m + 1) * sizeof(int));
   int* footPrints = (int*)malloc((m + 1) * sizeof(int));
+#ifdef profiling
+  printf("Time passed for malloc IC and footprints with %lf milliseconds\n", tid, time_in_mill_now() - now);
+  now = time_in_mill_now();
+#endif
   static int ends[65];
-  double now;
 #pragma omp parallel firstprivate(stride)
   {
     const int tid = omp_get_thread_num();
     const int nthreads = omp_get_num_threads();
+#ifdef profiling
+    double now = time_in_mill_now();
+#endif
     dynamic_omp_CSR_IC_nnzC_footprints(IA, JA, IB, JB, m, n, thread_datas[tid], IC, nnzC, footPrints, stride);
+#ifdef profiling
+    printf("Time passed for thread %d footprints nnzC with %lf milliseconds\n", tid, time_in_mill_now() - now);
+#endif
 #pragma omp barrier
 #pragma omp single
     {
@@ -122,9 +134,13 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
     }
 #pragma omp master
     {
+#ifdef profiling
+      double mnow = time_in_mill_now();
+#endif
       JC = (int*)malloc(sizeof(int) * nnzC);
       C = (double*)malloc(sizeof(double) * nnzC);
 #ifdef profiling
+      printf("time passed for malloc JC and C in main thread with %lf milliseconds\n", time_in_mill_now() - mnow);
       now = time_in_mill_now();
 #endif
     }
