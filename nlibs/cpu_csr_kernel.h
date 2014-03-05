@@ -79,6 +79,10 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
         const int IB[], const int JB[], const double B[], const int nnzB,
         int* &IC, int* &JC, double* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
+void flops_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
+        const int IB[], const int JB[], const double B[], const int nnzB,
+        int* &IC, int* &JC, double* &C, int& nnzC,
+        const int m, const int k, const int n, const int stride);
 void omp_CSR_IC_nnzC(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n, const thread_data_t& thread_data,
@@ -208,4 +212,35 @@ inline void matrix_relocation(const int rowsNnz[], const int m,
 //This function must be called in OpenMP parallel region
 void omp_matrix_relocation(int rowsNnz[], const int m, const int tid, const int stride,
         int* &IC, int* &JC, double* &C, int& nnzC);
+
+inline int cRowiCount(const int i, const int IA[], const int JA[], const int IB[], const int JB[], int iJC[], bool xb[]) {
+  if (IA[i] == IA[i + 1]) {
+    return 0;
+  }
+  int count = -1;
+  int vp = IA[i];
+  int v = JA[vp];
+  for (int kp = IB[v]; kp < IB[v+1]; ++kp) {
+    int k = JB[kp];
+    iJC[++count] = k;
+    xb[k] = true;
+  }
+  for (int vp = IA[i] + 1; vp < IA[i + 1]; ++vp) {
+    int v = JA[vp];
+    for (int kp = IB[v]; kp < IB[v+1]; ++kp) {
+      int k = JB[kp];
+      if(xb[k] == false) {
+        iJC[++count] = k;
+        xb[k] = true;
+      }
+    }
+  }
+  ++count;
+  for(int jp = 0; jp < count; ++jp) {
+    int j = iJC[jp];
+    xb[j] = false;
+  }
+  return count;
+}
+
 #endif

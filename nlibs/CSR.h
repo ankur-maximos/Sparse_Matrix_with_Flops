@@ -64,6 +64,7 @@ public:
   std::vector<int> multiFlopsStats(const CSR& B) const;
   vector<int> nnzStats() const;
   CSR spmm(const CSR& B) const;
+  CSR CSR::flops_spmm(const CSR& B, const int stride = 512) const;
   CSR omp_spmm(const CSR& B, const int stride = 512) const;
   CSR omp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride = 512) const;
   void output(const char* msg, bool isZeroBased = true) const {

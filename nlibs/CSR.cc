@@ -132,6 +132,20 @@ CSR CSR::omp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride) c
   return csr;
 }
 
+CSR CSR::flops_spmm(const CSR& B, const int stride) const {
+  assert(this->cols == B.rows);
+  int* IC;
+  int* JC;
+  double* C;
+  int nnzC;
+  flops_omp_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz,
+      IC, JC, C, nnzC,
+      this->rows, this->cols, B.cols, stride);
+  CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
+  return csr;
+}
+
 /* This method returns the norm of A-B. Remember, it assumes
  * that the adjacency lists in both A and B are sorted in
  * ascending order. */

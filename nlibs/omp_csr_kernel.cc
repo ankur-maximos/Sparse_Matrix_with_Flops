@@ -17,7 +17,8 @@ thread_data_t* allocateThreadDatas(int nthreads, int n) {
   thread_data_t* thread_datas = (thread_data_t*)malloc(nthreads * sizeof(thread_data_t));
 #ifdef AGGR
   double *xs = (double*)qmalloc((n * sizeof(double) + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
-  bool *xbs = (bool*)qcalloc((n + LEVEL1_DCACHE_LINESIZE) * nthreads, sizeof(bool), __FUNCTION__, __LINE__);
+  bool *xbs = (bool*)qmalloc((n + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
+  //bool *xbs = (bool*)qcalloc((n + LEVEL1_DCACHE_LINESIZE) * nthreads, sizeof(bool), __FUNCTION__, __LINE__);
   int *indices = (int*)qmalloc((n * sizeof(int) + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
   //memset(indices, -1, (n * sizeof(int) + LEVEL1_DCACHE_LINESIZE) * nthreads);
 #endif
@@ -26,7 +27,8 @@ thread_data_t* allocateThreadDatas(int nthreads, int n) {
     thread_datas[i].init(n);
 #else
     double *x = (double*)((char*)xs + i * (n * sizeof(double) + LEVEL1_DCACHE_LINESIZE));
-    bool *xb = (bool*)((char*)xbs + i * (n + LEVEL1_DCACHE_LINESIZE));
+    //bool *xb = (bool*)((char*)xbs + i * (n + LEVEL1_DCACHE_LINESIZE));
+    bool *xb = (bool*)x;
     int *index = (int*)((char*)indices + i * (n * sizeof(int) + LEVEL1_DCACHE_LINESIZE));
     thread_datas[i].init(x, xb, index);
 #endif
@@ -47,43 +49,13 @@ void freeThreadDatas(thread_data_t* thread_datas, int nthreads) {
   }
 #else
   free(thread_datas[0].x);
-  free(thread_datas[0].xb);
+  //free(thread_datas[0].xb);
   free(thread_datas[0].index);
   free(thread_datas);
 #endif
 #ifdef profiling
   printf("Time passed for %s in %lf milliseconds\n", __func__, time_in_mill_now() - now);
 #endif
-}
-
-inline int cRowiCount(const int i, const int IA[], const int JA[], const int IB[], const int JB[], int iJC[], bool xb[]) {
-  if (IA[i] == IA[i + 1]) {
-    return 0;
-  }
-  int count = -1;
-  int vp = IA[i];
-  int v = JA[vp];
-  for (int kp = IB[v]; kp < IB[v+1]; ++kp) {
-    int k = JB[kp];
-    iJC[++count] = k;
-    xb[k] = true;
-  }
-  for (int vp = IA[i] + 1; vp < IA[i + 1]; ++vp) {
-    int v = JA[vp];
-    for (int kp = IB[v]; kp < IB[v+1]; ++kp) {
-      int k = JB[kp];
-      if(xb[k] == false) {
-        iJC[++count] = k;
-        xb[k] = true;
-      }
-    }
-  }
-  ++count;
-  for(int jp = 0; jp < count; ++jp) {
-    int j = iJC[jp];
-    xb[j] = false;
-  }
-  return count;
 }
 
 void omp_CSR_IC_nnzC_Wrapper(const int IA[], const int JA[],
