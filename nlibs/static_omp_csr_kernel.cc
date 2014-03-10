@@ -71,7 +71,13 @@ void dynamic_omp_CSR_IC_nnzC_footprints(const int IA[], const int JA[],
     int* IC, int& nnzC, int* footPrints, const int stride) {
   int *iJC = (int*)thread_data.index;
   bool *xb = thread_data.xb;
+#ifdef profiling
+    double xnow = time_in_mill_now();
+#endif
   memset(xb, 0, n);
+#ifdef profiling
+  printf("Time passed for thread %d memset xb with %lf milliseconds\n", omp_get_thread_num(), time_in_mill_now() - xnow);
+#endif
 #pragma omp for schedule(dynamic)
   for (int it = 0; it < m; it += stride) {
     int up = it + stride < m ? it + stride : m;
@@ -146,7 +152,13 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
     }
     double *x = thread_datas[tid].x;
     int *index = thread_datas[tid].index;
+#ifdef profiling
+      double inow = time_in_mill_now();
+#endif
     memset(index, -1, n * sizeof(int));
+#ifdef profiling
+    printf("Time passed for thread %d memset index with %lf milliseconds\n", tid, time_in_mill_now() - inow);
+#endif
 #pragma omp barrier
 #ifdef profiling
       double tnow = time_in_mill_now();
