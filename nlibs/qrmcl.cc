@@ -3,11 +3,16 @@
 #include "tools/util.h"
 #include "gpus/gpu_csr_kernel.h"
 #include "process_args.h"
+#include <omp.h>
 
 void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, const RunOptions runOptions) {
   CSR newMt;
   double tsum = 0.0;
-  const int nthreads = 8;
+  int nthreads = 8;
+#pragma omp parallel
+#pragma omp master
+  nthreads = omp_get_num_threads();
+  printf("nthreads=%d\n", nthreads);
 
   FILE *fp = NULL;
   static const int cpercents[] = {-30.0, -20.0, -5.0, -0.0, 5.0, 20.0, 30.0, 100.0};
