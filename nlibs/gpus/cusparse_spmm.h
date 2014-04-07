@@ -23,9 +23,9 @@ void cusparseXcsrgemmNnzWrapper(const int dIA[], const int dJA[], const int nnzA
         const int dIB[], const int dJB[], const int nnzB,
         const int m, const int k, const int n,
         int* IC, int& nnzC);
-void cusparseDcsrgemmWapper(const int* const dIA, const int dJA[], const double dA[], const int nnzA,
-        const int dIB[], const int dJB[], const double dB[], const int nnzB,
-        const int* dIC, int* dJC, const double* dC, const int nnzC,
+void cusparseDcsrgemmWapper(const int* const dIA, const int dJA[], const Value dA[], const int nnzA,
+        const int dIB[], const int dJB[], const Value dB[], const int nnzB,
+        const int* dIC, int* dJC, const Value* dC, const int nnzC,
         const int m, const int k, const int n);
 CSR cusparseSpMMWrapper(const CSR &dA, const CSR &dB);
 void cusparse_finalize(const char *msg);

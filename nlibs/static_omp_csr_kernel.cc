@@ -72,7 +72,7 @@ void dynamic_omp_CSR_IC_nnzC_footprints(const int IA[], const int JA[],
   int *iJC = (int*)thread_data.index;
   bool *xb = thread_data.xb;
 #ifdef profiling
-    double xnow = time_in_mill_now();
+    Value xnow = time_in_mill_now();
 #endif
   memset(xb, 0, n);
 #ifdef profiling
@@ -94,12 +94,12 @@ void dynamic_omp_CSR_IC_nnzC_footprints(const int IA[], const int JA[],
   }
 }
 
-void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void static_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
 #ifdef profiling
-  double now = time_in_mill_now();
+  Value now = time_in_mill_now();
 #endif
   IC = (int*)malloc((m + 1) * sizeof(int));
   int* footPrints = (int*)malloc((m + 1) * sizeof(int));
@@ -113,7 +113,7 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
     const int tid = omp_get_thread_num();
     const int nthreads = omp_get_num_threads();
 #ifdef profiling
-    double now = time_in_mill_now();
+    Value now = time_in_mill_now();
 #endif
     dynamic_omp_CSR_IC_nnzC_footprints(IA, JA, IB, JB, m, n, thread_datas[tid], IC, nnzC, footPrints, stride);
 #ifdef profiling
@@ -123,7 +123,7 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
 #pragma omp single
     {
 #ifdef profiling
-      double now = time_in_mill_now();
+      Value now = time_in_mill_now();
 #endif
       //spmmFootPrints(IA, JA, IB, IC, m, footPrints);
       arrayEqualPartition(footPrints, m, nthreads, ends);
@@ -141,19 +141,19 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
 #pragma omp master
     {
 #ifdef profiling
-      double mnow = time_in_mill_now();
+      Value mnow = time_in_mill_now();
 #endif
       JC = (int*)malloc(sizeof(int) * nnzC);
-      C = (double*)malloc(sizeof(double) * nnzC);
+      C = (Value*)malloc(sizeof(Value) * nnzC);
 #ifdef profiling
       printf("time passed for malloc JC and C in main thread with %lf milliseconds\n", time_in_mill_now() - mnow);
       now = time_in_mill_now();
 #endif
     }
-    double *x = thread_datas[tid].x;
+    Value *x = thread_datas[tid].x;
     int *index = thread_datas[tid].index;
 #ifdef profiling
-      double inow = time_in_mill_now();
+      Value inow = time_in_mill_now();
 #endif
     memset(index, -1, n * sizeof(int));
 #ifdef profiling
@@ -161,7 +161,7 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
 #endif
 #pragma omp barrier
 #ifdef profiling
-      double tnow = time_in_mill_now();
+      Value tnow = time_in_mill_now();
 #endif
     int low = ends[tid];
     int high = ends[tid + 1];
@@ -181,12 +181,12 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
 #endif
 }
 
-void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void static_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const int stride) {
 #ifdef profiling
-    double now = time_in_mill_now();
+    Value now = time_in_mill_now();
 #endif
     int nthreads = 8;
 #pragma omp parallel
@@ -203,15 +203,15 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const
 #endif
 }
 
-void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
   IC = (int*)malloc((m + 1) * sizeof(int));
   int* rowsNnz = (int*)malloc((m + 1) * sizeof(int));
   int* footPrints = (int*)malloc((m + 1) * sizeof(int));
   static int ends[MAX_THREADS_NUM];
-  double now;
+  Value now;
 #pragma omp parallel firstprivate(stride)
     {
       const int tid = omp_get_thread_num();
@@ -221,7 +221,7 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
 #pragma omp single
       {
 #ifdef profiling
-        double now = time_in_mill_now();
+        Value now = time_in_mill_now();
 #endif
         arrayEqualPartition(footPrints, m, nthreads, ends);
 #ifdef profiling
@@ -237,22 +237,22 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
 #pragma omp master
       {
         JC = (int*)malloc(sizeof(int) * nnzC);
-        C = (double*)malloc(sizeof(double) * nnzC);
+        C = (Value*)malloc(sizeof(Value) * nnzC);
 #ifdef profiling
         now = time_in_mill_now();
 #endif
       }
-      double *x = thread_datas[tid].x;
+      Value *x = thread_datas[tid].x;
       int *index = thread_datas[tid].index;
       memset(index, -1, n * sizeof(int));
 #pragma omp barrier
 #ifdef profiling
-      double tnow = time_in_mill_now();
+      Value tnow = time_in_mill_now();
 #endif
       int low = ends[tid];
       int high = ends[tid + 1];
       for (int i = low; i < high; ++i) {
-        double *cValues = C + IC[i];
+        Value *cValues = C + IC[i];
         int *cColInd = JC + IC[i];
         indexProcessCRowI(index,
             IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
@@ -260,9 +260,9 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
             JC + IC[i], C + IC[i]);
         int count = IC[i + 1] - IC[i];
         arrayInflationR2(cValues, count, cValues);
-        pair<double, double> maxSum = arrayMaxSum(cValues, count);
-        double rmax = maxSum.first, rsum = maxSum.second;
-        double thresh = computeThreshold(rsum / count, rmax);
+        pair<Value, Value> maxSum = arrayMaxSum(cValues, count);
+        Value rmax = maxSum.first, rsum = maxSum.second;
+        Value thresh = computeThreshold(rsum / count, rmax);
         arrayThreshPruneNormalize(thresh, cColInd, cValues,
             &count, cColInd, cValues);
         rowsNnz[i] = count;
@@ -281,12 +281,12 @@ void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
 #endif
 }
 
-void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const int stride) {
 #ifdef profiling
-  double now = time_in_mill_now();
+  Value now = time_in_mill_now();
 #endif
   static_omp_CSR_SpMM(IA, JA, A, nnzA,
       IB, JB, B, nnzB,
@@ -298,13 +298,13 @@ void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A
     const int tid = omp_get_thread_num();
 #pragma omp for schedule(dynamic, stride)
     for (int i = 0; i < m; ++i) {
-        double *cValues = C + IC[i]; //-1 for one based IC index
+        Value *cValues = C + IC[i]; //-1 for one based IC index
         int *cColInd = JC + IC[i];
         int count = IC[i + 1] - IC[i];
         arrayInflationR2(cValues, count, cValues);
-        pair<double, double> maxSum = arrayMaxSum(cValues, count);
-        double rmax = maxSum.first, rsum = maxSum.second;
-        double thresh = computeThreshold(rsum / count, rmax);
+        pair<Value, Value> maxSum = arrayMaxSum(cValues, count);
+        Value rmax = maxSum.first, rsum = maxSum.second;
+        Value thresh = computeThreshold(rsum / count, rmax);
         arrayThreshPruneNormalize(thresh, cColInd, cValues,
             &count, cColInd, cValues);
         rowsNnz[i] = count;

@@ -9,13 +9,18 @@ void mkl_CSR_IC_nnzC(int IA[], int JA[],
   char trans = 'N';
   MKL_INT job = 1, sort = 7, nzmax = 0, ierr = -9;
   int k = m;
+#ifdef FDOUBLE
   mkl_dcsrmultcsr(&trans, &job, &sort, &m, &n, &k, NULL, JA, IA,
       NULL, JB, IB, NULL, NULL, IC, NULL, &ierr);
+#else
+  mkl_scsrmultcsr(&trans, &job, &sort, &m, &n, &k, NULL, JA, IA,
+      NULL, JB, IB, NULL, NULL, IC, NULL, &ierr);
+#endif
 }
 
-void mkl_CSR_SpMM(int IA[], int JA[], double A[],
-    int IB[], int JB[], double B[],
-    int* &IC, int* &JC, double* &C, int& nnzC,
+void mkl_CSR_SpMM(int IA[], int JA[], Value A[],
+    int IB[], int JB[], Value B[],
+    int* &IC, int* &JC, Value* &C, int& nnzC,
     int m, int k, int n) {
   char trans = 'N';
   assert(sizeof(int) == sizeof(MKL_INT));
@@ -26,20 +31,28 @@ void mkl_CSR_SpMM(int IA[], int JA[], double A[],
   nnzC = IC[m] - 1;
   MKL_INT sort = 7, ierr = -9;
   MKL_INT job = 2;
-  C = (double*)malloc(nnzC * sizeof(double));
-  JC = (MKL_INT*)malloc(nnzC * sizeof(MKL_INT));;
+  C = (Value*)malloc(nnzC * sizeof(Value));
+  JC = (MKL_INT*)malloc(nnzC * sizeof(MKL_INT));
+#ifdef FDOUBLE
   mkl_dcsrmultcsr(&trans, &job, &sort, &m, &n, &k,
       A, JA, IA,
       B, JB, IB,
       C, JC, IC,
       &nnzC, &ierr);
+#else
+  mkl_scsrmultcsr(&trans, &job, &sort, &m, &n, &k,
+      A, JA, IA,
+      B, JB, IB,
+      C, JC, IC,
+      &nnzC, &ierr);
+#endif
 }
 
 CSR mkl_spmm(CSR &A, CSR& B) {
   assert(A.cols == B.rows);
   int* IC;
   int* JC;
-  double* C;
+  Value* C;
   int nnzC;
   mkl_CSR_SpMM(A.rowPtr, A.colInd, A.values,
       B.rowPtr, B.colInd, B.values,
@@ -50,15 +63,15 @@ CSR mkl_spmm(CSR &A, CSR& B) {
 }
 
 //Both matrix A, B and C are one based index.
-void mkl_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void mkl_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const int stride) {
 #ifdef profiling
-  double now = time_in_mill_now();
+  Value now = time_in_mill_now();
 #endif
-  mkl_CSR_SpMM(const_cast<int*>(IA), const_cast<int*>(JA), const_cast<double*>(A),
-      const_cast<int*>(IB), const_cast<int*>(JB), const_cast<double*>(B),
+  mkl_CSR_SpMM(const_cast<int*>(IA), const_cast<int*>(JA), const_cast<Value*>(A),
+      const_cast<int*>(IB), const_cast<int*>(JB), const_cast<Value*>(B),
       IC, JC, C, nnzC,
       m, k, n);
 #ifdef profiling
@@ -72,13 +85,13 @@ void mkl_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
     const int tid = omp_get_thread_num();
 #pragma omp for schedule(dynamic, stride)
     for (int i = 0; i < m; ++i) {
-        double *cValues = C + IC[i] - 1; //-1 for one based IC index
+        Value *cValues = C + IC[i] - 1; //-1 for one based IC index
         int *cColInd = JC + IC[i] - 1;
         int count = IC[i + 1] - IC[i];
         arrayInflationR2(cValues, count, cValues);
-        pair<double, double> maxSum = arrayMaxSum(cValues, count);
-        double rmax = maxSum.first, rsum = maxSum.second;
-        double thresh = computeThreshold(rsum / count, rmax);
+        pair<Value, Value> maxSum = arrayMaxSum(cValues, count);
+        Value rmax = maxSum.first, rsum = maxSum.second;
+        Value thresh = computeThreshold(rsum / count, rmax);
         arrayThreshPruneNormalize(thresh, cColInd, cValues,
             &count, cColInd, cValues);
         rowsNnz[i] = count;
@@ -102,7 +115,7 @@ void mkl_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], cons
 #endif
   //tmpC.toOneBasedCSR();
   JC = (int*)realloc(JC, sizeof(int) * nnzC);
-  C = (double*)realloc(C, sizeof(double) * nnzC);
+  C = (Value*)realloc(C, sizeof(Value) * nnzC);
 #ifdef profiling
     std::cout << "time passed mkl_CSR_RMCL_OneStep " << time_in_mill_now() - now << std::endl;
 #endif

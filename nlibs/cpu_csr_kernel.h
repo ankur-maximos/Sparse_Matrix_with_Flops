@@ -10,22 +10,23 @@
 #include <iostream>
 #include "tools/qmalloc.h"
 #include "tools/stats.h"
+#include "tools/macro.h"
 
 const int LEVEL1_DCACHE_LINESIZE = 64;
 struct thread_data_t {
-  double* x;
+  Value* x;
   bool* xb;
   int* index;
   char pad_data[LEVEL1_DCACHE_LINESIZE];
   void init(const int n) {
-    x = (double*)qmalloc(n * sizeof(double) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
+    x = (Value*)qmalloc(n * sizeof(Value) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
     //xb = (bool*)qcalloc(n + LEVEL1_DCACHE_LINESIZE, sizeof(bool), __FUNCTION__, __LINE__);
     xb = (bool*)qmalloc(n + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
     index = (int*)qmalloc(n * sizeof(int) + LEVEL1_DCACHE_LINESIZE, __FUNCTION__, __LINE__);
     //memset(index, -1, n * sizeof(int) + LEVEL1_DCACHE_LINESIZE);
   }
 
-  void init(double *x, bool* xb, int *index) {
+  void init(Value *x, bool* xb, int *index) {
     this->x = x;
     this->xb = xb;
     this->index = index;
@@ -51,17 +52,17 @@ struct thread_data_t {
   }
 };
 
-long long getSpMMFlops(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
+long long getSpMMFlops(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
         const int m, const int k, const int n);
 
 long spmmFootPrints(const int IA[], const int JA[],
     const int IB[], const int IC[],
     const int m, long *footPrintSum);
 
-void sequential_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void sequential_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n);
 
 void sequential_CSR_IC_nnzC(const int IA[], const int JA[],
@@ -69,19 +70,19 @@ void sequential_CSR_IC_nnzC(const int IA[], const int JA[],
         const int m, const int n, bool xb[],
         int* IC, int& nnzC);
 
-void omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const int stride);
 thread_data_t* allocateThreadDatas(int nthreads, int n);
 void freeThreadDatas(thread_data_t* thread_datas, int nthreads);
-void static_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void static_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
-void flops_omp_CSR_SpMM(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void flops_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const int stride);
 void omp_CSR_IC_nnzC(const int IA[], const int JA[],
     const int IB[], const int JB[],
@@ -102,27 +103,27 @@ void static_omp_CSR_IC_nnzC(const int IA[], const int JA[],
 /*void processCRowI(
     //x and xb are used for temp use only and will have the same value when back.
     //xb must be all zeros before calling this functions.
-    double x[], bool* xb,
+    Value x[], bool* xb,
     //IAi and IAi1 are starting and ending postions of A's row i in JA array.
-    const int IAi, const int IAi1, const int JA[], const double A[],
-        const int IB[], const int JB[], const double B[],
-        const int ICi, int* JC, double* C);*/
-int processCRowI(double x[], bool* xb,
-    const int iAnnz, const int iJA[], const double iA[],
-        const int IB[], const int JB[], const double B[],
-        int* iJC, double* iC);
+    const int IAi, const int IAi1, const int JA[], const Value A[],
+        const int IB[], const int JB[], const Value B[],
+        const int ICi, int* JC, Value* C);*/
+int processCRowI(Value x[], bool* xb,
+    const int iAnnz, const int iJA[], const Value iA[],
+        const int IB[], const int JB[], const Value B[],
+        int* iJC, Value* iC);
 
 //inline int indexProcessCRowI(int *restrict index, // index array must be initilized with -1
 #ifdef __CUDACC__
 inline int indexProcessCRowI(int *index,
-    const int iAnnz, const int iJA[], const double iA[],
-    const int IB[], const int JB[], const double B[],
-    int* iJC, double* iC) {
+    const int iAnnz, const int iJA[], const Value iA[],
+    const int IB[], const int JB[], const Value B[],
+    int* iJC, Value* iC) {
 #else
 inline int indexProcessCRowI(int *restrict index,
-    const int iAnnz, const int iJA[], const double iA[],
-    const int IB[], const int JB[], const double B[],
-    int* restrict iJC, double* restrict iC) {
+    const int iAnnz, const int iJA[], const Value iA[],
+    const int IB[], const int JB[], const Value B[],
+    int* restrict iJC, Value* restrict iC) {
 #endif
   if (iAnnz == 0) {
     return 0;
@@ -165,30 +166,30 @@ inline int indexProcessCRowI(int *restrict index,
   return ip;
 }
 
-void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
-void cilk_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void cilk_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
-void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void static_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
-void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void static_fair_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const int stride);
-void hybrid_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void hybrid_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
 inline void matrix_relocation(const int rowsNnz[], const int m,
-        int* &IC, int* &JC, double* &C, int& nnzC) {
+        int* &IC, int* &JC, Value* &C, int& nnzC) {
 #ifdef profiling
-    double rnow = time_in_mill_now();
+    Value rnow = time_in_mill_now();
 #endif
     int top = rowsNnz[0];
     for (int i = 1; i < m; ++i) {
@@ -203,7 +204,7 @@ inline void matrix_relocation(const int rowsNnz[], const int m,
     IC[m] = top;
     nnzC = top;
     JC = (int*)realloc(JC, sizeof(int) * nnzC);
-    C = (double*)realloc(C, sizeof(double) * nnzC);
+    C = (Value*)realloc(C, sizeof(Value) * nnzC);
 #ifdef profiling
     printf("time passed for seq relocate IC, JC and C %lf with nnzC=%d\n", time_in_mill_now() - rnow, nnzC);
 #endif
@@ -211,7 +212,7 @@ inline void matrix_relocation(const int rowsNnz[], const int m,
 
 //This function must be called in OpenMP parallel region
 void omp_matrix_relocation(int rowsNnz[], const int m, const int tid, const int stride,
-        int* &IC, int* &JC, double* &C, int& nnzC);
+        int* &IC, int* &JC, Value* &C, int& nnzC);
 
 inline int cRowiCount(const int i, const int IA[], const int JA[], const int IB[], const int JB[], int iJC[], bool xb[]) {
   if (IA[i] == IA[i + 1]) {

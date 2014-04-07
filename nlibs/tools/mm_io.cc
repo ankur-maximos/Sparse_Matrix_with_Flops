@@ -223,7 +223,7 @@ int mm_read_mtx_array_size ( FILE *f, int *M, int *N )
 /******************************************************************************/
 
 int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J,
-        double **val, MM_typecode *matcode)
+        Value **val, MM_typecode *matcode)
 
 /******************************************************************************/
 /*
@@ -276,14 +276,14 @@ int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J,
 
     if (mm_is_complex(*matcode))
     {
-        *val = (double *) malloc(*nz * 2 * sizeof(double));
+        *val = (Value *) malloc(*nz * 2 * sizeof(Value));
         ret_code = mm_read_mtx_crd_data(f, *M, *N, *nz, *I, *J, *val,
                 *matcode);
         if (ret_code != 0) return ret_code;
     }
     else if (mm_is_real(*matcode))
     {
-        *val = (double *) malloc(*nz * sizeof(double));
+        *val = (Value *) malloc(*nz * sizeof(Value));
         ret_code = mm_read_mtx_crd_data(f, *M, *N, *nz, *I, *J, *val,
                 *matcode);
         if (ret_code != 0) return ret_code;
@@ -302,7 +302,7 @@ int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J,
 /******************************************************************************/
 
 int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
-        double val[], MM_typecode matcode)
+        Value val[], MM_typecode matcode)
 
 /******************************************************************************/
 /*
@@ -327,15 +327,25 @@ int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
     if (mm_is_complex(matcode))
     {
         for (i=0; i<nz; i++)
+#ifdef FDOUBLE
             if (fscanf(f, "%d %d %lg %lg", &I[i], &J[i], &val[2*i], &val[2*i+1])
                 != 4) return MM_PREMATURE_EOF;
+#else
+            if (fscanf(f, "%d %d %g %g", &I[i], &J[i], &val[2*i], &val[2*i+1])
+                != 4) return MM_PREMATURE_EOF;
+#endif
     }
     else if (mm_is_real(matcode))
     {
         for (i=0; i<nz; i++)
         {
+#ifdef FDOUBLE
             if (fscanf(f, "%d %d %lg\n", &I[i], &J[i], &val[i])
                 != 3) return MM_PREMATURE_EOF;
+#else
+            if (fscanf(f, "%d %d %g\n", &I[i], &J[i], &val[i])
+                != 3) return MM_PREMATURE_EOF;
+#endif
 
         }
     }
@@ -355,7 +365,7 @@ int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
 /******************************************************************************/
 
 int mm_read_mtx_crd_entry(FILE *f, int *I, int *J,
-        double *real, double *imag, MM_typecode matcode)
+        Value *real, Value *imag, MM_typecode matcode)
 
 /******************************************************************************/
 /*
@@ -374,14 +384,23 @@ int mm_read_mtx_crd_entry(FILE *f, int *I, int *J,
 {
     if (mm_is_complex(matcode))
     {
+#ifdef FDOUBLE
             if (fscanf(f, "%d %d %lg %lg", I, J, real, imag)
                 != 4) return MM_PREMATURE_EOF;
+#else
+            if (fscanf(f, "%d %d %g %g", I, J, real, imag)
+                != 4) return MM_PREMATURE_EOF;
+#endif
     }
     else if (mm_is_real(matcode))
     {
+#ifdef FDOUBLE
             if (fscanf(f, "%d %d %lg\n", I, J, real)
                 != 3) return MM_PREMATURE_EOF;
-
+#else
+            if (fscanf(f, "%d %d %g\n", I, J, real)
+                != 3) return MM_PREMATURE_EOF;
+#endif
     }
 
     else if (mm_is_pattern(matcode))
@@ -464,7 +483,7 @@ int mm_read_mtx_crd_size(FILE *f, int *M, int *N, int *nz )
 /******************************************************************************/
 
 int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
-                double **val_, int **I_, int **J_)
+                Value **val_, int **I_, int **J_)
 
 /******************************************************************************/
 /*
@@ -481,7 +500,7 @@ int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
     MM_typecode matcode;
     int M, N, nz;
     int i;
-    double *val;
+    Value *val;
     int *I, *J;
 
     if ((f = fopen(fname, "r")) == NULL)
@@ -524,20 +543,24 @@ int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
 */
     I = (int *) malloc(nz * sizeof(int));
     J = (int *) malloc(nz * sizeof(int));
-    val = (double *) malloc(nz * sizeof(double));
+    val = (Value *) malloc(nz * sizeof(Value));
 
     *val_ = val;
     *I_ = I;
     *J_ = J;
 /*
-  NOTE: when reading in doubles, ANSI C requires the use of the "l"
+  NOTE: when reading in Values, ANSI C requires the use of the "l"
   specifier as in "%lg", "%lf", "%le", otherwise errors will occur
   (ANSI C X3.159-1989, Sec. 4.9.6.2, p. 136 lines 13-15)
 */
     int freturn = 0;
     for (i=0; i<nz; i++)
     {
+#ifdef FDOUBLE
         freturn=fscanf(f, "%d %d %lg\n", &I[i], &J[i], &val[i]);
+#else
+        freturn=fscanf(f, "%d %d %g\n", &I[i], &J[i], &val[i]);
+#endif
 /*
   Adjust from 1-based to 0-based.
 */
@@ -700,7 +723,7 @@ int mm_write_mtx_array_size(FILE *f, int M, int N)
 /******************************************************************************/
 
 int mm_write_mtx_crd(char fname[], int M, int N, int nz, int I[], int J[],
-        double val[], MM_typecode matcode)
+        Value val[], MM_typecode matcode)
 
 /******************************************************************************/
 /*

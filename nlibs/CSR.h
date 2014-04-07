@@ -24,7 +24,7 @@ public:
 /*A real or complex array that contains the non-zero elements of a sparse matrix.
  * The non-zero elements are mapped into the values array using the row-major upper
  * triangular storage mapping described above.*/
-	double* values;
+	Value* values;
 
 /*Element i of the integer array columns is the number of the column that
  * contains the i-th element in the values array.*/
@@ -50,7 +50,7 @@ public:
 
  CSR deepCopy();
 
-	CSR(double* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
+	CSR(Value* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
     this->values = values;
     this->colInd = colInd;
     this->rowPtr = rowPtr;
@@ -73,7 +73,7 @@ public:
       for (int i = 0; i < rows; i++) {
         for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
           int col=colInd[j];
-          double val=values[j];
+          Value val=values[j];
           printf("%d\t%d\t%.6lf\n", i, col, val);
         }
       }
@@ -81,7 +81,7 @@ public:
       for (int i = 0; i < rows; i++) {
         for (int j = rowPtr[i] - 1; j < rowPtr[i+1] - 1; j++) {
           int col=colInd[j];
-          double val=values[j];
+          Value val=values[j];
           printf("%d\t%d\t%.6lf\n", i + 1, col, val);
         }
       }
@@ -191,8 +191,8 @@ public:
     }
   }
 
-  inline double rowMax(int rowId) const {
-    double rmax = 0.0;
+  inline Value rowMax(int rowId) const {
+    Value rmax = 0.0;
     for (int i = rowPtr[rowId]; i < rowPtr[rowId + 1]; ++i) {
       if (rmax < values[i]) {
         rmax = values[i];
@@ -201,8 +201,8 @@ public:
     return rmax;
   }
 
-  inline double rowSum(int rowId) const {
-    double sum = 0.0;
+  inline Value rowSum(int rowId) const {
+    Value sum = 0.0;
     for (int i = rowPtr[rowId]; i < rowPtr[rowId + 1]; ++i) {
         sum += values[i];
     }
@@ -219,8 +219,8 @@ public:
   CSR hybridOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
   CSR staticFairRmclOneStep(const CSR &B, const int stride) const;
   CSR cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
-  double differs(const CSR& B) const;
-  vector<int> differsStats(const CSR& B, vector<double> percents) const;
+  Value differs(const CSR& B) const;
+  vector<int> differsStats(const CSR& B, vector<Value> percents) const;
   CSR toGpuCSR() const;
   CSR toCpuCSR() const;
   long long spMMFlops(const CSR& B) const;

@@ -7,7 +7,7 @@
 
 void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, const RunOptions runOptions) {
   CSR newMt;
-  double tsum = 0.0;
+  Value tsum = 0.0;
   int nthreads = 8;
 #pragma omp parallel
 #pragma omp master
@@ -16,20 +16,20 @@ void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, con
 
   FILE *fp = NULL;
   static const int cpercents[] = {-30.0, -20.0, -5.0, -0.0, 5.0, 20.0, 30.0, 100.0};
-  vector<double> percents(cpercents, cpercents + sizeof(cpercents) / sizeof(int));
+  vector<Value> percents(cpercents, cpercents + sizeof(cpercents) / sizeof(int));
   if (options.stats) {
     fp = fopen("percent.stats", "w");
     fprintf(fp, "rows %d\n", Mt.rows);
     arrayOutput("percent\t", fp, percents);
   }
 
-  double nowTotal = time_in_mill_now();
+  Value nowTotal = time_in_mill_now();
   thread_data_t* thread_datas = NULL;
   if (runOptions == SOMP || runOptions == OMP || runOptions == CILK || runOptions == HYB) {
     thread_datas = allocateThreadDatas(nthreads, Mt.cols);
   }
   for (int iter = 0; iter < maxIter; ++iter) {
-    double now = time_in_mill_now();
+    Value now = time_in_mill_now();
 #ifdef debugging
     Mgt.output("Mgt iter");
     Mt.output("Mt iter");
@@ -75,10 +75,10 @@ void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, con
 
 void seqRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
   CSR newMt;
-  double nowTotal = time_in_mill_now();
-  double tsum = 0.0;
+  Value nowTotal = time_in_mill_now();
+  Value tsum = 0.0;
   for (int iter = 0; iter < maxIter; ++iter) {
-  double now = time_in_mill_now();
+  Value now = time_in_mill_now();
     //newMt = Mgt.omp_spmm(Mt);
     newMt = Mgt.spmm(Mt);
     tsum += time_in_mill_now() - now;
@@ -88,15 +88,15 @@ void seqRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
     int i;
     for (i = 0; i < newMt.rows; ++i) {
       int count = newMt.rowCount(i);
-      double* values = (double*)malloc(count * sizeof(double));
+      Value* values = (Value*)malloc(count * sizeof(Value));
       arrayInflationR2(newMt.values + newMt.rowPtr[i], count, values);
-      double rmax = arrayMax(values, count);
-      double rsum = arraySum(values, count);
-      double thresh = computeThreshold(rsum / count, rmax);
+      Value rmax = arrayMax(values, count);
+      Value rsum = arraySum(values, count);
+      Value thresh = computeThreshold(rsum / count, rmax);
       int* indices = (int*)malloc(count * sizeof(int));
-      double nsum = arrayThreshPruneNormalize(thresh, newMt.colInd + newMt.rowPtr[i], values,
+      Value nsum = arrayThreshPruneNormalize(thresh, newMt.colInd + newMt.rowPtr[i], values,
           &count, indices, values);
-      memcpy(newMt.values + pos, values, count * sizeof(double));
+      memcpy(newMt.values + pos, values, count * sizeof(Value));
       memcpy(newMt.colInd + pos, indices, count * sizeof(int));
       newMt.rowPtr[i] = pos;
       pos += count;
@@ -135,7 +135,7 @@ CSR RMCL(const char iname[], int maxIters, RunOptions runOptions) {
     Mgt.toOneBasedCSR();
   }
   //Mt.output("CSR Mgt");
-  double now = time_in_mill_now();
+  Value now = time_in_mill_now();
   if (runOptions == GPU) {
 #ifdef enable_GPU
     gpuRmclIter(maxIters, Mgt, Mt);

@@ -1,8 +1,8 @@
 #ifndef KEY_VALUE_QSORT_
 #define KEY_VALUE_QSORT_
 
-template <typename Key, typename Value>
-void key_value_qsort (Key *keys, Value *values, int n) {
+template <typename sKey, typename sValue>
+void key_value_qsort (sKey *keys, sValue *values, int n) {
   if (n < 2)
     return;
   int p = keys[n >> 1];
@@ -14,9 +14,9 @@ void key_value_qsort (Key *keys, Value *values, int n) {
     } else if (*r > p) {
       r--;
     } else {
-      Value *vl = values + (l - keys);
-      Value *vr = values + (r - keys);
-      Value vt = *vl; *vl = *vr; *vr = vt;
+      sValue *vl = values + (l - keys);
+      sValue *vr = values + (r - keys);
+      sValue vt = *vl; *vl = *vr; *vr = vt;
       int t = *l; *l++ = *r; *r-- = t;
     }
   }

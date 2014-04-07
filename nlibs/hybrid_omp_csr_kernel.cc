@@ -4,18 +4,18 @@
 #include "tools/util.h"
 #include "cpu_csr_kernel.h"
 
-void hybrid_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[], const int nnzA,
-        const int IB[], const int JB[], const double B[], const int nnzB,
-        int* &IC, int* &JC, double* &C, int& nnzC,
+void hybrid_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
   IC = (int*)malloc((m + 1) * sizeof(int));
   int* rowsNnz = (int*)malloc((m + 1) * sizeof(int));
   int* footPrints = (int*)malloc((m + 1) * sizeof(int));
   static int ends[65];
-  static double diffs = 1.1;
-  const double alpha = 0.008;
+  static Value diffs = 1.1;
+  const Value alpha = 0.008;
   //static int pnnzB = -1;
-  double now;
+  Value now;
 #pragma omp parallel firstprivate(stride)
     {
       const int tid = omp_get_thread_num();
@@ -35,16 +35,16 @@ void hybrid_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
 #pragma omp master
       {
         JC = (int*)malloc(sizeof(int) * nnzC);
-        C = (double*)malloc(sizeof(double) * nnzC);
+        C = (Value*)malloc(sizeof(Value) * nnzC);
       }
-      double *x = thread_datas[tid].x;
+      Value *x = thread_datas[tid].x;
       int *index = thread_datas[tid].index;
       memset(index, -1, n * sizeof(int));
 #pragma omp barrier
       int low = ends[tid];
       int high = ends[tid + 1];
       for (int i = low; i < high; ++i) {
-        double *cValues = C + IC[i];
+        Value *cValues = C + IC[i];
         int *cColInd = JC + IC[i];
         indexProcessCRowI(index,
             IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
@@ -52,9 +52,9 @@ void hybrid_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
             JC + IC[i], C + IC[i]);
         int count = IC[i + 1] - IC[i];
         arrayInflationR2(cValues, count, cValues);
-        pair<double, double> maxSum = arrayMaxSum(cValues, count);
-        double rmax = maxSum.first, rsum = maxSum.second;
-        double thresh = computeThreshold(rsum / count, rmax);
+        pair<Value, Value> maxSum = arrayMaxSum(cValues, count);
+        Value rmax = maxSum.first, rsum = maxSum.second;
+        Value thresh = computeThreshold(rsum / count, rmax);
         arrayThreshPruneNormalize(thresh, cColInd, cValues,
             &count, cColInd, cValues);
         rowsNnz[i] = count;
@@ -65,11 +65,11 @@ void hybrid_omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const double A[
     matrix_relocation(rowsNnz, m, IC, JC, C, nnzC);
     free(rowsNnz);
     if (diffs > alpha) {
-      diffs = fabs((double)nnzB - nnzC) / nnzB;
+      diffs = fabs((Value)nnzB - nnzC) / nnzB;
     } else {
-      diffs += fabs((double)nnzB - nnzC) / nnzB;
+      diffs += fabs((Value)nnzB - nnzC) / nnzB;
     }
     printf("nnzB=%d top=%d diffs=%lf", nnzB, nnzC, diffs * 100);
-    //printf("Compression ratio = %lf\n", (double)IC[m] / top);
+    //printf("Compression ratio = %lf\n", (Value)IC[m] / top);
     //printf("nnzB=%d pnnzB=%d top=%d diffs=%lf", nnzB, pnnzB, top, diffs * 100);
 }
