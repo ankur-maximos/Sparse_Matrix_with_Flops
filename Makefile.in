@@ -2,6 +2,7 @@
 #CC = cc
 hasGPU=0
 hasMIC=2
+hasPAPI=1
 CC = icpc
 NVCC = nvcc
 
@@ -24,7 +25,7 @@ GPERF_LDFLAGS=$(GPERF_HOME)/lib/libprofiler.a $(GPERF_HOME)/lib/libtcmalloc.a
 
 # What optimization level to use
 #OPTFLAGS = -fast -openmp
-OPTFLAGS = -O0 -openmp -vec-report1 -restrict -Dprofiling
+#OPTFLAGS = -O0 -openmp -vec-report1 -restrict -Dprofiling -pthreads
 OPTFLAGS = -O3 -openmp -vec-report1 -restrict #-Dprofiling #-DAGGR
 
 LIBDIR=nlibs
@@ -56,6 +57,11 @@ endif
 ifeq ($(hasMIC), 2)
 OPTFLAGS+=-mmic
 LDOPTIONS+=-mmic
+endif
+ifeq ($(hasPAPI), 1)
+PAPI_HOME=$(shell cd "$(shell dirname `which papi_version`)/.." && pwd)
+OPTFLAGS+=-I$(PAPI_HOME)/include
+LDOPTIONS+=$(PAPI_HOME)/lib/libpapi.a
 endif
 
 # What to use for indexing the archive
