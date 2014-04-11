@@ -48,15 +48,19 @@ public:
     this->nnz = 0;
 	}
 
- CSR deepCopy();
+  CSR deepCopy();
 
-	CSR(Value* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
+	void init(Value* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
     this->values = values;
     this->colInd = colInd;
     this->rowPtr = rowPtr;
     this->rows = rows;
     this->cols = cols;
     this->nnz = nnz;
+  }
+
+	CSR(Value* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
+    init(values, colInd, rowPtr, rows, cols, nnz);
 	}
 
   void averAndNormRowValue();
