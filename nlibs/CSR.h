@@ -92,6 +92,17 @@ public:
     }
   }
 
+  void coloffset_output(const char* msg, int colOffset) const {
+    printf("%s\n", msg);
+    for (int i = 0; i < rows; i++) {
+      for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
+        int col = colInd[j] + colOffset;
+        Value val = values[j];
+        printf("%d\t%d\t%.6lf\n", i, col, val);
+      }
+    }
+  }
+
   void output_int(const char* msg) const {
     printf("%s\n", msg);
     for (int i = 0; i < rows; i++) {
