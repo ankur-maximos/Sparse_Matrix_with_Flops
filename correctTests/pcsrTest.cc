@@ -30,10 +30,11 @@ int main(int argc, char *argv[]) {
   //A.output("CSR A");
   CSR B = A.deepCopy();
   CSR C = A.omp_spmm(B, options.stride);
+  //C.output("CSR C");
   PCSR pB(B, 2);
   B.dispose();
   PCSR pC = spmm(A, pB, options.stride);
-  //pB.output("PCSR A");
+  //pC.output("PCSR C");
   pC.dispose();
   const int up = 10;
   double sum = 0.0;

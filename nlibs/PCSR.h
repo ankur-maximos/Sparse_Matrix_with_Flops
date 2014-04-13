@@ -79,18 +79,18 @@ public:
       }
       for (int b = 0; b < c; ++b) {
         for (int j = blocks[b].rowPtr[i]; j < blocks[b].rowPtr[i + 1]; ++j) {
-          int col = blocks[b].colInd[j];
-          int val = blocks[b].colInd[j];
+          int col = blocks[b].colInd[j] + b * stride();
+          Value val = blocks[b].values[j];
           rowVals[col] = val;
         }
       }
       for (int j = B.rowPtr[i]; j < B.rowPtr[i + 1]; ++j) {
-        if (fabs(rowVals[i] - B.values[j]) > 1e7) {
-          printf("values[%d] %lf\t%lf\n", i, rowVals[i], B.values[i]);
+        int col = B.colInd[j];
+        if (fabs(rowVals[col] - B.values[j]) > 1e-7) {
+          printf("values[%d, %d] %lf\t%lf\n", i, col, rowVals[i], B.values[i]);
           flag = false;
           break;
         } else {
-          int col = B.colInd[j];
           rowVals[col] = 0.0;
         }
       }
