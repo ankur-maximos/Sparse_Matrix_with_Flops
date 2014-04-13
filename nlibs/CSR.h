@@ -149,7 +149,6 @@ public:
   void makeOrdered();
   void matrixRowReorder(const int* ranks) const;
 
-  //Both CSR should be called makeOrdered before call isEqual
   bool isEqual(const CSR &B) const {
     bool flag = true;
     if (rows != B.rows) {
@@ -180,14 +179,25 @@ public:
         break;
       }
     }
-
-    for (int i = 0; i < nnz; ++i) {
-      if (fabs(values[i] - B.values[i]) > 1e7) {
-        printf("values[%d] %lf\t%lf\n", i, values[i], B.values[i]);
-        flag = false;
-        break;
+    double* rowVals = (double*)malloc(cols * sizeof(double));
+    memset(rowVals, 0, cols * sizeof(double));
+    for (int i = 0; i < rows && flag != false; ++i) {
+      for (int j = rowPtr[i]; j < rowPtr[i + 1]; ++j) {
+        int col = colInd[j];
+        rowVals[col] = values[j];
+      }
+      for (int j = B.rowPtr[i]; j < B.rowPtr[i + 1]; ++j) {
+        int col = B.colInd[j];
+        if (fabs(rowVals[col] - B.values[j]) > 1e-7) {
+          printf("values[%d] %lf\t%lf\n", i, rowVals[i], B.values[i]);
+          flag = false;
+          break;
+        } else {
+          rowVals[col] = 0.0;
+        }
       }
     }
+    free(rowVals);
     return flag;
   }
 
