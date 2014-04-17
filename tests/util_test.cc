@@ -29,8 +29,7 @@ void arrayInflationR2Test() {
 }
 
 void randomPermutationVectorTest() {
-  int* P = NULL;
-  randomPermutationVector(P, 5);
+  int* P = randomPermutationVector(5);
   arrayOutput("P5=", stdout, P, 5);
 }
 
