@@ -189,7 +189,7 @@ public:
       for (int j = B.rowPtr[i]; j < B.rowPtr[i + 1]; ++j) {
         int col = B.colInd[j];
         if (fabs(rowVals[col] - B.values[j]) > 1e-7) {
-          printf("values[%d] %lf\t%lf\n", i, rowVals[i], B.values[i]);
+          printf("values[%d] %lf\t%lf\n", i, rowVals[col], B.values[j]);
           flag = false;
           break;
         } else {
@@ -199,6 +199,42 @@ public:
     }
     free(rowVals);
     return flag;
+  }
+
+  //RawEqual: The elements in A or B is not promising nonzero so that the number of nonzero
+  //is not guaranteed equal.
+  bool isRawEqual(const CSR &B) const {
+    bool flag = true;
+    if (rows != B.rows) {
+      printf("rows = %d\tB_rows = %d\n", rows, B.rows);
+      flag = false;
+    }
+    if (cols != B.cols) {
+      printf("cols = %d\tB_cols = %d\n", cols, B.cols);
+      flag = false;
+    }
+    double* rowVals = (double*)malloc(cols * sizeof(double));
+    memset(rowVals, 0, cols * sizeof(double));
+    for (int i = 0; i < rows && flag != false; ++i) {
+      for (int j = rowPtr[i]; j < rowPtr[i + 1]; ++j) {
+        int col = colInd[j];
+        if (fabs(values[j]) > 1e-8) {
+          rowVals[col] = values[j];
+        }
+      }
+      for (int j = B.rowPtr[i]; j < B.rowPtr[i + 1]; ++j) {
+        int col = B.colInd[j];
+        if (fabs(rowVals[col] - B.values[j]) > 1e-8) {
+          printf("values[%d, %d] %lf\t%lf\n", i, col, rowVals[col], B.values[j]);
+          flag = false;
+          break;
+        } else {
+          rowVals[col] = 0.0;
+        }
+      }
+      free(rowVals);
+      return flag;
+    }
   }
 
   void dispose() {
