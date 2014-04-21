@@ -1,11 +1,13 @@
 #include "BCSR.h"
 
-BCSR::BCSR(const CSR &csr, const int c, const int r) {
+BCSR::BCSR(const CSR &csr, const int r, const int c) {
     rows = csr.rows; brows = (rows + r - 1) / r;
     cols = csr.cols; bcols = (cols + c - 1) / c;
     this->r = r; this->c = c;
+    assert(csr.nnz == csr.rowPtr[rows]);
+    nnz = csr.nnz;
     bool* xb = (bool*)malloc(sizeof(int) * bcols);
-    memset(xb, 0, brows);
+    memset(xb, 0, bcols);
     int* iJC = (int*)malloc(sizeof(int) * bcols);
     int nnzb = 0;
     rowPtr = (int*)malloc((brows + 1) * sizeof(int));
@@ -29,7 +31,7 @@ BCSR::BCSR(const CSR &csr, const int c, const int r) {
       nnzb += top;
       rowPtr[it / r + 1] = nnzb;
     }
-    values = (Value*)malloc(nnzb * sizeof(Value) * r * c);
+    values = (Value*)_mm_malloc(nnzb * sizeof(Value) * r * c, 4096);
     memset(values, 0, nnzb * sizeof(Value) * r * c);
     colInd = (int*)malloc(nnzb * sizeof(int));
     memset(colInd, -1, nnzb * sizeof(int));

@@ -7,6 +7,7 @@ struct BCSR {
   int r, c;
   int rows, cols;
   int brows, bcols;
+  int nnz;
 
 	Value* values;
 	int* colInd;
@@ -22,6 +23,7 @@ struct BCSR {
     values = NULL;
     colInd = NULL;
     rowPtr = NULL;
+    nnz = 0;
   }
 
   void output(const char* msg, bool isZeroBased = true) const {
@@ -48,11 +50,16 @@ struct BCSR {
   }
 
   void dispose() {
-    free(values);
+    //free(values);
+    _mm_free(values);
     free(colInd);
     free(rowPtr);
   }
 
   bool isEqual(const CSR &B) const;
+
+  double nonzeroDensity() const {
+    return (double)nnz / (rowPtr[brows] * r * c) * 100.0;
+  }
 };
 #endif
