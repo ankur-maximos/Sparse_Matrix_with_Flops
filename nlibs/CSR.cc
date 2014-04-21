@@ -179,7 +179,7 @@ Value CSR::differs(const CSR& B) const {
 }
 
 vector<int> CSR::nnzStats() const {
-  std::vector<int> stats(13, 0);
+  std::vector<int> stats(18, 0);
   for (int i = 0; i < rows; ++i) {
     long stat = rowPtr[i + 1] - rowPtr[i];
     pushToStats(rowPtr[i + 1] - rowPtr[i], stats);
