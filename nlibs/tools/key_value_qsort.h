@@ -1,17 +1,23 @@
 #ifndef KEY_VALUE_QSORT_
 #define KEY_VALUE_QSORT_
 
+template <typename sKey>
+bool lessThanFunction(const sKey &a, const sKey &b) {
+  return a < b;
+}
+
 template <typename sKey, typename sValue>
-void key_value_qsort (sKey *keys, sValue *values, int n) {
+void key_value_qsort (sKey *keys, sValue *values, long n,
+    bool (*lessThan)(const sKey &a, const sKey &b)) {
   if (n < 2)
     return;
   int p = keys[n >> 1];
-  int *l = keys;
-  int *r = keys + n - 1;
+  sKey *l = keys;
+  sKey *r = keys + n - 1;
   while (l <= r) {
-    if (*l < p) {
+    if (lessThan(*l, p)) {
       l++;
-    } else if (*r > p) {
+    } else if (lessThan(p, *r)) {
       r--;
     } else {
       sValue *vl = values + (l - keys);
@@ -20,7 +26,13 @@ void key_value_qsort (sKey *keys, sValue *values, int n) {
       int t = *l; *l++ = *r; *r-- = t;
     }
   }
-  key_value_qsort(keys, values, r - keys + 1);
-  key_value_qsort(l, values + (l - keys), keys + n - l);
+  key_value_qsort<sKey, sValue>(keys, values, r - keys + 1, lessThan);
+  key_value_qsort<sKey, sValue>(l, values + (l - keys), keys + n - l, lessThan);
+}
+
+template <typename sKey, typename sValue>
+void key_value_qsort(sKey *keys, sValue *values, long n) {
+  bool (*functionPointer)(const sKey &, const sKey &) = &(lessThanFunction<sKey>);
+  key_value_qsort<sKey, sValue>(keys, values, n, functionPointer);
 }
 #endif
