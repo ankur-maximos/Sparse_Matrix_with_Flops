@@ -414,3 +414,16 @@ CSR CSR::PtMP(const int P[]) const {
   free(Pt);
   return ptMP;
 }
+
+int* CSR::rowDescendingOrderPermutation() {
+  int* rowNnzs = (int*)malloc(rows * sizeof(int));
+  int* permu = (int*)malloc(rows * sizeof(int));
+  for (int i = 0; i < rows; ++i) {
+    rowNnzs[i] = rowPtr[i + 1] - rowPtr[i];
+    permu[i] = i;
+  }
+  key_value_qsort(rowNnzs, permu, rows, &(greaterThanFunction<int>));
+  free(rowNnzs);
+  return permu;
+}
+
