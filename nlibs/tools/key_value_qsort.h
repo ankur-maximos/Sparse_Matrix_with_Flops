@@ -2,6 +2,11 @@
 #define KEY_VALUE_QSORT_
 
 template <typename sKey>
+bool greaterThanFunction(const sKey &a, const sKey &b) {
+  return a > b;
+}
+
+template <typename sKey>
 bool lessThanFunction(const sKey &a, const sKey &b) {
   return a < b;
 }

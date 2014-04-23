@@ -16,11 +16,6 @@ void testDefault() {
   printf("passed key_value_qsort default compare function test\n");
 }
 
-template <typename sKey>
-bool greaterThanFunction(const sKey &a, const sKey &b) {
-  return a > b;
-}
-
 void testGreaterSort() {
   int keys[] = {2, 5, 9, 10, 1, 8};
   double values[] = {3, 6, 9, 10, 11, 8};
