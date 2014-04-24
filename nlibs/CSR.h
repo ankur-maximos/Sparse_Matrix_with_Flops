@@ -51,6 +51,36 @@ public:
 
   CSR deepCopy();
 
+  void initWithDenseMatrix(const Value* dvalues, const int rows, const int cols) {
+    this->rows = rows; this->cols = cols;
+    rowPtr = (int*)malloc((rows + 1) * sizeof(int));
+    rowPtr[0] = 0;
+    nnz = 0;
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        Value val = dvalues[i * cols + j];
+        if (val < 1e-8) {
+          continue;
+        }
+        ++nnz;
+      }
+      rowPtr[i + 1] = nnz;
+    }
+    colInd = (int*)malloc(nnz * sizeof(int));
+    values = (Value*)malloc(nnz * sizeof(Value));
+    int top = 0;
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        Value val = dvalues[i * cols + j];
+        if (val < 1e-8) {
+          continue;
+        }
+        colInd[top] = j;
+        values[top++] = val;
+      }
+    }
+  }
+
 	void init(Value* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
     this->values = values;
     this->colInd = colInd;
