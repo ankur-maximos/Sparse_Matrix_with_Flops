@@ -5,8 +5,8 @@
 
 struct BCSR {
   int r, c;
-  int rows, cols;
-  int brows, bcols;
+  int m, n;
+  int bm, bn;
   int nnz;
 
 	Value* values;
@@ -14,12 +14,12 @@ struct BCSR {
 	int* rowPtr;
   BCSR(const CSR &csr, const int c, const int r);
 
-  BCSR(int rows, int cols, int r, int c) {
-    this->rows = rows;
-    this->cols = cols;
+  BCSR(int m, int n, int r, int c) {
+    this->m = m;
+    this->n = n;
     this->r = r; this->c = c;
-    brows = (rows + r - 1) / r;
-    bcols = (cols + c - 1) / c;
+    bm = (m + r - 1) / r;
+    bn = (n + c - 1) / c;
     values = NULL;
     colInd = NULL;
     rowPtr = NULL;
@@ -28,11 +28,11 @@ struct BCSR {
 
   void output(const char* msg, bool isZeroBased = true) const {
     printf("%s\n", msg);
-    arrayOutput("rowPtr", stdout, rowPtr, brows + 1);
-    int nnzb = rowPtr[brows];
+    arrayOutput("rowPtr", stdout, rowPtr, bm + 1);
+    int nnzb = rowPtr[bm];
     arrayOutput("colInd", stdout, colInd, nnzb);
     arrayOutput("values", stdout, values, nnzb * r * c);
-    for (int bi = 0; bi < brows; ++bi) {
+    for (int bi = 0; bi < bm; ++bi) {
       for (int bj = rowPtr[bi]; bj < rowPtr[bi + 1]; bj++) {
         int bcol = colInd[bj];
         printf("%d\t%d\n", bi, bcol);
@@ -59,7 +59,7 @@ struct BCSR {
   bool isEqual(const CSR &B) const;
 
   double nonzeroDensity() const {
-    return (double)nnz / (rowPtr[brows] * r * c) * 100.0;
+    return (double)nnz / (rowPtr[bm] * r * c) * 100.0;
   }
 };
 #endif
