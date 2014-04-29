@@ -16,13 +16,15 @@ int process_args(int argc, char **argv) {
       {"maxIters",  required_argument, 0, 'm'},
       {"stride",  required_argument, 0, 'd'},
       {"stats", no_argument, 0, 's'},
+      {"br",  required_argument, 0, 'x'},
+      {"bc",  required_argument, 0, 'y'},
       {"help",   no_argument, 0, 'h'},
       {0, 0, 0, 0}
     };
     /* getopt_long stores the option index here. */
     int option_index = 0;
 
-    c = getopt_long (argc, argv, "cr:i:m:sh",
+    c = getopt_long (argc, argv, "cr:i:m:sx:y:h",
         long_options, &option_index);
     /* Detect the end of the options. */
     if (c == -1)
@@ -57,6 +59,12 @@ int process_args(int argc, char **argv) {
         break;
       case 'd':
         options.stride = atol(optarg);
+        break;
+      case 'x':
+        options.br= atol(optarg);
+        break;
+      case 'y':
+        options.bc= atol(optarg);
         break;
       case 'h':
         break;

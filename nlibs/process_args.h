@@ -17,6 +17,7 @@ struct Options {
   bool stats = false;
   int stride = 512;
   RunOptions rmclOption;
+  int br = 2, bc = 8;
 };
 
 extern Options options;
