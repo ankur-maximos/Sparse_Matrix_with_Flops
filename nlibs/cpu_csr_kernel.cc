@@ -50,7 +50,7 @@ long long getSpMMFlops(const int IA[], const int JA[], const Value A[], const in
     if(row_flops > 2) printf("rowid=%d : %ld row_nnz=%d\n", i, row_flops, IA[i + 1] - IA[i]);
 #endif
   }
-  return flops;
+  return flops * 2;
 }
 
 void sequential_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
