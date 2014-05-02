@@ -100,6 +100,20 @@ CSR CSR::deepCopy() {
   return B;
 }
 
+CSR CSR::somp_spmm(const CSR& B, const int stride) const {
+  assert(this->cols == B.rows);
+  int* IC;
+  int* JC;
+  Value* C;
+  int nnzC;
+  static_omp_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz,
+      IC, JC, C, nnzC,
+      this->rows, this->cols, B.cols, stride);
+  CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
+  return csr;
+}
+
 CSR CSR::omp_spmm(const CSR& B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
@@ -114,7 +128,7 @@ CSR CSR::omp_spmm(const CSR& B, const int stride) const {
   return csr;
 }
 
-CSR CSR::omp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride) const {
+CSR CSR::somp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
@@ -128,6 +142,34 @@ CSR CSR::omp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride) c
       B.rowPtr, B.colInd, B.values, B.nnz,
       IC, JC, C, nnzC,
       this->rows, this->cols, B.cols, thread_datas, stride);
+  CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
+  return csr;
+}
+
+CSR CSR::omp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride) const {
+  assert(this->cols == B.rows);
+  int* IC;
+  int* JC;
+  Value* C;
+  int nnzC;
+  omp_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz,
+      IC, JC, C, nnzC,
+      this->rows, this->cols, B.cols, thread_datas, stride);
+  CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
+  return csr;
+}
+
+CSR CSR::noindex_somp_spmm(const CSR& B, const int stride) const {
+  assert(this->cols == B.rows);
+  int* IC;
+  int* JC;
+  Value* C;
+  int nnzC;
+  noindex_somp_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
+      B.rowPtr, B.colInd, B.values, B.nnz,
+      IC, JC, C, nnzC,
+      this->rows, this->cols, B.cols, stride);
   CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
   return csr;
 }

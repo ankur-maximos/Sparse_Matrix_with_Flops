@@ -74,8 +74,20 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnz
         const int IB[], const int JB[], const Value B[], const int nnzB,
         int* &IC, int* &JC, Value* &C, int& nnzC,
         const int m, const int k, const int n, const int stride);
+void omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
+        const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride);
+void noindex_somp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
+        const int m, const int k, const int n, const int stride);
 thread_data_t* allocateThreadDatas(int nthreads, int n);
 void freeThreadDatas(thread_data_t* thread_datas, int nthreads);
+void static_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
+        const int m, const int k, const int n, const int stride);
 void static_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
         const int IB[], const int JB[], const Value B[], const int nnzB,
         int* &IC, int* &JC, Value* &C, int& nnzC,

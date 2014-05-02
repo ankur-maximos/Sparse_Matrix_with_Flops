@@ -304,13 +304,72 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnz
 #pragma omp master
     nthreads = omp_get_num_threads();
     thread_data_t* thread_datas = allocateThreadDatas(nthreads, n);
-    static_omp_CSR_SpMM(IA, JA, A, nnzA,
-    //omp_CSR_SpMM(IA, JA, A, nnzA,
+    omp_CSR_SpMM(IA, JA, A, nnzA,
         IB, JB, B, nnzB,
         IC, JC, C, nnzC,
         m, k, n, thread_datas, stride);
     freeThreadDatas(thread_datas, nthreads);
 #ifdef profiling
     std::cout << "time passed for omp_CSR_SpMM total " <<  time_in_mill_now() - now << std::endl;
+#endif
+}
+
+void noindex_somp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
+        const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
+  IC = (int*)malloc((m + 1) * sizeof(int));
+  int* footPrints = (int*)malloc((m + 1) * sizeof(int));
+  static int ends[MAX_THREADS_NUM];
+#pragma omp parallel firstprivate(stride)
+  {
+    const int tid = omp_get_thread_num();
+    const int nthreads = omp_get_num_threads();
+    dynamic_omp_CSR_IC_nnzC_footprints(IA, JA, IB, JB, m, n, thread_datas[tid], IC, nnzC, footPrints, stride);
+#pragma omp barrier
+#pragma omp single
+    {
+      arrayEqualPartition(footPrints, m, nthreads, ends);
+    }
+#pragma omp master
+    {
+      JC = (int*)malloc(sizeof(int) * nnzC);
+      C = (Value*)malloc(sizeof(Value) * nnzC);
+    }
+    Value *x = thread_datas[tid].x;
+    bool *xb = (bool*)thread_datas[tid].index;
+    memset(xb, 0, n * sizeof(bool));
+#pragma omp barrier
+    int low = ends[tid];
+    int high = ends[tid + 1];
+    for (int i = low; i < high; ++i) {
+      processCRowI(x, xb,
+          IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
+          IB, JB, B,
+          JC + IC[i], C + IC[i]);
+    }
+  }
+  free(footPrints);
+}
+
+void noindex_somp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
+        const int IB[], const int JB[], const Value B[], const int nnzB,
+        int* &IC, int* &JC, Value* &C, int& nnzC,
+        const int m, const int k, const int n, const int stride) {
+#ifdef profiling
+    Value now = time_in_mill_now();
+#endif
+    int nthreads = 8;
+#pragma omp parallel
+#pragma omp master
+    nthreads = omp_get_num_threads();
+    thread_data_t* thread_datas = allocateThreadDatas(nthreads, n);
+    noindex_somp_CSR_SpMM(IA, JA, A, nnzA,
+        IB, JB, B, nnzB,
+        IC, JC, C, nnzC,
+        m, k, n, thread_datas, stride);
+    freeThreadDatas(thread_datas, nthreads);
+#ifdef profiling
+    std::cout << "time passed for static_omp_CSR_SpMM total " << time_in_mill_now() - now << std::endl;
 #endif
 }

@@ -102,6 +102,9 @@ public:
   CSR flops_spmm(const CSR& B, const int stride = 512) const;
   CSR omp_spmm(const CSR& B, const int stride = 512) const;
   CSR omp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride = 512) const;
+  CSR somp_spmm(const CSR& B, const int stride = 512) const;
+  CSR somp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride = 512) const;
+  CSR noindex_somp_spmm(const CSR& B, const int stride = 512) const;
   void output(const char* msg, bool isZeroBased = true) const {
     printf("%s\n", msg);
     if (isZeroBased) {
