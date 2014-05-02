@@ -1,5 +1,6 @@
 #include "CSR.h"
 #include "COO.h"
+#include "tools/util.h"
 
 void CSR_PM_Test() {
   int rows = 4, cols = 4, nnz = 5;
@@ -61,6 +62,30 @@ void CSR_MP_Test() {
   printf("%s Passed\n", __func__);
 }
 
+void CSR_initWithDenseMatrixTest() {
+  const Value dMM[] = {
+    1, 2, 0, 0, 0, 0,
+    0, 0, 3, 0, 0, 0,
+    0, 4, 0, 0, 0, 5,
+    0, 0, 0, 0, 2, 0,
+    3, 0, 0, 1, 0, 8
+  };
+  const int rows = 5, cols = 6;
+  CSR A;
+  A.initWithDenseMatrix(dMM, rows, cols);
+  const int rowPtr[] = {0, 2, 3, 5, 6, 9};
+  const int colInd[] = {0, 1, 2, 1, 5, 4, 0, 3, 5};
+  const Value values[] = {1, 2, 3, 4, 5, 2, 3, 1, 8};
+  for (int i = 0; i < rows + 1; ++i) {
+    assert(rowPtr[i] == A.rowPtr[i]);
+  }
+  for (int j = 0; j < A.nnz; ++j) {
+    assert(colInd[j] == A.colInd[j]);
+    assert(fabs(values[j] - A.values[j]) < 1e-8);
+  }
+  printf("%s Passed\n", __func__);
+}
+
 int main() {
   int rows = 4, cols = 4, nnz = 5;
   const int rowIndex[] = {0, 1, 2, 3, 3};
@@ -72,5 +97,6 @@ int main() {
   csr.output("csr");
   CSR_PM_Test();
   CSR_MP_Test();
+  CSR_initWithDenseMatrixTest();
   return 0;
 }
