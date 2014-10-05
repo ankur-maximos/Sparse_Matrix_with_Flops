@@ -25,7 +25,7 @@ public:
 /*A real or complex array that contains the non-zero elements of a sparse matrix.
  * The non-zero elements are mapped into the values array using the row-major upper
  * triangular storage mapping described above.*/
-	Value* values;
+	QValue* values;
 
 /*Element i of the integer array columns is the number of the column that
  * contains the i-th element in the values array.*/
@@ -51,14 +51,14 @@ public:
 
   CSR deepCopy();
 
-  void initWithDenseMatrix(const Value* dvalues, const int rows, const int cols) {
+  void initWithDenseMatrix(const QValue* dvalues, const int rows, const int cols) {
     this->rows = rows; this->cols = cols;
     rowPtr = (int*)malloc((rows + 1) * sizeof(int));
     rowPtr[0] = 0;
     nnz = 0;
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
-        Value val = dvalues[i * cols + j];
+        QValue val = dvalues[i * cols + j];
         if (val < 1e-8) {
           continue;
         }
@@ -67,11 +67,11 @@ public:
       rowPtr[i + 1] = nnz;
     }
     colInd = (int*)malloc(nnz * sizeof(int));
-    values = (Value*)malloc(nnz * sizeof(Value));
+    values = (QValue*)malloc(nnz * sizeof(QValue));
     int top = 0;
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
-        Value val = dvalues[i * cols + j];
+        QValue val = dvalues[i * cols + j];
         if (val < 1e-8) {
           continue;
         }
@@ -81,7 +81,7 @@ public:
     }
   }
 
-	void init(Value* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
+	void init(QValue* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
     this->values = values;
     this->colInd = colInd;
     this->rowPtr = rowPtr;
@@ -90,11 +90,11 @@ public:
     this->nnz = nnz;
   }
 
-	CSR(Value* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
+	CSR(QValue* values, int* colInd, int* rowPtr, int rows, int cols, int nnz) {
     init(values, colInd, rowPtr, rows, cols, nnz);
 	}
 
-  void averAndNormRowValue();
+  void averAndNormRowQValue();
   long spmmFlops(const CSR& B) const;
   std::vector<int> multiFlopsStats(const CSR& B) const;
   vector<int> nnzStats() const;
@@ -111,7 +111,7 @@ public:
       for (int i = 0; i < rows; i++) {
         for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
           int col=colInd[j];
-          Value val=values[j];
+          QValue val=values[j];
           printf("%d\t%d\t%.6lf\n", i, col, val);
         }
       }
@@ -119,7 +119,7 @@ public:
       for (int i = 0; i < rows; i++) {
         for (int j = rowPtr[i] - 1; j < rowPtr[i+1] - 1; j++) {
           int col=colInd[j];
-          Value val=values[j];
+          QValue val=values[j];
           printf("%d\t%d\t%.6lf\n", i + 1, col, val);
         }
       }
@@ -131,7 +131,7 @@ public:
     for (int i = 0; i < rows; i++) {
       for (int j = rowPtr[i]; j < rowPtr[i+1]; j++) {
         int col = colInd[j] + colOffset;
-        Value val = values[j];
+        QValue val = values[j];
         printf("%d\t%d\t%.6lf\n", i, col, val);
       }
     }
@@ -269,6 +269,7 @@ public:
       free(rowVals);
       return flag;
     }
+    return flag;
   }
 
   void dispose() {
@@ -286,8 +287,8 @@ public:
     }
   }
 
-  inline Value rowMax(int rowId) const {
-    Value rmax = 0.0;
+  inline QValue rowMax(int rowId) const {
+    QValue rmax = 0.0;
     for (int i = rowPtr[rowId]; i < rowPtr[rowId + 1]; ++i) {
       if (rmax < values[i]) {
         rmax = values[i];
@@ -296,8 +297,8 @@ public:
     return rmax;
   }
 
-  inline Value rowSum(int rowId) const {
-    Value sum = 0.0;
+  inline QValue rowSum(int rowId) const {
+    QValue sum = 0.0;
     for (int i = rowPtr[rowId]; i < rowPtr[rowId + 1]; ++i) {
         sum += values[i];
     }
@@ -314,8 +315,8 @@ public:
   CSR hybridOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
   CSR staticFairRmclOneStep(const CSR &B, const int stride) const;
   CSR cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
-  Value differs(const CSR& B) const;
-  vector<int> differsStats(const CSR& B, vector<Value> percents) const;
+  QValue differs(const CSR& B) const;
+  vector<int> differsStats(const CSR& B, vector<QValue> percents) const;
   CSR toGpuCSR() const;
   CSR toCpuCSR() const;
   long long spMMFlops(const CSR& B) const;

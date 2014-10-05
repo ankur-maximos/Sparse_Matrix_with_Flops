@@ -29,12 +29,12 @@ void dynamic_omp_CSR_flops(const int IA[], const int JA[],
   noTileOmpPrefixSum(rowFlops, rowFlops, m);
 }
 
-void flops_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
-        const int IB[], const int JB[], const Value B[], const int nnzB,
-        int* &IC, int* &JC, Value* &C, int& nnzC,
+void flops_omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int nnzA,
+        const int IB[], const int JB[], const QValue B[], const int nnzB,
+        int* &IC, int* &JC, QValue* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
 #ifdef profiling
-  Value now = time_in_mill_now();
+  QValue now = time_in_mill_now();
 #endif
   IC = (int*)malloc((m + 1) * sizeof(int));
   int* flops = (int*)malloc((m + 1) * sizeof(int));
@@ -48,7 +48,7 @@ void flops_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const i
     const int tid = omp_get_thread_num();
     const int nthreads = omp_get_num_threads();
 #ifdef profiling
-    Value now = time_in_mill_now();
+    QValue now = time_in_mill_now();
 #endif
     dynamic_omp_CSR_flops(IA, JA, IB, JB, m, n, IC, nnzC, flops, stride);
 #ifdef profiling
@@ -83,11 +83,11 @@ void flops_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const i
 #pragma omp master
     {
 #ifdef profiling
-      Value now = time_in_mill_now();
+      QValue now = time_in_mill_now();
 #endif
       nnzC = IC[m];
       JC = (int*)malloc(sizeof(int) * nnzC);
-      C = (Value*)malloc(sizeof(Value) * nnzC);
+      C = (QValue*)malloc(sizeof(QValue) * nnzC);
 #ifdef profiling
       printf("time passed for malloc JC and C in main thread with %lf milliseconds\n", time_in_mill_now() - now);
 #endif
@@ -95,7 +95,7 @@ void flops_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const i
 #ifdef profiling
     now = time_in_mill_now();
 #endif
-    Value *x = thread_datas[tid].x;
+    QValue *x = thread_datas[tid].x;
     int *index = thread_datas[tid].index;
     memset(index, -1, n * sizeof(int));
 #ifdef profiling
@@ -118,12 +118,12 @@ void flops_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const i
   free(flops);
 }
 
-void flops_omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
-        const int IB[], const int JB[], const Value B[], const int nnzB,
-        int* &IC, int* &JC, Value* &C, int& nnzC,
+void flops_omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int nnzA,
+        const int IB[], const int JB[], const QValue B[], const int nnzB,
+        int* &IC, int* &JC, QValue* &C, int& nnzC,
         const int m, const int k, const int n, const int stride) {
 #ifdef profiling
-    Value now = time_in_mill_now();
+    QValue now = time_in_mill_now();
 #endif
     int nthreads = 8;
 #pragma omp parallel

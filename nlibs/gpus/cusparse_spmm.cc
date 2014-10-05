@@ -43,9 +43,9 @@ int cusparse_init(void) {
     return 0;
 }
 
-void gpuCsrSpMM(const int dIA[], const int dJA[], const Value dA[], const int nnzA,
-        const int dIB[], const int dJB[], const Value dB[], const int nnzB,
-        int* &dIC, int* &dJC, Value* &dC, int& nnzC,
+void gpuCsrSpMM(const int dIA[], const int dJA[], const QValue dA[], const int nnzA,
+        const int dIB[], const int dJB[], const QValue dB[], const int nnzB,
+        int* &dIC, int* &dJC, QValue* &dC, int& nnzC,
         const int m, const int k, const int n) {
 }
 
@@ -64,9 +64,9 @@ void cusparseXcsrgemmNnzWrapper(const int dIA[], const int dJA[], const int nnzA
   }
 }
 
-void cusparseDcsrgemmWapper(const int* const dIA, const int dJA[], const Value dA[], const int nnzA,
-        const int dIB[], const int dJB[], const Value dB[], const int nnzB,
-        const int* dIC, int* dJC, Value* dC, const int nnzC,
+void cusparseDcsrgemmWapper(const int* const dIA, const int dJA[], const QValue dA[], const int nnzA,
+        const int dIB[], const int dJB[], const QValue dB[], const int nnzB,
+        const int* dIC, int* dJC, QValue* dC, const int nnzC,
         const int m, const int k, const int n) {
   cusparseOperation_t transA = CUSPARSE_OPERATION_NON_TRANSPOSE;
   cusparseOperation_t transB = CUSPARSE_OPERATION_NON_TRANSPOSE;
@@ -98,12 +98,12 @@ CSR cusparseSpMMWrapper(const CSR &dA, const CSR &dB) {
       dB.rowPtr, dB.colInd, dB.nnz,
       m, k, n,
       dC.rowPtr, nnzC);
-  Value nnzTime = t2.milliseconds_elapsed();
+  QValue nnzTime = t2.milliseconds_elapsed();
   HANDLE_ERROR(cudaMemcpy(&nnzC , dC.rowPtr + m, sizeof(int), cudaMemcpyDeviceToHost));
   cudaMemcpy(&baseC, dC.rowPtr, sizeof(int), cudaMemcpyDeviceToHost);
   nnzC -= baseC;
   cudaMalloc((void**)&dC.colInd, sizeof(int) * nnzC);
-  cudaMalloc((void**)&dC.values, sizeof(Value) * nnzC);
+  cudaMalloc((void**)&dC.values, sizeof(QValue) * nnzC);
   dC.nnz = nnzC;
   cusparseDcsrgemmWapper(dA.rowPtr, dA.colInd, dA.values, dA.nnz,
       dB.rowPtr, dB.colInd, dB.values, dB.nnz,

@@ -21,17 +21,17 @@ COO::COO(const char fname[]) {
   this->readMatrixMarketFile(fname);
 }
 
-COO::COO(const Value* const cooVal, const int* const cooColIndex,
+COO::COO(const QValue* const cooVal, const int* const cooColIndex,
       const int* const cooRowIndex, const int rows, const int cols, const int nnz) {
   this->rows = rows;
   this->cols = cols;
   this->nnz = nnz;
   this->cooColIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
   this->cooRowIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
-  this->cooVal = (Value*)qmalloc(nnz * sizeof(Value), __FUNCTION__, __LINE__);
+  this->cooVal = (QValue*)qmalloc(nnz * sizeof(QValue), __FUNCTION__, __LINE__);
   memcpy(this->cooColIndex, cooColIndex, nnz * sizeof(int));
   memcpy(this->cooRowIndex, cooRowIndex, nnz * sizeof(int));
-  memcpy(this->cooVal, cooVal, nnz * sizeof(Value));
+  memcpy(this->cooVal, cooVal, nnz * sizeof(QValue));
 }
 
 void COO::dispose() {
@@ -64,7 +64,7 @@ void COO::readTransposedSNAPFile(const char fname[]) {
   this->cols = this->rows;
   cooRowIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
   cooColIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
-  cooVal = (Value*)qmalloc(nnz * sizeof(Value), __FUNCTION__, __LINE__);
+  cooVal = (QValue*)qmalloc(nnz * sizeof(QValue), __FUNCTION__, __LINE__);
   int from, to;
   for (int i = 0; i < nnz; ++i) {
     fscanf(fpin, "%d%d", &from, &to);
@@ -92,7 +92,7 @@ void COO::addSelfLoopIfNeeded() {
   nnz += needed;
   cooRowIndex = (int*)realloc(cooRowIndex, nnz * sizeof(int));
   cooColIndex = (int*)realloc(cooColIndex, nnz * sizeof(int));
-  cooVal = (Value*)realloc(cooVal, nnz * sizeof(Value));
+  cooVal = (QValue*)realloc(cooVal, nnz * sizeof(QValue));
   int top = oldNnz;
   for (int i = 0; i < rows; ++i) {
     if (u[i]) {
@@ -115,7 +115,7 @@ void COO::output(const char* msg) {
 }
 
 void COO::makeOrdered() const {
-  typedef std::tuple<int, int, Value> iid;
+  typedef std::tuple<int, int, QValue> iid;
   std::vector<iid> v(nnz);
   for (int i = 0; i < nnz; ++i) {
     v[i] = (std::make_tuple(cooRowIndex[i], cooColIndex[i], cooVal[i]));
@@ -141,9 +141,9 @@ CSR COO::toCSR() const {
 	ocsrRowPtr[rows] = nnz;
 	int onnz = nnz;
 	int* ocsrColInd = (int*)qmalloc(sizeof(int) * onnz, __FUNCTION__, __LINE__);
-	Value* ocsrVals = (Value*)qmalloc(sizeof(Value) * onnz, __FUNCTION__, __LINE__);
+	QValue* ocsrVals = (QValue*)qmalloc(sizeof(QValue) * onnz, __FUNCTION__, __LINE__);
 	memcpy(ocsrColInd, cooColIndex, sizeof(int) * onnz);
-	memcpy(ocsrVals, cooVal, sizeof(Value) * onnz);
+	memcpy(ocsrVals, cooVal, sizeof(QValue) * onnz);
 	CSR csr(ocsrVals, ocsrColInd, ocsrRowPtr, rows, cols, onnz);
 	return csr;
 }

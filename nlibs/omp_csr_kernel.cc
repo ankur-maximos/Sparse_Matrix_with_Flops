@@ -12,11 +12,11 @@ using namespace std;
 
 thread_data_t* allocateThreadDatas(int nthreads, int n) {
 #ifdef profiling
-  Value now = time_in_mill_now();
+  QValue now = time_in_mill_now();
 #endif
   thread_data_t* thread_datas = (thread_data_t*)malloc(nthreads * sizeof(thread_data_t));
 #ifdef AGGR
-  Value *xs = (Value*)qmalloc((n * sizeof(Value) + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
+  QValue *xs = (QValue*)qmalloc((n * sizeof(QValue) + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
   bool *xbs = (bool*)qmalloc((n + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
   //bool *xbs = (bool*)qcalloc((n + LEVEL1_DCACHE_LINESIZE) * nthreads, sizeof(bool), __FUNCTION__, __LINE__);
   int *indices = (int*)qmalloc((n * sizeof(int) + LEVEL1_DCACHE_LINESIZE) * nthreads, __FUNCTION__, __LINE__);
@@ -26,7 +26,7 @@ thread_data_t* allocateThreadDatas(int nthreads, int n) {
 #ifndef AGGR
     thread_datas[i].init(n);
 #else
-    Value *x = (Value*)((char*)xs + i * (n * sizeof(Value) + LEVEL1_DCACHE_LINESIZE));
+    QValue *x = (QValue*)((char*)xs + i * (n * sizeof(QValue) + LEVEL1_DCACHE_LINESIZE));
     //bool *xb = (bool*)((char*)xbs + i * (n + LEVEL1_DCACHE_LINESIZE));
     bool *xb = (bool*)x;
     int *index = (int*)((char*)indices + i * (n * sizeof(int) + LEVEL1_DCACHE_LINESIZE));
@@ -41,7 +41,7 @@ thread_data_t* allocateThreadDatas(int nthreads, int n) {
 
 void freeThreadDatas(thread_data_t* thread_datas, int nthreads) {
 #ifdef profiling
-  Value now = time_in_mill_now();
+  QValue now = time_in_mill_now();
 #endif
 #ifndef AGGR
   for(int i = 0; i < nthreads; i++) {
@@ -123,10 +123,10 @@ void omp_CSR_IC_nnzC(const int IA[], const int JA[],
   }
 }
 
-inline int processCRowI(Value x[], bool* xb,
-    const int iAnnz, const int iJA[], const Value iA[],
-        const int IB[], const int JB[], const Value B[],
-        int* iJC, Value* iC) {
+inline int processCRowI(QValue x[], bool* xb,
+    const int iAnnz, const int iJA[], const QValue iA[],
+        const int IB[], const int JB[], const QValue B[],
+        int* iJC, QValue* iC) {
   int ip = 0;
   for(int jp = 0; jp < iAnnz; ++jp) {
     int j = iJA[jp];
@@ -151,9 +151,9 @@ inline int processCRowI(Value x[], bool* xb,
   return ip;
 }
 
-void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
-        const int IB[], const int JB[], const Value B[], const int nnzB,
-        int* &IC, int* &JC, Value* &C, int& nnzC,
+void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const QValue A[], const int nnzA,
+        const int IB[], const int JB[], const QValue B[], const int nnzB,
+        int* &IC, int* &JC, QValue* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
     IC = (int*)calloc(m + 1, sizeof(int));
     int* rowsNnz = (int*)malloc((m + 1) * sizeof(int));
@@ -164,9 +164,9 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const
 #pragma omp master
       {
         JC = (int*)malloc(sizeof(int) * nnzC);
-        C = (Value*)malloc(sizeof(Value) * nnzC);
+        C = (QValue*)malloc(sizeof(QValue) * nnzC);
       }
-      Value *x = thread_datas[tid].x;
+      QValue *x = thread_datas[tid].x;
       bool *xb = thread_datas[tid].xb;
       int *index = thread_datas[tid].index;
       memset(index, -1, n * sizeof(int));
@@ -175,20 +175,20 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const
       for (int it = 0; it < m; it += stride) {
         int up = it + stride < m ? it + stride : m;
         for (int i = it; i < up; ++i) {
-          Value *cValues = C + IC[i];
+          QValue *cQValues = C + IC[i];
           int *cColInd = JC + IC[i];
           //processCRowI(x, xb,
           indexProcessCRowI(index,
               IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
               IB, JB, B,
-              cColInd, cValues);
+              cColInd, cQValues);
           int count = IC[i + 1] - IC[i];
-          arrayInflationR2(cValues, count, cValues);
-          pair<Value, Value> maxSum = arrayMaxSum(cValues, count);
-          Value rmax = maxSum.first, rsum = maxSum.second;
-          Value thresh = computeThreshold(rsum / count, rmax);
-          arrayThreshPruneNormalize(thresh, cColInd, cValues,
-              &count, cColInd, cValues);
+          arrayInflationR2(cQValues, count, cQValues);
+          pair<QValue, QValue> maxSum = arrayMaxSum(cQValues, count);
+          QValue rmax = maxSum.first, rsum = maxSum.second;
+          QValue thresh = computeThreshold(rsum / count, rmax);
+          arrayThreshPruneNormalize(thresh, cColInd, cQValues,
+              &count, cColInd, cQValues);
           rowsNnz[i] = count;
         }
       }
@@ -199,18 +199,18 @@ void omp_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const
 
 //This function must be called in OpenMP parallel region
 void omp_matrix_relocation(int rowsNnz[], const int m, const int tid, const int stride,
-        int* &IC, int* &JC, Value* &C, int& nnzC) {
+        int* &IC, int* &JC, QValue* &C, int& nnzC) {
 #ifdef profiling
-    Value rnow = time_in_mill_now();
+    QValue rnow = time_in_mill_now();
 #endif
  int *oJC = JC;
- Value *oC = C;
+ QValue *oC = C;
  noTileOmpPrefixSum(rowsNnz, rowsNnz, m);
 #pragma omp master
   {
     nnzC = rowsNnz[m];
     JC = (int*)qmalloc(sizeof(int) * nnzC, __FUNCTION__, __LINE__);
-    C = (Value*)qmalloc(sizeof(Value) * nnzC, __FUNCTION__, __LINE__);
+    C = (QValue*)qmalloc(sizeof(QValue) * nnzC, __FUNCTION__, __LINE__);
   }
 #pragma omp barrier
 #pragma omp for schedule(dynamic, stride)
@@ -235,13 +235,13 @@ void omp_matrix_relocation(int rowsNnz[], const int m, const int tid, const int 
 #endif
 }
 
-void omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
-        const int IB[], const int JB[], const Value B[], const int nnzB,
-        int* &IC, int* &JC, Value* &C, int& nnzC,
+void omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int nnzA,
+        const int IB[], const int JB[], const QValue B[], const int nnzB,
+        int* &IC, int* &JC, QValue* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
     IC = (int*)malloc((m + 1) * sizeof(int));
 #ifdef profiling
-    Value now = time_in_mill_now();
+    QValue now = time_in_mill_now();
 #endif
 #pragma omp parallel firstprivate(stride)
     {
@@ -259,9 +259,9 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnz
         std::cout << "time passed omp nnzC " << time_in_mill_now() - now << std::endl;
 #endif
         JC = (int*)malloc(sizeof(int) * nnzC);
-        C = (Value*)malloc(sizeof(Value) * nnzC);
+        C = (QValue*)malloc(sizeof(QValue) * nnzC);
       }
-      Value *x = thread_datas[tid].x;
+      QValue *x = thread_datas[tid].x;
       //bool *xb = thread_datas[tid].xb;
       int *index = thread_datas[tid].index;
       memset(index, -1, n * sizeof(int));
@@ -292,12 +292,12 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnz
 #endif
 }
 
-void omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
-        const int IB[], const int JB[], const Value B[], const int nnzB,
-        int* &IC, int* &JC, Value* &C, int& nnzC,
+void omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int nnzA,
+        const int IB[], const int JB[], const QValue B[], const int nnzB,
+        int* &IC, int* &JC, QValue* &C, int& nnzC,
         const int m, const int k, const int n, const int stride) {
 #ifdef profiling
-    Value now = time_in_mill_now();
+    QValue now = time_in_mill_now();
 #endif
     int nthreads = 8;
 #pragma omp parallel
@@ -314,9 +314,9 @@ void omp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnz
 #endif
 }
 
-void noindex_somp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
-        const int IB[], const int JB[], const Value B[], const int nnzB,
-        int* &IC, int* &JC, Value* &C, int& nnzC,
+void noindex_somp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int nnzA,
+        const int IB[], const int JB[], const QValue B[], const int nnzB,
+        int* &IC, int* &JC, QValue* &C, int& nnzC,
         const int m, const int k, const int n, const thread_data_t* thread_datas, const int stride) {
   IC = (int*)malloc((m + 1) * sizeof(int));
   int* footPrints = (int*)malloc((m + 1) * sizeof(int));
@@ -334,9 +334,9 @@ void noindex_somp_CSR_SpMM(const int IA[], const int JA[], const Value A[], cons
 #pragma omp master
     {
       JC = (int*)malloc(sizeof(int) * nnzC);
-      C = (Value*)malloc(sizeof(Value) * nnzC);
+      C = (QValue*)malloc(sizeof(QValue) * nnzC);
     }
-    Value *x = thread_datas[tid].x;
+    QValue *x = thread_datas[tid].x;
     bool *xb = (bool*)thread_datas[tid].index;
     memset(xb, 0, n * sizeof(bool));
 #pragma omp barrier
@@ -352,12 +352,12 @@ void noindex_somp_CSR_SpMM(const int IA[], const int JA[], const Value A[], cons
   free(footPrints);
 }
 
-void noindex_somp_CSR_SpMM(const int IA[], const int JA[], const Value A[], const int nnzA,
-        const int IB[], const int JB[], const Value B[], const int nnzB,
-        int* &IC, int* &JC, Value* &C, int& nnzC,
+void noindex_somp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int nnzA,
+        const int IB[], const int JB[], const QValue B[], const int nnzB,
+        int* &IC, int* &JC, QValue* &C, int& nnzC,
         const int m, const int k, const int n, const int stride) {
 #ifdef profiling
-    Value now = time_in_mill_now();
+    QValue now = time_in_mill_now();
 #endif
     int nthreads = 8;
 #pragma omp parallel

@@ -223,7 +223,7 @@ int mm_read_mtx_array_size ( FILE *f, int *M, int *N )
 /******************************************************************************/
 
 int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J,
-        Value **val, MM_typecode *matcode)
+        QValue **val, MM_typecode *matcode)
 
 /******************************************************************************/
 /*
@@ -276,14 +276,14 @@ int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J,
 
     if (mm_is_complex(*matcode))
     {
-        *val = (Value *) malloc(*nz * 2 * sizeof(Value));
+        *val = (QValue *) malloc(*nz * 2 * sizeof(QValue));
         ret_code = mm_read_mtx_crd_data(f, *M, *N, *nz, *I, *J, *val,
                 *matcode);
         if (ret_code != 0) return ret_code;
     }
     else if (mm_is_real(*matcode))
     {
-        *val = (Value *) malloc(*nz * sizeof(Value));
+        *val = (QValue *) malloc(*nz * sizeof(QValue));
         ret_code = mm_read_mtx_crd_data(f, *M, *N, *nz, *I, *J, *val,
                 *matcode);
         if (ret_code != 0) return ret_code;
@@ -302,7 +302,7 @@ int mm_read_mtx_crd(char *fname, int *M, int *N, int *nz, int **I, int **J,
 /******************************************************************************/
 
 int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
-        Value val[], MM_typecode matcode)
+        QValue val[], MM_typecode matcode)
 
 /******************************************************************************/
 /*
@@ -365,7 +365,7 @@ int mm_read_mtx_crd_data(FILE *f, int M, int N, int nz, int I[], int J[],
 /******************************************************************************/
 
 int mm_read_mtx_crd_entry(FILE *f, int *I, int *J,
-        Value *real, Value *imag, MM_typecode matcode)
+        QValue *real, QValue *imag, MM_typecode matcode)
 
 /******************************************************************************/
 /*
@@ -483,7 +483,7 @@ int mm_read_mtx_crd_size(FILE *f, int *M, int *N, int *nz )
 /******************************************************************************/
 
 int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
-                Value **val_, int **I_, int **J_)
+                QValue **val_, int **I_, int **J_)
 
 /******************************************************************************/
 /*
@@ -500,7 +500,7 @@ int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
     MM_typecode matcode;
     int M, N, nz;
     int i;
-    Value *val;
+    QValue *val;
     int *I, *J;
 
     if ((f = fopen(fname, "r")) == NULL)
@@ -543,13 +543,13 @@ int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
 */
     I = (int *) malloc(nz * sizeof(int));
     J = (int *) malloc(nz * sizeof(int));
-    val = (Value *) malloc(nz * sizeof(Value));
+    val = (QValue *) malloc(nz * sizeof(QValue));
 
     *val_ = val;
     *I_ = I;
     *J_ = J;
 /*
-  NOTE: when reading in Values, ANSI C requires the use of the "l"
+  NOTE: when reading in QValues, ANSI C requires the use of the "l"
   specifier as in "%lg", "%lf", "%le", otherwise errors will occur
   (ANSI C X3.159-1989, Sec. 4.9.6.2, p. 136 lines 13-15)
 */
@@ -723,7 +723,7 @@ int mm_write_mtx_array_size(FILE *f, int M, int N)
 /******************************************************************************/
 
 int mm_write_mtx_crd(char fname[], int M, int N, int nz, int I[], int J[],
-        Value val[], MM_typecode matcode)
+        QValue val[], MM_typecode matcode)
 
 /******************************************************************************/
 /*

@@ -9,7 +9,7 @@ struct BCSR {
   int bm, bn;
   int nnz;
 
-	Value* values;
+	QValue* values;
 	int* colInd;
 	int* rowPtr;
   BCSR(const CSR &csr, const int c, const int r);
@@ -36,10 +36,10 @@ struct BCSR {
       for (int bj = rowPtr[bi]; bj < rowPtr[bi + 1]; bj++) {
         int bcol = colInd[bj];
         printf("%d\t%d\n", bi, bcol);
-        Value* bvalues = values + bj * r * c;
+        QValue* bvalues = values + bj * r * c;
         for (int ei = 0; ei < r; ++ei) {
           for (int ej = 0; ej < c; ++ej) {
-            Value val = bvalues[ei * c + ej];
+            QValue val = bvalues[ei * c + ej];
             printf("%.6lf\t", val);
           }
           printf("\n");

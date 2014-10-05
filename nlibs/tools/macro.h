@@ -1,7 +1,7 @@
 #ifndef MACRO_H_
 #define MACRO_H_
-#define Value double
+#define QValue double
 #define FDOUBLE
-//#define Value float
+//#define QValue float
 //#define FSINGLE
 #endif

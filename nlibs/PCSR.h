@@ -80,7 +80,7 @@ public:
       for (int b = 0; b < c; ++b) {
         for (int j = blocks[b].rowPtr[i]; j < blocks[b].rowPtr[i + 1]; ++j) {
           int col = blocks[b].colInd[j] + b * stride();
-          Value val = blocks[b].values[j];
+          QValue val = blocks[b].values[j];
           rowVals[col] = val;
         }
       }

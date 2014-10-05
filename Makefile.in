@@ -37,7 +37,7 @@ COPTIONS= -Wno-write-strings -g -std=c++0x
 #COPTIONS = -g
 #COPTIONS = -Wno-write-strings
 
-CUDA_HOME = /opt/cuda/5.5
+CUDA_HOME = $(shell cd "$(shell dirname `which nvcc`)/.." && pwd)
 CINCLUDES = -I.
 
 # What options to be used by the loader

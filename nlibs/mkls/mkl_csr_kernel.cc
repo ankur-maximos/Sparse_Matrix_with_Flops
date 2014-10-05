@@ -18,9 +18,9 @@ void mkl_CSR_IC_nnzC(int IA[], int JA[],
 #endif
 }
 
-void mkl_CSR_SpMM(int IA[], int JA[], Value A[],
-    int IB[], int JB[], Value B[],
-    int* &IC, int* &JC, Value* &C, int& nnzC,
+void mkl_CSR_SpMM(int IA[], int JA[], QValue A[],
+    int IB[], int JB[], QValue B[],
+    int* &IC, int* &JC, QValue* &C, int& nnzC,
     int m, int k, int n) {
   char trans = 'N';
   assert(sizeof(int) == sizeof(MKL_INT));
@@ -31,7 +31,7 @@ void mkl_CSR_SpMM(int IA[], int JA[], Value A[],
   nnzC = IC[m] - 1;
   MKL_INT sort = 7, ierr = -9;
   MKL_INT job = 2;
-  C = (Value*)malloc(nnzC * sizeof(Value));
+  C = (QValue*)malloc(nnzC * sizeof(QValue));
   JC = (MKL_INT*)malloc(nnzC * sizeof(MKL_INT));
 #ifdef FDOUBLE
   mkl_dcsrmultcsr(&trans, &job, &sort, &m, &n, &k,
@@ -52,7 +52,7 @@ CSR mkl_spmm(CSR &A, CSR& B) {
   assert(A.cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   mkl_CSR_SpMM(A.rowPtr, A.colInd, A.values,
       B.rowPtr, B.colInd, B.values,
@@ -63,15 +63,15 @@ CSR mkl_spmm(CSR &A, CSR& B) {
 }
 
 //Both matrix A, B and C are one based index.
-void mkl_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const int nnzA,
-        const int IB[], const int JB[], const Value B[], const int nnzB,
-        int* &IC, int* &JC, Value* &C, int& nnzC,
+void mkl_CSR_RMCL_OneStep(const int IA[], const int JA[], const QValue A[], const int nnzA,
+        const int IB[], const int JB[], const QValue B[], const int nnzB,
+        int* &IC, int* &JC, QValue* &C, int& nnzC,
         const int m, const int k, const int n, const int stride) {
 #ifdef profiling
-  Value now = time_in_mill_now();
+  QValue now = time_in_mill_now();
 #endif
-  mkl_CSR_SpMM(const_cast<int*>(IA), const_cast<int*>(JA), const_cast<Value*>(A),
-      const_cast<int*>(IB), const_cast<int*>(JB), const_cast<Value*>(B),
+  mkl_CSR_SpMM(const_cast<int*>(IA), const_cast<int*>(JA), const_cast<QValue*>(A),
+      const_cast<int*>(IB), const_cast<int*>(JB), const_cast<QValue*>(B),
       IC, JC, C, nnzC,
       m, k, n);
 #ifdef profiling
@@ -85,15 +85,15 @@ void mkl_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const
     const int tid = omp_get_thread_num();
 #pragma omp for schedule(dynamic, stride)
     for (int i = 0; i < m; ++i) {
-        Value *cValues = C + IC[i] - 1; //-1 for one based IC index
+        QValue *cQValues = C + IC[i] - 1; //-1 for one based IC index
         int *cColInd = JC + IC[i] - 1;
         int count = IC[i + 1] - IC[i];
-        arrayInflationR2(cValues, count, cValues);
-        pair<Value, Value> maxSum = arrayMaxSum(cValues, count);
-        Value rmax = maxSum.first, rsum = maxSum.second;
-        Value thresh = computeThreshold(rsum / count, rmax);
-        arrayThreshPruneNormalize(thresh, cColInd, cValues,
-            &count, cColInd, cValues);
+        arrayInflationR2(cQValues, count, cQValues);
+        pair<QValue, QValue> maxSum = arrayMaxSum(cQValues, count);
+        QValue rmax = maxSum.first, rsum = maxSum.second;
+        QValue thresh = computeThreshold(rsum / count, rmax);
+        arrayThreshPruneNormalize(thresh, cColInd, cQValues,
+            &count, cColInd, cQValues);
         rowsNnz[i] = count;
     }
   }
@@ -115,7 +115,7 @@ void mkl_CSR_RMCL_OneStep(const int IA[], const int JA[], const Value A[], const
 #endif
   //tmpC.toOneBasedCSR();
   JC = (int*)realloc(JC, sizeof(int) * nnzC);
-  C = (Value*)realloc(C, sizeof(Value) * nnzC);
+  C = (QValue*)realloc(C, sizeof(QValue) * nnzC);
 #ifdef profiling
     std::cout << "time passed mkl_CSR_RMCL_OneStep " << time_in_mill_now() - now << std::endl;
 #endif

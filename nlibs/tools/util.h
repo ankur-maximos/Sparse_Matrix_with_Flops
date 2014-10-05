@@ -11,17 +11,17 @@ using namespace std;
 #define MLMCL_PRUNE_A	(0.90) /* pruning parameter */
 #define MLMCL_PRUNE_B	(2)	   /* pruning parameter */
 
-Value computeThreshold(Value avg, Value max);
-Value arrayMax(const Value values[], const int count);
-Value arraySum(const Value values[], const int count);
-pair<Value, Value> arrayMaxSum(const Value values[], const int count);
-void arrayInflationR2(const Value ivalues[], const int count, Value ovalues[]);
-Value arrayThreshPruneNormalize(const Value thresh, const int rindices[], const Value rvalues[],
-    int* count, int indices[], Value values[]);
+QValue computeThreshold(QValue avg, QValue max);
+QValue arrayMax(const QValue values[], const int count);
+QValue arraySum(const QValue values[], const int count);
+pair<QValue, QValue> arrayMaxSum(const QValue values[], const int count);
+void arrayInflationR2(const QValue ivalues[], const int count, QValue ovalues[]);
+QValue arrayThreshPruneNormalize(const QValue thresh, const int rindices[], const QValue rvalues[],
+    int* count, int indices[], QValue values[]);
 void arrayOutput(const char* msg, FILE* fp, const int datas[], int len);
-void arrayOutput(const char* msg, FILE* fp, const Value datas[], int len);
+void arrayOutput(const char* msg, FILE* fp, const QValue datas[], int len);
 void arrayOutput(const char *msg, FILE* fp, const vector<int> &datas);
-void arrayOutput(const char *msg, FILE* fp, const vector<Value> &datas);
+void arrayOutput(const char *msg, FILE* fp, const vector<QValue> &datas);
 void prefixSumToCounts(const int prefixSum[], const int len, int *counts);
 void arrayEqualPartition(int prefixSum[], const int n, const int nthreads, int ends[]);
 int* randomPermutationVector(const int len);

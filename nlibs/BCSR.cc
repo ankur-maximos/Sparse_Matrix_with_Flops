@@ -31,8 +31,8 @@ BCSR::BCSR(const CSR &csr, const int r, const int c) {
       nnzb += top;
       rowPtr[it / r + 1] = nnzb;
     }
-    values = (Value*)_mm_malloc(nnzb * sizeof(Value) * r * c, 4096);
-    memset(values, 0, nnzb * sizeof(Value) * r * c);
+    values = (QValue*)_mm_malloc(nnzb * sizeof(QValue) * r * c, 4096);
+    memset(values, 0, nnzb * sizeof(QValue) * r * c);
     colInd = (int*)malloc(nnzb * sizeof(int));
     memset(colInd, -1, nnzb * sizeof(int));
     int *index = (int*)xb;
@@ -80,7 +80,7 @@ bool BCSR::isEqual(const CSR &B) const {
         int bcol = colInd[bj];
         for (int ej = 0; ej < c && bcol * c + ej < n; ++ej) {
           int col = bcol * c + ej;
-          Value val = values[bj * r * c + ei * c + ej];
+          QValue val = values[bj * r * c + ei * c + ej];
           if (!xb[col] && fabs(val) > 1e-9) {
             xb[col] = true;
             x[col] = val;
@@ -90,7 +90,7 @@ bool BCSR::isEqual(const CSR &B) const {
       }
       for (int Bj = B.rowPtr[row]; Bj < B.rowPtr[row + 1]; ++Bj) {
         int col = B.colInd[Bj];
-        Value val = B.values[Bj];
+        QValue val = B.values[Bj];
         if (fabs(x[col] - val) > 1e-9) {
           printf("row=%d col=%d val %lf VS B %lf\n", row, col, x[col], val);
           flag = false;

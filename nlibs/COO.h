@@ -7,12 +7,12 @@ class COO {
 private:
 	int * cooRowIndex;
 	int * cooColIndex;
-	Value * cooVal;
+	QValue * cooVal;
 	int rows, cols, nnz;
 public:
   COO(const char fname[]);
 	COO();
-	COO(const Value* const cooVal, const int* const cooColIndex,
+	COO(const QValue* const cooVal, const int* const cooColIndex,
       const int* const cooRowIndex, const int rows, const int cols, const int nnz);
 	//virtual ~COO();
   void dispose();

@@ -48,11 +48,11 @@ MCSR::MCSR(const CSR &csr, const int r, const int c,
   printf("nnzb=%d r=%d c=%d\n", nnzb, r, c);
   printf("nnz=%d\n", nnz);
   BCSR::colInd = (int*)malloc(nnzb * sizeof(int) * r * c);
-  BCSR::values = (Value*)malloc(nnzb * sizeof(Value) * r * c);
-  memset(BCSR::values, 0, nnzb * sizeof(Value) * r * c);
+  BCSR::values = (QValue*)malloc(nnzb * sizeof(QValue) * r * c);
+  memset(BCSR::values, 0, nnzb * sizeof(QValue) * r * c);
   assert(nnz == CSR::rowPtr[rows]);
   CSR::colInd = (int*)malloc(nnz * sizeof(int));
-  CSR::values = (Value*)malloc(nnz * sizeof(Value));
+  CSR::values = (QValue*)malloc(nnz * sizeof(QValue));
   int *index = (int*)xb;
   memset(index, -1, blockCols * sizeof(int));
   int topb = 0, top = 0;
@@ -62,7 +62,7 @@ MCSR::MCSR(const CSR &csr, const int r, const int c,
         int col = csr.colInd[j];
         if (col < blockCols) {
           int target = col / c;
-          Value* bval = NULL;
+          QValue* bval = NULL;
           if (index[target] == -1) {
             BCSR::colInd[topb] = target;
             bval = BCSR::values + topb * r * c;

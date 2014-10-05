@@ -20,7 +20,7 @@
 void CSR::matrixRowReorder(const int* ranks) const {
   int* nrowPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
   int* ncolInd= (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
-  Value* nvalues = (Value*)qmalloc(nnz * sizeof(Value), __FUNCTION__, __LINE__);
+  QValue* nvalues = (QValue*)qmalloc(nnz * sizeof(QValue), __FUNCTION__, __LINE__);
   nrowPtr[0] = 0;
   for (int i = 0; i < rows; ++i) {
     int count = rowPtr[ranks[i] + 1] - rowPtr[ranks[i]];
@@ -28,11 +28,11 @@ void CSR::matrixRowReorder(const int* ranks) const {
     memcpy(ncolInd + nrowPtr[i], colInd + rowPtr[ranks[i]],
         count * sizeof(int));
     memcpy(nvalues + nrowPtr[i], values + rowPtr[ranks[i]],
-        count * sizeof(Value));
+        count * sizeof(QValue));
   }
   memcpy(rowPtr, nrowPtr, (rows + 1) * sizeof(int));
   memcpy(colInd, ncolInd, nnz * sizeof(int));
-  memcpy(values, nvalues, nnz * sizeof(Value));
+  memcpy(values, nvalues, nnz * sizeof(QValue));
   free(nrowPtr);
   free(ncolInd);
   free(nvalues);
@@ -55,7 +55,7 @@ CSR CSR::spmm(const CSR& B) const {
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   sequential_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -67,7 +67,7 @@ CSR CSR::spmm(const CSR& B) const {
 
 void CSR::makeOrdered() {
   for (int i = 0; i < rows; ++i) {
-    std::vector<std::pair<int, Value> > rowv;
+    std::vector<std::pair<int, QValue> > rowv;
     for (int jp = rowPtr[i]; jp < rowPtr[i + 1]; ++jp) {
       rowv.push_back(std::make_pair(colInd[jp], values[jp]));
     }
@@ -80,7 +80,7 @@ void CSR::makeOrdered() {
   }
 }
 
-void CSR::averAndNormRowValue() {
+void CSR::averAndNormRowQValue() {
   for (int i = 0; i < rows; ++i) {
     int count = rowPtr[i + 1] - rowPtr[i];
     for (int j = rowPtr[i]; j < rowPtr[i + 1]; ++j) {
@@ -91,10 +91,10 @@ void CSR::averAndNormRowValue() {
 
 CSR CSR::deepCopy() {
   int* browPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
-	Value* bvalues = (Value*)qmalloc(nnz * sizeof(Value), __FUNCTION__, __LINE__);
+	QValue* bvalues = (QValue*)qmalloc(nnz * sizeof(QValue), __FUNCTION__, __LINE__);
   int* bcolInd = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
   memcpy(browPtr, rowPtr, (rows + 1) * sizeof(int));
-  memcpy(bvalues, values, nnz * sizeof(Value));
+  memcpy(bvalues, values, nnz * sizeof(QValue));
   memcpy(bcolInd, colInd, nnz * sizeof(int));
   CSR B(bvalues, bcolInd, browPtr, rows, cols, nnz);
   return B;
@@ -104,7 +104,7 @@ CSR CSR::somp_spmm(const CSR& B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   static_omp_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -118,7 +118,7 @@ CSR CSR::omp_spmm(const CSR& B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   omp_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -132,7 +132,7 @@ CSR CSR::somp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride) 
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   int nthreads = 8;
 #pragma omp parallel
@@ -150,7 +150,7 @@ CSR CSR::omp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride) c
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   omp_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -164,7 +164,7 @@ CSR CSR::noindex_somp_spmm(const CSR& B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   noindex_somp_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -178,7 +178,7 @@ CSR CSR::flops_spmm(const CSR& B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   flops_omp_CSR_SpMM(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -191,14 +191,14 @@ CSR CSR::flops_spmm(const CSR& B, const int stride) const {
 /* This method returns the norm of A-B. Remember, it assumes
  * that the adjacency lists in both A and B are sorted in
  * ascending order. */
-Value CSR::differs(const CSR& B) const {
-  Value sum = 0;
+QValue CSR::differs(const CSR& B) const {
+  QValue sum = 0;
   int i, j, k;
   for (i = 0; i < rows; ++i) {
     for (j = rowPtr[i], k = B.rowPtr[i];
         j < rowPtr[i + 1] && k < B.rowPtr[i + 1];) {
-      Value a = values[j];
-      Value b = B.values[k];
+      QValue a = values[j];
+      QValue b = B.values[k];
       if (colInd[j] == colInd[k]) {
         sum += (a - b) * (a - b);
         ++j, ++k;
@@ -233,7 +233,7 @@ CSR CSR::ompRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int str
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   omp_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -247,7 +247,7 @@ CSR CSR::staticOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const i
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   static_omp_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -261,7 +261,7 @@ CSR CSR::hybridOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const i
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   hybrid_omp_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -275,7 +275,7 @@ CSR CSR::staticFairRmclOneStep(const CSR &B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   static_fair_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -290,7 +290,7 @@ CSR CSR::mklRmclOneStep(const CSR &B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   mkl_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -304,7 +304,7 @@ CSR CSR::cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int st
   assert(this->cols == B.rows);
   int* IC;
   int* JC;
-  Value* C;
+  QValue* C;
   int nnzC;
   cilk_CSR_RMCL_OneStep(this->rowPtr, this->colInd, this->values, this->nnz,
       B.rowPtr, B.colInd, B.values, B.nnz,
@@ -324,8 +324,8 @@ CSR CSR::toGpuCSR() const {
   cudaMemcpy(dA.rowPtr, rowPtr, sizeof(int) * (rows + 1), cudaMemcpyHostToDevice);
   cudaMalloc((void**)&dA.colInd, sizeof(int) * nnz);
   cudaMemcpy(dA.colInd, colInd, sizeof(int) * nnz, cudaMemcpyHostToDevice);
-  cudaMalloc((void**)&dA.values, sizeof(Value) * nnz);
-  cudaMemcpy(dA.values, values, sizeof(Value) * nnz, cudaMemcpyHostToDevice);
+  cudaMalloc((void**)&dA.values, sizeof(QValue) * nnz);
+  cudaMemcpy(dA.values, values, sizeof(QValue) * nnz, cudaMemcpyHostToDevice);
   return dA;
 }
 #endif
@@ -340,8 +340,8 @@ CSR CSR::toCpuCSR() const {
   HANDLE_ERROR(cudaMemcpy(hA.rowPtr, rowPtr, sizeof(int) * (rows + 1), cudaMemcpyDeviceToHost));
   hA.colInd = (int*)qmalloc(sizeof(int) * nnz, __FUNCTION__, __LINE__);
   HANDLE_ERROR(cudaMemcpy(hA.colInd, colInd, sizeof(int) * nnz, cudaMemcpyDeviceToHost));
-  hA.values = (Value*)qmalloc(sizeof(Value) * nnz, __FUNCTION__, __LINE__);
-  HANDLE_ERROR(cudaMemcpy(hA.values, values, sizeof(Value) * nnz, cudaMemcpyDeviceToHost));
+  hA.values = (QValue*)qmalloc(sizeof(QValue) * nnz, __FUNCTION__, __LINE__);
+  HANDLE_ERROR(cudaMemcpy(hA.values, values, sizeof(QValue) * nnz, cudaMemcpyDeviceToHost));
   return hA;
 }
 #endif
@@ -354,7 +354,7 @@ void CSR::deviceDispose() {
 }
 #endif
 
-vector<int> CSR::differsStats(const CSR& B, const vector<Value> percents) const {
+vector<int> CSR::differsStats(const CSR& B, const vector<QValue> percents) const {
   vector<int> counts(percents.size() + 4, 0);
   const int PINFI = percents.size() + 1;
   const int ZEROS = PINFI + 1;
@@ -369,7 +369,7 @@ vector<int> CSR::differsStats(const CSR& B, const vector<Value> percents) const 
     } else if (acount == bcount) {
       ++counts[EQUALS];
     } else {
-      Value percent = (bcount - acount) / (Value)acount;
+      QValue percent = (bcount - acount) / (QValue)acount;
       int k;
       for (k = 0; k < percents.size(); ++k) {
         if (percent < percents[k]) {
@@ -401,18 +401,18 @@ void CSR::outputSpMMStats(const CSR &B) const {
   CSR C = this->omp_spmm(B, 512);
   int cNnz = C.nnz;
   C.dispose();
-  printf("flops=%lld\tcNnz=%d\trows=%d\tflops/rows=%lf cnnz/rows=%lf\n", flops, cNnz, rows, (Value)(flops) / rows, (Value)(cNnz) / rows);
+  printf("flops=%lld\tcNnz=%d\trows=%d\tflops/rows=%lf cnnz/rows=%lf\n", flops, cNnz, rows, (QValue)(flops) / rows, (QValue)(cNnz) / rows);
 }
 
 CSR CSR::PM(const int P[]) const {
   int* browPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
-	Value* bvalues = (Value*)qmalloc(nnz * sizeof(Value), __FUNCTION__, __LINE__);
+	QValue* bvalues = (QValue*)qmalloc(nnz * sizeof(QValue), __FUNCTION__, __LINE__);
   int* bcolInd = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
   browPtr[0] = 0;
   for (int i = 0; i < rows; ++i) {
     int target = P[i];
     int count = rowPtr[target + 1] - rowPtr[target];
-    memcpy(bvalues + browPtr[i], values + rowPtr[target], count * sizeof(Value));
+    memcpy(bvalues + browPtr[i], values + rowPtr[target], count * sizeof(QValue));
     memcpy(bcolInd + browPtr[i], colInd + rowPtr[target], count * sizeof(int));
     browPtr[i + 1] = browPtr[i] + count;
   }
@@ -423,8 +423,8 @@ CSR CSR::PM(const int P[]) const {
 CSR CSR::MP(const int P[]) const {
   int* browPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
   memcpy(browPtr, rowPtr, (rows + 1) * sizeof(int));
-	Value* bvalues = (Value*)qmalloc(nnz * sizeof(Value), __FUNCTION__, __LINE__);
-  memcpy(bvalues, values, nnz * sizeof(Value));
+	QValue* bvalues = (QValue*)qmalloc(nnz * sizeof(QValue), __FUNCTION__, __LINE__);
+  memcpy(bvalues, values, nnz * sizeof(QValue));
   int* bcolInd = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
   for (int i = 0; i < rows; ++i) {
     for (int j = rowPtr[i]; j < rowPtr[i + 1]; ++j) {

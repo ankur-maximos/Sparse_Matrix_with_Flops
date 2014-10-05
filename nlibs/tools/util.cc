@@ -1,15 +1,15 @@
 #include "util.h"
 #include <algorithm>
 
-Value computeThreshold(Value avg, Value max) {
-	Value ret = MLMCL_PRUNE_A * avg * (1 - MLMCL_PRUNE_B * (max - avg));
+QValue computeThreshold(QValue avg, QValue max) {
+	QValue ret = MLMCL_PRUNE_A * avg * (1 - MLMCL_PRUNE_B * (max - avg));
 	ret = (ret > 1.0e-7) ? ret : 1.0e-7;
 	ret = (ret > max) ? max : ret;
 	return ret;
 }
 
-Value arrayMax(const Value values[], const int count) {
-  Value rmax = 0.0;
+QValue arrayMax(const QValue values[], const int count) {
+  QValue rmax = 0.0;
   for ( int i = 0; i < count; ++i) {
     if (rmax < values[i]) {
       rmax = values[i];
@@ -18,9 +18,9 @@ Value arrayMax(const Value values[], const int count) {
   return rmax;
 }
 
-pair<Value, Value> arrayMaxSum(const Value values[], const int count) {
-  Value rmax = 0.0;
-  Value rsum = 0.0;
+pair<QValue, QValue> arrayMaxSum(const QValue values[], const int count) {
+  QValue rmax = 0.0;
+  QValue rsum = 0.0;
   for ( int i = 0; i < count; ++i) {
     if (rmax < values[i]) {
       rmax = values[i];
@@ -30,25 +30,25 @@ pair<Value, Value> arrayMaxSum(const Value values[], const int count) {
   return make_pair(rmax, rsum);
 }
 
-Value arraySum(const Value *restrict values, const int count) {
-  Value rsum = 0.0;
+QValue arraySum(const QValue *restrict values, const int count) {
+  QValue rsum = 0.0;
   for (int i = 0; i < count; ++i) {
     rsum += values[i];
   }
   return rsum;
 }
 
-void arrayInflationR2(const Value *restrict ivalues, const int count, Value *restrict ovalues) {
+void arrayInflationR2(const QValue *restrict ivalues, const int count, QValue *restrict ovalues) {
   for (int i = 0; i < count; ++i) {
     ovalues[i] = ivalues[i] * ivalues[i];
   }
 }
 
-Value arrayThreshPruneNormalize(const Value thresh, const int rindices[], const Value rvalues[],
-    int* count, int indices[], Value values[]) {
+QValue arrayThreshPruneNormalize(const QValue thresh, const int rindices[], const QValue rvalues[],
+    int* count, int indices[], QValue values[]) {
 	//int* indicesToRetain = (int*)malloc(sizeof(int) * (*count));
 	int i, j;
-	Value sum = 0;
+	QValue sum = 0;
 	for (i = 0, j = 0; i < *count; ++i) {
 		if (values[i] >= thresh) {
 			sum += rvalues[i];
@@ -68,7 +68,7 @@ Value arrayThreshPruneNormalize(const Value thresh, const int rindices[], const 
 	return sum;
 }
 
-void arrayOutput(const char *msg, FILE* fp, const Value datas[], int len) {
+void arrayOutput(const char *msg, FILE* fp, const QValue datas[], int len) {
   fprintf(fp, "%s", msg);
   for (int i = 0; i < len; ++i) {
     fprintf(fp, "%e ", datas[i]);
@@ -95,7 +95,7 @@ void arrayOutput(const char *msg, FILE* fp, const vector<int> &datas) {
   fflush(fp);
 }
 
-void arrayOutput(const char *msg, FILE* fp, const vector<Value> &datas) {
+void arrayOutput(const char *msg, FILE* fp, const vector<QValue> &datas) {
   fprintf(fp, "%s", msg);
   for (int i = 0; i < datas.size(); ++i) {
     fprintf(fp, "%lf ", datas[i]);
