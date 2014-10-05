@@ -12,7 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include <omp.h>
-#ifdef enable_GPU
+#ifdef enable_gpu
 #include "gpus/cuda_handle_error.h"
 #endif
 //#include "gpus/gpu_csr_kernel.h"
@@ -314,7 +314,7 @@ CSR CSR::cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int st
   return csr;
 }
 
-#ifdef enable_GPU
+#ifdef enable_gpu
 CSR CSR::toGpuCSR() const {
   CSR dA;
   dA.rows = this->rows;
@@ -330,7 +330,7 @@ CSR CSR::toGpuCSR() const {
 }
 #endif
 
-#ifdef enable_GPU
+#ifdef enable_gpu
 CSR CSR::toCpuCSR() const {
   CSR hA;
   hA.rows = this->rows;
@@ -346,7 +346,7 @@ CSR CSR::toCpuCSR() const {
 }
 #endif
 
-#ifdef enable_GPU
+#ifdef enable_gpu
 void CSR::deviceDispose() {
   cudaFree(values); values = NULL;
   cudaFree(colInd); colInd = NULL;

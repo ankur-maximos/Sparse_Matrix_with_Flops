@@ -13,7 +13,7 @@
 #include "math.h"
 #include "cpu_csr_kernel.h"
 #include "tools/key_value_qsort.h"
-#ifdef enable_GPU
+#ifdef enable_gpu
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #endif

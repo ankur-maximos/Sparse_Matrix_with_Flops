@@ -91,14 +91,14 @@ CSR cusparseSpMMWrapper(const CSR &dA, const CSR &dB) {
   CSR dC;
   int baseC, nnzC;
   dC.rows = m; dC.cols = n;
+  //timer t;
   cudaMalloc((void**)&dC.rowPtr, sizeof(int) * (m + 1));
-  timer t;
-  timer t2;
+  //timer t2;
   cusparseXcsrgemmNnzWrapper(dA.rowPtr, dA.colInd, dA.nnz,
       dB.rowPtr, dB.colInd, dB.nnz,
       m, k, n,
       dC.rowPtr, nnzC);
-  QValue nnzTime = t2.milliseconds_elapsed();
+  //QValue nnzTime = t2.milliseconds_elapsed();
   HANDLE_ERROR(cudaMemcpy(&nnzC , dC.rowPtr + m, sizeof(int), cudaMemcpyDeviceToHost));
   cudaMemcpy(&baseC, dC.rowPtr, sizeof(int), cudaMemcpyDeviceToHost);
   nnzC -= baseC;
@@ -109,7 +109,7 @@ CSR cusparseSpMMWrapper(const CSR &dA, const CSR &dB) {
       dB.rowPtr, dB.colInd, dB.values, dB.nnz,
       dC.rowPtr, dC.colInd, dC.values, dC.nnz,
       m, k, n);
-  printf("cusparse time passed %lf nnzTime=%lf\n", t.milliseconds_elapsed(), nnzTime);
+  //printf("cusparse time passed %lf nnzTime=%lf\n", t.milliseconds_elapsed(), nnzTime);
   //cusparse_finalize("clear up cusparse");
   return dC;
 }
