@@ -1,8 +1,6 @@
 # Which compiler to use
 #CC = cc
-hasGPU=0
-hasMIC=2
-hasPAPI=1
+include ../config.mk
 CC = icpc
 NVCC = nvcc
 
