@@ -8,7 +8,9 @@
 #include "tools/util.h"
 #include "tools/stats.h"
 #include "tools/qmalloc.h"
+#ifdef enable_mkl
 #include "mkls/mkl_csr_kernel.h"
+#endif
 #include <vector>
 #include <algorithm>
 #include <omp.h>
@@ -289,6 +291,7 @@ CSR CSR::staticFairRmclOneStep(const CSR &B, const int stride) const {
 }
 
 //Input A and B matrix are one based index. Output C is also one based index.
+#ifdef enable_mkl
 CSR CSR::mklRmclOneStep(const CSR &B, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
@@ -302,6 +305,7 @@ CSR CSR::mklRmclOneStep(const CSR &B, const int stride) const {
   CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
   return csr;
 }
+#endif
 
 
 #ifdef enable_cilk

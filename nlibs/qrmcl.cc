@@ -51,7 +51,12 @@ void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, con
       exit(-1);
 #endif
     } else if (runOptions == MKL) {
+#ifdef enable_mkl
       newMt = Mgt.mklRmclOneStep(Mt, stride);
+#else
+      printf("Configuration config without MKL support\n");
+      exit(-1);
+#endif
     } else {
       printf("Multithreaded RunOptions should be either OMP or CILK\n");
       exit(-1);

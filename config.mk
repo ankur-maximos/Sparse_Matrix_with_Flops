@@ -3,4 +3,4 @@ hasGPU=0
 hasMIC=0
 hasPAPI=0
 hasCILK=0
-
+hasMKL=0

@@ -2,7 +2,7 @@
 #include "process_args.h"
 #include "qrmcl.h"
 #include "tools/ntimer.h"
-#include "tools/micpower_sample.h"
+//#include "tools/micpower_sample.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

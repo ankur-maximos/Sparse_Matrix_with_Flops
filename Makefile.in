@@ -50,6 +50,10 @@ ifeq ($(hasCILK), 1)
 OPTFLAGS+=-Denable_cilk
 endif
 
+ifeq ($(hasMKL), 1)
+OPTFLAGS+=-Denable_mkl $(MKL_FLAGS)
+LDOPTIONS+= $(MKL_LDFLAGS)
+endif
 # What archiving to use
 AR = ar rv
 ifeq ($(hasMIC), 1)

@@ -1,14 +1,17 @@
+#ifdef enable_mkl
 #include "mkl.h"
 #include "process_args.h"
 #include "qrmcl.h"
 #include "tools/ntimer.h"
-#include "tools/micpower_sample.h"
+//#include "tools/micpower_sample.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "mkls/mkl_csr_kernel.h"
+#endif
 
 int main(int argc, char *argv[]) {
+#ifdef enable_mkl
   process_args(argc, argv);
   print_args();
   int up = options.maxIters;
@@ -42,5 +45,6 @@ int main(int argc, char *argv[]) {
   A.dispose();
   B.dispose();
   C.dispose();
+#endif
   return 0;
 }
