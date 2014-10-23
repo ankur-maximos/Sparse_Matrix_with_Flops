@@ -7,7 +7,7 @@
 
 #include "COO.h"
 #include "tools/qmalloc.h"
-#include <tuple>
+//#include <tuple>
 #include <vector>
 #include <algorithm>
 
@@ -114,17 +114,35 @@ void COO::output(const char* msg) {
   printf("host output end\n");
 }
 
+struct COOTuple {
+  int rowIndex;
+  int colIndex;
+  QValue val;
+};
+
+bool operator < (const COOTuple &A, const COOTuple &B) {
+  return A.rowIndex < B.rowIndex || (A.rowIndex == B.rowIndex && A.colIndex < B.colIndex);
+}
+
+
+COOTuple makeCOOTuple(int rowIndex, int colIndex, QValue val) {
+  COOTuple cooTuple;
+  cooTuple.rowIndex = rowIndex;
+  cooTuple.colIndex = colIndex;
+  cooTuple.val = val;
+}
+
 void COO::makeOrdered() const {
-  typedef std::tuple<int, int, QValue> iid;
+  typedef COOTuple iid;
   std::vector<iid> v(nnz);
   for (int i = 0; i < nnz; ++i) {
-    v[i] = (std::make_tuple(cooRowIndex[i], cooColIndex[i], cooVal[i]));
+    v[i] = (makeCOOTuple(cooRowIndex[i], cooColIndex[i], cooVal[i]));
   }
   std::sort(v.begin(), v.end());
   for (int i = 0; i < nnz; ++i) {
-    cooRowIndex[i] = std::get<0>(v[i]);
-    cooColIndex[i] = std::get<1>(v[i]);
-    cooVal[i] = std::get<2>(v[i]);
+    cooRowIndex[i] = v[i].rowIndex;
+    cooColIndex[i] = v[i].colIndex;
+    cooVal[i] = v[i].val;
   }
 }
 

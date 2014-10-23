@@ -63,7 +63,7 @@ void CSR_MP_Test() {
 }
 
 void CSR_initWithDenseMatrixTest() {
-  const Value dMM[] = {
+  const QValue dMM[] = {
     1, 2, 0, 0, 0, 0,
     0, 0, 3, 0, 0, 0,
     0, 4, 0, 0, 0, 5,
@@ -75,7 +75,7 @@ void CSR_initWithDenseMatrixTest() {
   A.initWithDenseMatrix(dMM, rows, cols);
   const int rowPtr[] = {0, 2, 3, 5, 6, 9};
   const int colInd[] = {0, 1, 2, 1, 5, 4, 0, 3, 5};
-  const Value values[] = {1, 2, 3, 4, 5, 2, 3, 1, 8};
+  const QValue values[] = {1, 2, 3, 4, 5, 2, 3, 1, 8};
   for (int i = 0; i < rows + 1; ++i) {
     assert(rowPtr[i] == A.rowPtr[i]);
   }
