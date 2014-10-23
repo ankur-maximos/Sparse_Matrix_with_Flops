@@ -16,6 +16,9 @@
 #include "gpus/cuda_handle_error.h"
 #endif
 //#include "gpus/gpu_csr_kernel.h"
+#ifdef enable_cilk
+#include "cilks/cilk_csr_kernel.h"
+#endif
 
 void CSR::matrixRowReorder(const int* ranks) const {
   int* nrowPtr = (int*)qmalloc((rows + 1) * sizeof(int), __FUNCTION__, __LINE__);
@@ -300,6 +303,8 @@ CSR CSR::mklRmclOneStep(const CSR &B, const int stride) const {
   return csr;
 }
 
+
+#ifdef enable_cilk
 CSR CSR::cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const {
   assert(this->cols == B.rows);
   int* IC;
@@ -313,6 +318,7 @@ CSR CSR::cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int st
   CSR csr(C, JC, IC, this->rows, B.cols, nnzC);
   return csr;
 }
+#endif
 
 #ifdef enable_gpu
 CSR CSR::toGpuCSR() const {

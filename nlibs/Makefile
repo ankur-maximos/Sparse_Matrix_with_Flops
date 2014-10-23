@@ -7,10 +7,14 @@ CUFLAGS = $(CUOPTFLAGS) $(CUINCLUDES) -I.
 LD = $(CC) -L. 
 
 #SOURCES=$(wildcard *.cc)
-SOURCES=$(shell find . -path ./gpus -prune -o -name '*.cc' -print) 
+SOURCES=$(shell find . -path ./gpus -prune -o -path ./cilks -prune -o -name '*.cc' -print) 
 
 ifeq ($(hasGPU), 1)
 SOURCES+= $(shell find gpus -name "*.cc" -o -name "*.cu")
+endif
+
+ifeq ($(hasCILK), 1)
+SOURCES+= $(shell find cilks -name "*.cc")
 endif
 
 OBJS=$(shell echo $(SOURCES) | sed "s/\.cc/\.o/g" | sed "s/\.cu/\.o/g")

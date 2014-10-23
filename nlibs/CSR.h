@@ -314,7 +314,9 @@ public:
   CSR staticOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
   CSR hybridOmpRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
   CSR staticFairRmclOneStep(const CSR &B, const int stride) const;
+#ifdef enable_cilk
   CSR cilkRmclOneStep(const CSR &B, thread_data_t *thread_datas, const int stride) const;
+#endif
   QValue differs(const CSR& B) const;
   vector<int> differsStats(const CSR& B, vector<QValue> percents) const;
   CSR toGpuCSR() const;

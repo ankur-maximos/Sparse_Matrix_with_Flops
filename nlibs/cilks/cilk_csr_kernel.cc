@@ -1,11 +1,4 @@
-#include "cpu_csr_kernel.h"
-#include "tools/ntimer.h"
-#include "tools/util.h"
-#include <cilk/cilk.h>
-#include <cilk/cilk_api.h>
-#include <iostream>
-#include <omp.h>
-using namespace std;
+#include "cilk_csr_kernel.h"
 
 void cilk_CSR_RMCL_OneStep(const int IA[], const int JA[], const QValue A[], const int nnzA,
         const int IB[], const int JB[], const QValue B[], const int nnzB,

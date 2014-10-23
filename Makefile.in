@@ -46,6 +46,10 @@ LDOPTIONS= -L$(CUDA_HOME)/lib64 -Wl,-rpath,$(CUDA_HOME)/lib64 -lcudart -lcuspars
 CINCLUDES+= -I$(CUDA_HOME)/include
 endif
 
+ifeq ($(hasCILK), 1)
+OPTFLAGS+=-Denable_cilk
+endif
+
 # What archiving to use
 AR = ar rv
 ifeq ($(hasMIC), 1)

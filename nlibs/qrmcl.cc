@@ -44,7 +44,12 @@ void mtRmclIter(const int maxIter, const CSR Mgt, CSR &Mt, const int stride, con
     } else if (runOptions == OMP) {
       newMt = Mgt.ompRmclOneStep(Mt, thread_datas, stride);
     } else if (runOptions == CILK) {
+#ifdef enable_cilk
       newMt = Mgt.cilkRmclOneStep(Mt, thread_datas, stride);
+#else
+      printf("Configuration config without CILK support\n");
+      exit(-1);
+#endif
     } else if (runOptions == MKL) {
       newMt = Mgt.mklRmclOneStep(Mt, stride);
     } else {
