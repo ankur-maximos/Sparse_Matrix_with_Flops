@@ -45,7 +45,7 @@ void COO::readMatrixMarketFile(const char fname[]) {
             &cooVal, &cooRowIndex, &cooColIndex);
 }
 
-void COO::readTransposedSNAPFile(const char fname[]) {
+void COO::readSNAPFile(const char fname[], bool isTrans) {
   FILE *fpin;
   if ((fpin = fopen(fname, "r")) == NULL) {
     printf("Failed to open file %s\n", fname);
@@ -69,8 +69,13 @@ void COO::readTransposedSNAPFile(const char fname[]) {
   for (int i = 0; i < nnz; ++i) {
     fscanf(fpin, "%d%d", &from, &to);
     //Reverse row and col so that it is transposed.
-    cooRowIndex[i] = to;
-    cooColIndex[i] = from;
+    if (isTrans) {
+      cooRowIndex[i] = to;
+      cooColIndex[i] = from;
+    } else {
+      cooRowIndex[i] = from;
+      cooColIndex[i] = to;
+    }
     cooVal[i] = 1.0;
   }
 }
@@ -130,13 +135,15 @@ COOTuple makeCOOTuple(int rowIndex, int colIndex, QValue val) {
   cooTuple.rowIndex = rowIndex;
   cooTuple.colIndex = colIndex;
   cooTuple.val = val;
+  return cooTuple;
 }
 
 void COO::makeOrdered() const {
   typedef COOTuple iid;
-  std::vector<iid> v(nnz);
+  std::vector<iid> v;
+  v.resize(nnz);
   for (int i = 0; i < nnz; ++i) {
-    v[i] = (makeCOOTuple(cooRowIndex[i], cooColIndex[i], cooVal[i]));
+    v[i] = makeCOOTuple(cooRowIndex[i], cooColIndex[i], cooVal[i]);
   }
   std::sort(v.begin(), v.end());
   for (int i = 0; i < nnz; ++i) {
@@ -146,6 +153,7 @@ void COO::makeOrdered() const {
   }
 }
 
+//COO format must be in order
 CSR COO::toCSR() const {
   int row = 0;
 	int* ocsrRowPtr = (int*)qmalloc(sizeof(int) * (rows + 1), __FUNCTION__, __LINE__);

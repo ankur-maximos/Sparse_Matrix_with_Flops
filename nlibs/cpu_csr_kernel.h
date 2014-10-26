@@ -96,6 +96,10 @@ void flops_omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const 
         const int IB[], const int JB[], const QValue B[], const int nnzB,
         int* &IC, int* &JC, QValue* &C, int& nnzC,
         const int m, const int k, const int n, const int stride);
+void group_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int nnzA,
+        const int IB[], const int JB[], const QValue B[], const int nnzB,
+        int* &IC, int* &JC, QValue* &C, int& nnzC,
+        const int m, const int k, const int n, const int stride);
 void omp_CSR_IC_nnzC(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n, const thread_data_t& thread_data,

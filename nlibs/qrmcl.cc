@@ -135,7 +135,7 @@ CSR rmclInit(COO &cooAt) {
 
 CSR RMCL(const char iname[], int maxIters, RunOptions runOptions) {
   COO cooAt;
-  cooAt.readTransposedSNAPFile(iname);
+  cooAt.readSNAPFile(iname);
   CSR Mt = rmclInit(cooAt);
   //Mt.output("CSR Mt");
   cooAt.dispose();

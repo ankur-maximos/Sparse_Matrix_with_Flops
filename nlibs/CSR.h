@@ -100,6 +100,7 @@ public:
   vector<int> nnzStats() const;
   CSR spmm(const CSR& B) const;
   CSR flops_spmm(const CSR& B, const int stride = 512) const;
+  CSR group_spmm(const CSR& B, const int stride = 512) const;
   CSR omp_spmm(const CSR& B, const int stride = 512) const;
   CSR omp_spmm(thread_data_t* thread_datas, const CSR& B, const int stride = 512) const;
   CSR somp_spmm(const CSR& B, const int stride = 512) const;

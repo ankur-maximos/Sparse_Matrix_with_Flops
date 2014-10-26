@@ -18,7 +18,7 @@ public:
   void dispose();
 	void readMatrixMarketFile(const char fname[]);
 /*Instead of read matrix read its transpose. It is useful for RMCL which process column instead of row.*/
-  void readTransposedSNAPFile(const char fname[]);
+  void readSNAPFile(const char fname[], bool isTrans = true);
   void addSelfLoopIfNeeded();
 	void output(const char* msg);
 	CSR toCSR() const;
