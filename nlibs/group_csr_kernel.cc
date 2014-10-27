@@ -30,20 +30,19 @@ void group_CSR_flops(const int IA[], const int JA[],
     else ++c16p;
     rowFlops[i] = tmpRowFlops;
   }
+  assert (c0 + c1 + c2 + c4 + c8 + c16 + c16p == m);
   int top0 = 0, top1 = c0, top2 = c0 + c1, top4 = c0 + c1 + c2;
-  int top8 = c0 + c1 + c2 + c4, top16 = c0 + c1 + c2 + c4 + c8, top16p = c0 + c1 + c2 + c4 + c8;
+  int top8 = c0 + c1 + c2 + c4, top16 = c0 + c1 + c2 + c4 + c8, top16p = c0 + c1 + c2 + c4 + c8 + c16;
   tops[0] = top0; tops[1] = top1; tops[2] = top2;
   tops[3] = top4; tops[4] = top8; tops[5] = top16; tops[6] = top16p; tops[7] = top16p + c16p;
   for (int i = 0; i < m; ++i) {
     if (rowFlops[i] <= 0) {
       groups[top0++] = i;
       IC[i] = 0;
-    }
-    else if (rowFlops[i] <= 1) {
+    } else if (rowFlops[i] <= 1) {
       groups[top1++] = i;
       IC[i] = 1;
-    }
-    else if (rowFlops[i] <= 2) groups[top2++] = i;
+    } else if (rowFlops[i] <= 2) groups[top2++] = i;
     else if (rowFlops[i] <= 4) groups[top4++] = i;
     else if (rowFlops[i] <= 8) groups[top8++] = i;
     else if (rowFlops[i] <= 16) groups[top16++] = i;
@@ -62,8 +61,6 @@ void group_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int 
   static int groupPtr[8];
   static int ends[MAX_THREADS_NUM];
   group_CSR_flops(IA, JA, IB, JB, m, n, IC, nnzC, flops, groups, groupPtr, stride);
-  arrayOutput("IC ", stdout, IC, m + 1);
-  arrayOutput("groupPtr ", stdout, groupPtr, 7);
 #pragma omp parallel firstprivate(stride)
   {
     const int tid = omp_get_thread_num();
@@ -75,12 +72,9 @@ void group_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int 
       int groupSize = groupPtr[gid + 1] - groupPtr[gid];
       int low = groupPtr[gid] + ((long long) groupSize) * tid / nthreads;
       int high = groupPtr[gid] + ((long long) groupSize) * (tid + 1) / nthreads;
-      printf("gid=%d start=%d end=%d\n", gid, groupPtr[gid], groupPtr[gid + 1]);
-      printf("gid=%d low=%d high=%d\n", gid, low, high);
       for (int i = low; i < high; ++i) {
         int r = groups[i];
         IC[r] = cRowiCount(r, IA, JA, IB, JB, iJC, xb);
-        printf("r=%d count=%d\n", r, IC[r]);
       }
     }
 #pragma omp barrier
@@ -88,7 +82,6 @@ void group_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int 
 #pragma omp master
     {
       nnzC = IC[m];
-      arrayOutput("IC master", stdout, IC, m + 1);
       JC = (int*)malloc(sizeof(int) * nnzC);
       C = (QValue*)malloc(sizeof(QValue) * nnzC);
     }
@@ -103,9 +96,9 @@ void group_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int 
       for (int i = low; i < high; ++i) {
         int r = groups[i];
         indexProcessCRowI(index,
-            IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
+            IA[r + 1] - IA[r], JA + IA[r], A + IA[r],
             IB, JB, B,
-            JC + IC[i], C + IC[i]);
+            JC + IC[r], C + IC[r]);
       }
     }
   }
