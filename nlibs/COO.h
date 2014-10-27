@@ -8,8 +8,8 @@ private:
 	int * cooRowIndex;
 	int * cooColIndex;
 	QValue * cooVal;
-	int rows, cols, nnz;
 public:
+	int rows, cols, nnz;
   COO(const char fname[]);
 	COO();
 	COO(const QValue* const cooVal, const int* const cooColIndex,
@@ -23,6 +23,7 @@ public:
 	void output(const char* msg);
 	CSR toCSR() const;
   void makeOrdered() const;
+  int orderedAndDuplicatesRemoving();
 };
 
 #endif /* COO_H_ */

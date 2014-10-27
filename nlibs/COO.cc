@@ -153,6 +153,36 @@ void COO::makeOrdered() const {
   }
 }
 
+int COO::orderedAndDuplicatesRemoving() {
+  typedef COOTuple iid;
+  std::vector<iid> v;
+  v.resize(nnz);
+  for (int i = 0; i < nnz; ++i) {
+    v[i] = makeCOOTuple(cooRowIndex[i], cooColIndex[i], cooVal[i]);
+  }
+  std::sort(v.begin(), v.end());
+  int i = 1, j = 0;
+  while (i < nnz) {
+    if (v[i].rowIndex == v[j].rowIndex && v[i].colIndex == v[j].colIndex) {
+      v[j].val += v[i].val;
+    } else {
+      ++j;
+      v[j] = v[i];
+    }
+    ++i;
+  }
+  nnz = j + 1;
+  for (int i = 0; i < nnz; ++i) {
+    cooRowIndex[i] = v[i].rowIndex;
+    cooColIndex[i] = v[i].colIndex;
+    cooVal[i] = v[i].val;
+  }
+  cooRowIndex = (int*)realloc(cooRowIndex, nnz * sizeof(int));
+  cooColIndex = (int*)realloc(cooColIndex, nnz * sizeof(int));
+  cooVal = (QValue*)realloc(cooVal, nnz * sizeof(QValue));
+  return j + 1;
+}
+
 //COO format must be in order
 CSR COO::toCSR() const {
   int row = 0;
