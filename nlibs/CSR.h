@@ -207,13 +207,13 @@ public:
       }
     }
 
-    for (int i = 0; i < nnz; ++i) {
-      if (colInd[i] != B.colInd[i]) {
-        printf("colInd[%d] %d\t%d\n", i, colInd[i], B.colInd[i]);
-        flag = false;
-        break;
-      }
-    }
+    // for (int i = 0; i < nnz; ++i) {
+    //   if (colInd[i] != B.colInd[i]) {
+    //     printf("colInd[%d] %d\t%d\n", i, colInd[i], B.colInd[i]);
+    //     flag = false;
+    //     break;
+    //   }
+    // }
     double* rowVals = (double*)malloc(cols * sizeof(double));
     memset(rowVals, 0, cols * sizeof(double));
     for (int i = 0; i < rows && flag != false; ++i) {
@@ -224,7 +224,7 @@ public:
       for (int j = B.rowPtr[i]; j < B.rowPtr[i + 1]; ++j) {
         int col = B.colInd[j];
         if (fabs(rowVals[col] - B.values[j]) > 1e-7) {
-          printf("values[%d] %lf\t%lf\n", i, rowVals[col], B.values[j]);
+          printf("values[%d][%d] %lf\t%lf\n", i, col, rowVals[col], B.values[j]);
           flag = false;
           break;
         } else {
