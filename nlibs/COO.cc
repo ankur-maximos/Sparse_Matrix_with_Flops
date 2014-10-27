@@ -189,11 +189,16 @@ CSR COO::toCSR() const {
 	int* ocsrRowPtr = (int*)qmalloc(sizeof(int) * (rows + 1), __FUNCTION__, __LINE__);
 	memset(ocsrRowPtr, -1, sizeof(int) * (rows + 1));
 	for (int t = 0; t < nnz; ++t) {
-		while(row < cooRowIndex[t] && row < rows && ocsrRowPtr[row] == -1)
-		  ocsrRowPtr[row++] = t;
-		if(row == cooRowIndex[t] && ocsrRowPtr[row] == -1)
-		  ocsrRowPtr[row++] = t;
+    while (row < cooRowIndex[t] && row < rows && ocsrRowPtr[row] == -1)
+      ocsrRowPtr[row++] = t;
+    if (row == cooRowIndex[t] && ocsrRowPtr[row] == -1)
+      ocsrRowPtr[row++] = t;
 	}
+  for (; row < rows; ++row) {
+    if (ocsrRowPtr[row] == -1) {
+		  ocsrRowPtr[row] = nnz;
+    }
+  }
 	ocsrRowPtr[rows] = nnz;
 	int onnz = nnz;
 	int* ocsrColInd = (int*)qmalloc(sizeof(int) * onnz, __FUNCTION__, __LINE__);
