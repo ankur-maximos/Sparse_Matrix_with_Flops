@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   process_args(argc, argv);
   print_args();
   COO cooAt;
-  cooAt.readTransposedSNAPFile(options.inputFileName);
+  cooAt.readSNAPFile(options.inputFileName, true);
   CSR A = rmclInit(cooAt);
   //Mt.output("CSR Mt");
   cooAt.dispose();
@@ -23,13 +23,13 @@ int main(int argc, char *argv[]) {
   CSR ompC;
   double sum = 0.0;
   // Warmup for omp_spmm
-  ompC = A.omp_spmm(B, options.stride);
+  ompC = A.somp_spmm(B, options.stride);
   ompC.dispose();
   const int up = 10;
   printf("IA=%p JA=%p\n", A.rowPtr, A.colInd);
   for (int i = 0; i < up; ++i) {
     now = time_in_mill_now();
-    ompC = A.omp_spmm(B, options.stride);
+    ompC = A.somp_spmm(B, options.stride);
     sum += time_in_mill_now() - now;
     if (i != up - 1)
     ompC.dispose();
