@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "mkls/mkl_csr_kernel.h"
 
 
 int main(int argc, char *argv[]) {
@@ -12,10 +13,13 @@ int main(int argc, char *argv[]) {
   print_args();
   int up = options.maxIters;
   COO cooAt;
-  cooAt.readSNAPFile(options.inputFileName, false);
-  cooAt.makeOrdered();
+  cooAt.readSNAPFile(options.inputFileName, true);
+  //cooAt.makeOrdered();
+  printf("nnz before prune=%d", cooAt.nnz);
+  cooAt.orderedAndDuplicatesRemoving();
+  printf("nnz after prune=%d", cooAt.nnz);
   CSR A = cooAt.toCSR();
-  A.output("A");
+  //A.output("A");
   cooAt.dispose();
   CSR B = A.deepCopy();
   up = options.maxIters;
@@ -35,12 +39,17 @@ int main(int argc, char *argv[]) {
       ompC.dispose();
     }
   }
-  std::cout << "time passed for " << up << " times noindex cpu " << sum / up
+  std::cout << "time passed for " << up << " times group cpu " << sum / up
     << " GFLOPS=" << flops / (sum / up) / 1e6 << std::endl;
-  ompC.output("group spmm:");
-  CSR C = A.somp_spmm(B, options.stride);
-  C.output("somp spmm:");
-  bool isSame = C.isEqual(ompC);
+  //ompC.output("group spmm:");
+  A.toOneBasedCSR();
+  B.toOneBasedCSR();
+  CSR C = mkl_spmm(A, B);
+  C.toZeroBasedCSR();
+  A.dispose();
+  B.dispose();
+  //C.output("somp spmm:");
+  bool isSame = C.isRawEqual(ompC);
   if (isSame) {
     std::cout << "Same\n";
   } else {
@@ -48,7 +57,5 @@ int main(int argc, char *argv[]) {
   }
   C.dispose();
   ompC.dispose();
-  A.dispose();
-  B.dispose();
   return 0;
 }

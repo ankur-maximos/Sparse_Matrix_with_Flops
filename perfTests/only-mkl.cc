@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
   print_args();
   int up = options.maxIters;
   COO cooAt;
-  cooAt.readTransposedSNAPFile(options.inputFileName);
+  cooAt.readSNAPFile(options.inputFileName);
   CSR A = rmclInit(cooAt);
   cooAt.dispose();
   CSR B = A.deepCopy();
