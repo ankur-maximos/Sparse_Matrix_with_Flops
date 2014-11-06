@@ -13,7 +13,7 @@ using namespace std;
 void dynamic_omp_CSR_flops(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n,
-    int* IC, int& nnzC, int* rowFlops, const int stride) {
+    int* rowFlops, const int stride) {
 #pragma omp for schedule(dynamic, stride)
   for (int i = 0; i < m; ++i) {
     int tmpRowFlops = 0;
@@ -22,8 +22,8 @@ void dynamic_omp_CSR_flops(const int IA[], const int JA[],
       int BrowFlops = IB[j + 1] - IB[j];
       tmpRowFlops += BrowFlops;
     }
-    rowFlops[i] = (tmpRowFlops >> 1);
-    //rowFlops[i] = (tmpRowFlops);
+    //rowFlops[i] = (tmpRowFlops >> 1);
+    rowFlops[i] = (tmpRowFlops);
   }
 #pragma omp barrier
   noTileOmpPrefixSum(rowFlops, rowFlops, m);
@@ -50,7 +50,7 @@ void flops_omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const 
 #ifdef profiling
     QValue now = time_in_mill_now();
 #endif
-    dynamic_omp_CSR_flops(IA, JA, IB, JB, m, n, IC, nnzC, flops, stride);
+    dynamic_omp_CSR_flops(IA, JA, IB, JB, m, n, flops, stride);
 #ifdef profiling
     printf("Time passed for thread %d dynamic_omp_CSR_flops with %lf milliseconds\n", tid, time_in_mill_now() - now);
 #endif
