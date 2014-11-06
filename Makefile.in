@@ -24,7 +24,7 @@ GPERF_LDFLAGS=$(GPERF_HOME)/lib/libprofiler.a $(GPERF_HOME)/lib/libtcmalloc.a
 # What optimization level to use
 #OPTFLAGS = -fast -openmp
 #OPTFLAGS = -O0 -openmp -vec-report1 -restrict -Dprofiling -pthreads
-OPTFLAGS = -O3 -openmp -vec-report1 -restrict #-Dprofiling #-DAGGR
+OPTFLAGS = -O3 -openmp -restrict #-vec-report1 #-Dprofiling #-DAGGR
 
 LIBDIR=nlibs
 LIBNAME=libnrmcl.a

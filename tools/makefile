@@ -16,13 +16,13 @@ all:$(EXES)
 CC=icpc
 %.x:%.o $(NRMCL)
 	@echo $(LDFLAGS)
-	$(CC) -o $@ $< $(LDFLAGS) $(MKL_LDFLAGS) #$(GPERF_LDFLAGS)
+	$(CC) -o $@ $< $(LDFLAGS) 
 
 $(NRMCL):$(shell find $(LIBDIR) -name '*.cc' -o -name '*.h' -o -name '*.cu')
 	(cd $(LIBDIR); make)
 
 %.o:%.cc 
-	$(CC) $(CFLAGS) $(MKL_FLAGS) $^ -c 
+	$(CC) $(CFLAGS) $^ -c 
 
 clean:
 	rm -rf *.o *.x
