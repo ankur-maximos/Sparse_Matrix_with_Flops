@@ -16,6 +16,7 @@ int process_args(int argc, char **argv) {
       {"maxIters",  required_argument, 0, 'm'},
       {"stride",  required_argument, 0, 'd'},
       {"stats", no_argument, 0, 's'},
+      {"ptile",  required_argument, 0, 'p'},
       {"br",  required_argument, 0, 'x'},
       {"bc",  required_argument, 0, 'y'},
       {"help",   no_argument, 0, 'h'},
@@ -59,6 +60,9 @@ int process_args(int argc, char **argv) {
         break;
       case 'd':
         options.stride = atol(optarg);
+        break;
+      case 'p':
+        options.ptile = atol(optarg);
         break;
       case 'x':
         options.br= atol(optarg);

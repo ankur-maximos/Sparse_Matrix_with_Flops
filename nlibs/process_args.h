@@ -16,6 +16,7 @@ struct Options {
   char inputFileName[200];
   bool stats = false;
   int stride = 512;
+  int ptile = 2;
   RunOptions rmclOption;
   int br = 2, bc = 8;
 };
