@@ -45,39 +45,108 @@ void COO::readMatrixMarketFile(const char fname[]) {
             &cooVal, &cooRowIndex, &cooColIndex);
 }
 
-void COO::readSNAPFile(const char fname[], bool isTrans) {
+int COO::readSNAPFile(const char fname[], bool isTrans) {
   FILE *fpin;
   if ((fpin = fopen(fname, "r")) == NULL) {
     printf("Failed to open file %s\n", fname);
     exit(-1);
   }
-  const int MAX_LINE = 500;
-  char line[MAX_LINE];
-  do {
-    fgets(line, MAX_LINE, fpin);
-  } while (line[0] == '#' && !feof(fpin));
+  char line[MM_MAX_LINE_LENGTH];
+  char banner[MM_MAX_TOKEN_LENGTH];
+  char mtx[MM_MAX_TOKEN_LENGTH]; mtx[0] = '\0';
+  char crd[MM_MAX_TOKEN_LENGTH];
+  char data_type[MM_MAX_TOKEN_LENGTH];
+  char storage_scheme[MM_MAX_TOKEN_LENGTH];
+  strcpy(storage_scheme, "unsymmetric");
+  char *p;
+  fgets(line, MM_MAX_LINE_LENGTH, fpin);
+  bool isMtx = false;
+  if (line[0] == '%' && !feof(fpin)) {
+    if (sscanf(line, "%s %s %s %s %s", banner, mtx, crd, data_type, storage_scheme) == 5) {
+      for (p = mtx; *p != '\0'; *p = tolower(*p), p++);  /* convert to lower case */
+      for (p = crd; *p != '\0'; *p = tolower(*p), p++);
+      for (p = data_type; *p != '\0'; *p = tolower(*p), p++);
+      for (p = storage_scheme; *p != '\0'; *p = tolower(*p), p++);
+      isMtx = true;
+    }
+  }
+  while ((line[0] == '#' || line[0] == '%') && !feof(fpin)) {
+    fgets(line, MM_MAX_LINE_LENGTH, fpin);
+  }
   if (feof(fpin)) {
     nnz = 0;
-    return;
+    return 0;
   }
-  sscanf(line, "%d %d", &(this->rows), &(this->nnz));
-  this->cols = this->rows;
-  cooRowIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
-  cooColIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
-  cooVal = (QValue*)qmalloc(nnz * sizeof(QValue), __FUNCTION__, __LINE__);
-  int from, to;
-  for (int i = 0; i < nnz; ++i) {
-    fscanf(fpin, "%d%d", &from, &to);
-    //Reverse row and col so that it is transposed.
-    if (isTrans) {
-      cooRowIndex[i] = to;
-      cooColIndex[i] = from;
-    } else {
-      cooRowIndex[i] = from;
-      cooColIndex[i] = to;
+  int f2, f3;
+  int ret = sscanf(line, "%d %d %d", &(this->rows), &f2, &f3);
+  if (ret == 2) {
+    this->cols = this->rows;
+    this->nnz = f2;
+  } else {
+    assert (ret == 3);
+    this->cols = f2;
+    this->nnz = f3;
+  }
+  printf("rows=%d cols=%d nnz=%d\n", rows, cols, nnz);
+  //printf("%s\n", banner);
+  if (strcmp(storage_scheme, "symmetric") == 0) {
+    cooRowIndex = (int*)qmalloc(nnz * 2 * sizeof(int), __FUNCTION__, __LINE__);
+    cooColIndex = (int*)qmalloc(nnz * 2 * sizeof(int), __FUNCTION__, __LINE__);
+    cooVal = (QValue*)qmalloc(nnz * 2 * sizeof(QValue), __FUNCTION__, __LINE__);
+    int top = 0;
+    int from, to;
+    QValue val;
+    printf("symm %d %d %d\n", this->rows, this->cols, this->nnz);
+    for (int i = 0; i < nnz; ++i) {
+      int ret = fscanf(fpin, "%d%d%lf", &from, &to, &val);
+      assert (isMtx);
+      --from; --to;
+      //isTrans is not useful if symmetric
+      assert (ret == 2 || ret == 3);
+      if (ret == 2) {
+        val = 1.0;
+      }
+      cooRowIndex[top] = from;
+      cooColIndex[top] = to;
+      cooVal[top++] = val;
+      if (from != to) {
+        cooRowIndex[top] = to;
+        cooColIndex[top] = from;
+        cooVal[top++] = val;
+      }
     }
-    cooVal[i] = 1.0;
+    this->nnz = top;
+  } else {
+    cooRowIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
+    cooColIndex = (int*)qmalloc(nnz * sizeof(int), __FUNCTION__, __LINE__);
+    cooVal = (QValue*)qmalloc(nnz * sizeof(QValue), __FUNCTION__, __LINE__);
+    int from, to;
+    QValue val;
+    printf("nonsymm %d %d %d\n", this->rows, this->cols, this->nnz);
+    for (int i = 0; i < nnz; ++i) {
+      fgets(line, MM_MAX_LINE_LENGTH, fpin);
+      int ret = sscanf(line, "%d%d%lf", &from, &to, &val);
+      if (isMtx) {
+        assert (isMtx);
+        --from; --to;
+      }
+      //Reverse row and col so that it is transposed.
+      if (isTrans) {
+        cooRowIndex[i] = to;
+        cooColIndex[i] = from;
+      } else {
+        cooRowIndex[i] = from;
+        cooColIndex[i] = to;
+      }
+      if (ret == 2) {
+        cooVal[i] = 1.0;
+      } else {
+        assert (ret == 3);
+        cooVal[i] = val;
+      }
+    }
   }
+  return 0;
 }
 
 void COO::addSelfLoopIfNeeded() {

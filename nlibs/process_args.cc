@@ -99,6 +99,7 @@ void print_args() {
   printf("inputFileName= %s\t", options.inputFileName);
   printf("maxIters= %d\t", options.maxIters);
   printf("stride= %d\t", options.stride);
+  printf("ptile= %d\t", options.ptile);
   printf("rmclOption= %s\t", runOptionsStr[options.rmclOption]);
   printf("}\n");
 }

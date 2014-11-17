@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
   print_args();
   int up = options.maxIters;
   COO cooAt;
-  cooAt.readSNAPFile(options.inputFileName, true);
+  cooAt.readSNAPFile(options.inputFileName, false);
   cooAt.orderedAndDuplicatesRemoving();
   CSR At = cooAt.toCSR();
 
@@ -31,7 +31,8 @@ int main(int argc, char *argv[]) {
   //C.output("C");
   printf("sparsity of A=%lf\n", (double)A.nnz / A.rows / A.rows);
   printf("sparsity of C=%lf\n", (double)C.nnz / C.rows / C.rows);
-  printf("N= %d\tAnnz= %d Cnnz=%d flops= %ld\n", A.rows, A.nnz, C.nnz, flops);
+  printf("N= %d\tAnnz= %d Cnnz=%d flops= %ld flops/cnnz=%lf\n", A.rows, A.nnz, C.nnz, flops, ((double)flops) / C.nnz);
+  printf("%d & %d & %d & %lf\n", A.rows, A.nnz, C.nnz, flops, ((double)flops) / C.nnz);
   printf("Cnnz/Annz=%lf\n", (double)C.nnz / A.nnz);
 
   vector<int> stats = A.nnzStats();
