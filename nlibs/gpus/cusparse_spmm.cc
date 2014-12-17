@@ -70,14 +70,25 @@ void cusparseDcsrgemmWapper(const int* const dIA, const int dJA[], const QValue 
         const int m, const int k, const int n) {
   cusparseOperation_t transA = CUSPARSE_OPERATION_NON_TRANSPOSE;
   cusparseOperation_t transB = CUSPARSE_OPERATION_NON_TRANSPOSE;
-  status = cusparseDcsrgemm(handle, transA, transB, m, n, k,
+#ifdef FDOUBLE
+  status = cusparseDcsrgemm(
+      handle, transA, transB, m, n, k,
       descrA, nnzA,
       dA, dIA, dJA,
       descrB, nnzB,
       dB, dIB, dJB,
       descrC,
       dC, dIC, dJC);
-
+#else
+  status = cusparseScsrgemm(
+      handle, transA, transB, m, n, k,
+      descrA, nnzA,
+      dA, dIA, dJA,
+      descrB, nnzB,
+      dB, dIB, dJB,
+      descrC,
+      dC, dIC, dJC);
+#endif
   if (status != CUSPARSE_STATUS_SUCCESS) {
     CLEANUP("CSR Matrix-Matrix multiplication failed");
   }
@@ -91,14 +102,14 @@ CSR cusparseSpMMWrapper(const CSR &dA, const CSR &dB) {
   CSR dC;
   int baseC, nnzC;
   dC.rows = m; dC.cols = n;
-  //timer t;
+  timer t;
   cudaMalloc((void**)&dC.rowPtr, sizeof(int) * (m + 1));
-  //timer t2;
+  timer t2;
   cusparseXcsrgemmNnzWrapper(dA.rowPtr, dA.colInd, dA.nnz,
       dB.rowPtr, dB.colInd, dB.nnz,
       m, k, n,
       dC.rowPtr, nnzC);
-  //QValue nnzTime = t2.milliseconds_elapsed();
+  double nnzTime = t2.milliseconds_elapsed();
   HANDLE_ERROR(cudaMemcpy(&nnzC , dC.rowPtr + m, sizeof(int), cudaMemcpyDeviceToHost));
   cudaMemcpy(&baseC, dC.rowPtr, sizeof(int), cudaMemcpyDeviceToHost);
   nnzC -= baseC;
@@ -109,7 +120,8 @@ CSR cusparseSpMMWrapper(const CSR &dA, const CSR &dB) {
       dB.rowPtr, dB.colInd, dB.values, dB.nnz,
       dC.rowPtr, dC.colInd, dC.values, dC.nnz,
       m, k, n);
-  //printf("cusparse time passed %lf nnzTime=%lf\n", t.milliseconds_elapsed(), nnzTime);
+  cudaDeviceSynchronize();
+  printf("cusparse time passed %lf nnzTime=%lf\n", t.milliseconds_elapsed(), nnzTime);
   //cusparse_finalize("clear up cusparse");
   return dC;
 }
