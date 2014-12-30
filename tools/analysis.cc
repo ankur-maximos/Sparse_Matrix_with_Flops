@@ -37,6 +37,9 @@ int main(int argc, char *argv[]) {
 
   vector<int> stats = A.nnzStats();
   outputStats(stats);
+
+  vector<int> statsC = C.nnzStats();
+  outputStats(statsC);
   // Warmup for mkl_spmm
   At.dispose();
   A.dispose();
