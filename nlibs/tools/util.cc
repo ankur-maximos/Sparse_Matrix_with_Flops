@@ -86,6 +86,15 @@ void arrayOutput(const char *msg, FILE* fp, const int datas[], int len) {
   fflush(fp);
 }
 
+void arrayOutput(const char *msg, FILE* fp, const long datas[], int len) {
+  fprintf(fp, "%s", msg);
+  for (int i = 0; i < len; ++i) {
+    fprintf(fp, "%ld ", datas[i]);
+  }
+  fprintf(fp, "\n");
+  fflush(fp);
+}
+
 void arrayOutput(const char *msg, FILE* fp, const vector<int> &datas) {
   fprintf(fp, "%s", msg);
   for (int i = 0; i < datas.size(); ++i) {
@@ -109,6 +118,20 @@ void prefixSumToCounts(const int prefixSum[], const int len, int *counts) {
   for (int i = 0; i < len; ++i) {
     counts[i] = prefixSum[i + 1] - prefixSum[i];
   }
+}
+
+void arrayEqualPartition64(long prefixSum[], const int n, const int nthreads, int ends[]) {
+  const long chunk_size = (prefixSum[n] + nthreads - 1) / nthreads;
+  ends[0] = 0;
+  for (int i = 0, now = 0; i < nthreads - 1; ++i) {
+    const long target = std::min((i + 1) * chunk_size, prefixSum[n]);
+    long* begin = prefixSum + now;
+    long* upper = std::upper_bound(begin, prefixSum + n + 1, target);
+    ends[i + 1] = std::max((int)(upper - prefixSum - 1), now + 1);
+    ends[i + 1] = std::min(ends[i + 1], n);
+    now = ends[i + 1];
+  }
+  ends[nthreads] = n;
 }
 
 void arrayEqualPartition(int prefixSum[], const int n, const int nthreads, int ends[]) {
