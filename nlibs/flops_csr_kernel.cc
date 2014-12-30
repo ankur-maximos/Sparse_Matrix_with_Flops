@@ -4,6 +4,7 @@
 #include "tools/ntimer.h"
 #include "tools/util.h"
 #include "tools/prefixSum.h"
+#include "tools/prefixSum64.h"
 using namespace std;
 
 /*
@@ -13,10 +14,10 @@ using namespace std;
 void dynamic_omp_CSR_flops(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n,
-    int* rowFlops, const int stride) {
+    long* rowFlops, const int stride) {
 #pragma omp for schedule(dynamic, stride)
   for (int i = 0; i < m; ++i) {
-    int tmpRowFlops = 0;
+    long tmpRowFlops = 0;
     for (int jp = IA[i]; jp < IA[i + 1]; ++jp) {
       int j = JA[jp];
       int BrowFlops = IB[j + 1] - IB[j];
@@ -26,7 +27,7 @@ void dynamic_omp_CSR_flops(const int IA[], const int JA[],
     rowFlops[i] = (tmpRowFlops);
   }
 #pragma omp barrier
-  noTileOmpPrefixSum(rowFlops, rowFlops, m);
+  noTileOmpPrefixSum64(rowFlops, rowFlops, m);
 }
 
 void flops_omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int nnzA,
@@ -37,7 +38,7 @@ void flops_omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const 
   QValue now = time_in_mill_now();
 #endif
   IC = (int*)malloc((m + 1) * sizeof(int));
-  int* flops = (int*)malloc((m + 1) * sizeof(int));
+  long* flops = (long*)malloc((m + 1) * sizeof(long));
 #ifdef profiling
   printf("Time passed for malloc IC and flops with %lf milliseconds\n", time_in_mill_now() - now);
   now = time_in_mill_now();
@@ -57,7 +58,7 @@ void flops_omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const 
 #pragma omp barrier
 #pragma omp single
     {
-      arrayEqualPartition(flops, m, nthreads, ends);
+      arrayEqualPartition64(flops, m, nthreads, ends);
       //arrayOutput("ends partitions ", stdout, ends, nthreads + 1);
     }
 #ifdef profiling

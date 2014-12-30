@@ -259,6 +259,6 @@ inline int cRowiCount(const int i, const int IA[], const int JA[], const int IB[
 void dynamic_omp_CSR_flops(const int IA[], const int JA[],
     const int IB[], const int JB[],
     const int m, const int n,
-    int* rowFlops, const int stride);
+    long* rowFlops, const int stride);
 
 #endif
