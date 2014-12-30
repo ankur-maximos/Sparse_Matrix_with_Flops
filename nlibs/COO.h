@@ -4,11 +4,10 @@
 #include "CSR.h"
 
 class COO {
-private:
+public:
 	int * cooRowIndex;
 	int * cooColIndex;
 	QValue * cooVal;
-public:
 	int rows, cols, nnz;
   COO(const char fname[]);
 	COO();
