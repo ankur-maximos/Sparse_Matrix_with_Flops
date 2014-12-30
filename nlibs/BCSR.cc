@@ -43,7 +43,7 @@ BCSR::BCSR(const CSR &csr, const int r, const int c) {
         for (int j = csr.rowPtr[i]; j < csr.rowPtr[i + 1]; ++j) {
           int col = csr.colInd[j];
           int target = col / c;
-          double* bval = NULL;
+          QValue* bval = NULL;
           if (index[target] == -1) {
             colInd[top] = target;
             bval = values + top * r * c;

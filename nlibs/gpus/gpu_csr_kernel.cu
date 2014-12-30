@@ -12,7 +12,7 @@
 #include <thrust/scan.h>
 #include <thrust/remove.h>
 
-__global__ void outputCSRKernel(const int *rowPtr, const int *colInd, const double *values, int rows) {
+__global__ void outputCSRKernel(const int *rowPtr, const int *colInd, const QValue *values, int rows) {
   if (threadIdx.x == 0 && blockIdx.x == 0) {
     for (int i = 0; i < rows; i++) {
       for (int j = rowPtr[i]; j < rowPtr[i + 1]; j++) {
@@ -82,24 +82,24 @@ __global__ void gpu_CSR_IC_nnzC(const int IA[], const int JA[],
 }
 
 template <int BLOCK_THREADS>
-__global__ void gpuSpMMKernel(const int *IA, const int *JA, const double *A,
-    const int *IB, const int *JB, const double *B,
-    const int *IC, int *JC, double *C,
-    bool *xbs, double *xs,
+__global__ void gpuSpMMKernel(const int *IA, const int *JA, const QValue *A,
+    const int *IB, const int *JB, const QValue *B,
+    const int *IC, int *JC, QValue *C,
+    bool *xbs, QValue *xs,
     const int m, const int k, const int n) {
   __shared__ int dcount;
   if (threadIdx.x == 0) {
     dcount = 0;
   }
   bool *xb = xbs + blockIdx.x * n;
-  double *x = xs + blockIdx.x * n;
+  QValue *x = xs + blockIdx.x * n;
   __syncthreads();
   for (int i = blockIdx.x; i < m; i += gridDim.x) {
     const int ICi = IC[i];
     int *iJC = JC + ICi;
     for (int jp = IA[i]; jp < IA[i + 1]; ++jp) {
       int j = JA[jp];
-      const double Ajp = A[jp];
+      const QValue Ajp = A[jp];
       for (int tp = IB[j] + threadIdx.x; tp < IB[j + 1]; tp += blockDim.x) {
         int t = JB[tp];
         if (xb[t] == false) {
@@ -126,6 +126,7 @@ __global__ void gpuSpMMKernel(const int *IA, const int *JA, const double *A,
 }
 
 CSR gpuSpMMWrapper(const CSR &dA, const CSR &dB) {
+  timer t;
   CSR dC;
   //const int NBLOCKS = 1; const int NTHREADS = 1;
   const int NBLOCKS = 512; const int NTHREADS = 128;
@@ -134,13 +135,12 @@ CSR gpuSpMMWrapper(const CSR &dA, const CSR &dB) {
   int n = dB.cols;
   bool *xbs = NULL;
   int *iJCs = NULL;
-  double *xs = NULL;
+  QValue *xs = NULL;
   HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(bool))); cudaMemset(xbs, 0, NBLOCKS * n * sizeof(bool));
-  HANDLE_ERROR(cudaMalloc((void**)&xs, NBLOCKS * n * sizeof(double))); cudaMemset(xs, 0, NBLOCKS * n * sizeof(double));
+  HANDLE_ERROR(cudaMalloc((void**)&xs, NBLOCKS * n * sizeof(QValue))); cudaMemset(xs, 0, NBLOCKS * n * sizeof(QValue));
   HANDLE_ERROR(cudaMalloc((void**)&iJCs, NBLOCKS * n * sizeof(int)));
 
   HANDLE_ERROR(cudaMalloc((void**)&dC.rowPtr, (m + 1) * sizeof(int)));
-  timer t;
   timer t2;
   gpu_CSR_IC_nnzC<<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd,
       m, n, dC.rowPtr, xbs, iJCs);
@@ -153,15 +153,13 @@ CSR gpuSpMMWrapper(const CSR &dA, const CSR &dB) {
   int hh = dIC[1];
   //printf("dIC[1] = %d\n", hh);
   HANDLE_ERROR(cudaMalloc((void**)&dC.colInd, cNnz * sizeof(int)));
-  HANDLE_ERROR(cudaMalloc((void**)&dC.values, cNnz * sizeof(double)));
+  HANDLE_ERROR(cudaMalloc((void**)&dC.values, cNnz * sizeof(QValue)));
   gpuSpMMKernel<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values,
       dB.rowPtr, dB.colInd, dB.values,
       dC.rowPtr, dC.colInd, dC.values,
       xbs, xs,
       m, k, n);
   cudaDeviceSynchronize();
-  double timeUsed = t.milliseconds_elapsed();
-  printf("Time used for gpu spmm %lf nnzTime=%lf\n", timeUsed, nnzTime);
   HANDLE_ERROR(cudaGetLastError());
   //hh = dIC[1]; printf("dIC[1] = %d\n", hh);
   dC.rows = m;
@@ -169,28 +167,30 @@ CSR gpuSpMMWrapper(const CSR &dA, const CSR &dB) {
   dC.nnz = cNnz;
   HANDLE_ERROR(cudaFree(xbs));
   HANDLE_ERROR(cudaFree(xs));
+  double timeUsed = t.milliseconds_elapsed();
+  printf("Time used for gpu spmm %lf nnzTime=%lf\n", timeUsed, nnzTime);
   return dC;
 }
 
 template <int BLOCK_THREADS>
-__global__ void gpuRmclOneStepKernel(const int *IA, const int *JA, const double *A,
-    const int *IB, const int *JB, const double *B,
-    int *IC, int *JC, double *C,
-    bool *xbs, double *xs,
+__global__ void gpuRmclOneStepKernel(const int *IA, const int *JA, const QValue *A,
+    const int *IB, const int *JB, const QValue *B,
+    int *IC, int *JC, QValue *C,
+    bool *xbs, QValue *xs,
     const int m, const int k, const int n) {
   __shared__ int dcount;
   if (threadIdx.x == 0) {
     dcount = 0;
   }
   bool *xb = xbs + blockIdx.x * n;
-  double *x = xs + blockIdx.x * n;
+  QValue *x = xs + blockIdx.x * n;
   __syncthreads();
   for (int i = blockIdx.x; i < m; i += gridDim.x) {
     const int ICi = IC[i];
     int *iJC = JC + ICi;
     for (int jp = IA[i]; jp < IA[i + 1]; ++jp) {
       int j = JA[jp];
-      const double Ajp = A[jp];
+      const QValue Ajp = A[jp];
       for (int tp = IB[j] + threadIdx.x; tp < IB[j + 1]; tp += blockDim.x) {
         int t = JB[tp];
         if (xb[t] == false) {
@@ -242,7 +242,7 @@ struct is_minus_one {
 
 template <int NBLOCKS, int NTHREADS>
 CSR gpuRmclOneStepWrapper(const CSR &dA, const CSR &dB,
-    bool *xbs, double *xs, int *iJCs) {
+    bool *xbs, QValue *xs, int *iJCs) {
   CSR dC;
   int m = dA.rows;
   int k = dA.cols;
@@ -256,7 +256,7 @@ CSR gpuRmclOneStepWrapper(const CSR &dA, const CSR &dB,
   thrust::exclusive_scan(dIC, dIC + m + 1, dIC);
   int cNnz = dIC[m];
   HANDLE_ERROR(cudaMalloc((void**)&dC.colInd, cNnz * sizeof(int)));
-  HANDLE_ERROR(cudaMalloc((void**)&dC.values, cNnz * sizeof(double)));
+  HANDLE_ERROR(cudaMalloc((void**)&dC.values, cNnz * sizeof(QValue)));
   gpuRmclOneStepKernel<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values,
       dB.rowPtr, dB.colInd, dB.values,
       dC.rowPtr, dC.colInd, dC.values,
@@ -286,9 +286,9 @@ void gpuRmclIter(const int maxIter, const CSR Mgt, CSR &Mt) {
   CSR dMt = Mt.toGpuCSR();
   bool *xbs = NULL;
   int *iJCs = NULL;
-  double *xs = NULL;
+  QValue *xs = NULL;
   HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(bool))); cudaMemset(xbs, 0, NBLOCKS * n * sizeof(bool));
-  HANDLE_ERROR(cudaMalloc((void**)&xs, NBLOCKS * n * sizeof(double))); //cudaMemset(xs, 0, NBLOCKS * n * sizeof(double));
+  HANDLE_ERROR(cudaMalloc((void**)&xs, NBLOCKS * n * sizeof(QValue))); //cudaMemset(xs, 0, NBLOCKS * n * sizeof(double));
   HANDLE_ERROR(cudaMalloc((void**)&iJCs, NBLOCKS * n * sizeof(int)));
   double now = time_in_mill_now();
   for (int iter = 0; iter < maxIter; ++iter) {
