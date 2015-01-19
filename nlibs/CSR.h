@@ -149,6 +149,14 @@ public:
     }
   }
 
+  void toAbs() {
+    for (int i = 0; i < rows; i++) {
+      for (int j = rowPtr[i]; j < rowPtr[i + 1]; j++) {
+        values[j] = fabs(values[j]);
+      }
+    }
+  }
+
   void output_structure(const char* msg) const {
     printf("%s\n", msg);
     for (int i = 0; i < rows; i++) {
@@ -261,6 +269,42 @@ public:
         int col = B.colInd[j];
         if (fabs(rowVals[col] - B.values[j]) > 1e-8) {
           printf("values[%d, %d] %lf\t%lf\n", i, col, rowVals[col], B.values[j]);
+          flag = false;
+          break;
+        } else {
+          rowVals[col] = 0.0;
+        }
+      }
+      free(rowVals);
+      return flag;
+    }
+    return flag;
+  }
+
+  bool isRelativeEqual(const CSR &B, float maxRelativeError) const {
+    bool flag = true;
+    if (rows != B.rows) {
+      printf("rows = %d\tB_rows = %d\n", rows, B.rows);
+      flag = false;
+    }
+    if (cols != B.cols) {
+      printf("cols = %d\tB_cols = %d\n", cols, B.cols);
+      flag = false;
+    }
+    double* rowVals = (double*)malloc(cols * sizeof(double));
+    memset(rowVals, 0, cols * sizeof(double));
+    for (int i = 0; i < rows && flag != false; ++i) {
+      for (int j = rowPtr[i]; j < rowPtr[i + 1]; ++j) {
+        int col = colInd[j];
+        if (fabs(values[j]) > 1e-8) {
+          rowVals[col] = values[j];
+        }
+      }
+      for (int j = B.rowPtr[i]; j < B.rowPtr[i + 1]; ++j) {
+        int col = B.colInd[j];
+        float relativeError = fabs((rowVals[col] - B.values[j]) / B.values[j]);
+        if (relativeError > maxRelativeError && fabs(B.values[j]) > 1e-7) {
+          printf("values[%d, %d] %e should be %e\n", i, col, rowVals[col], B.values[j]);
           flag = false;
           break;
         } else {
