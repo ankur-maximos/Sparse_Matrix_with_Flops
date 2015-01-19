@@ -94,6 +94,7 @@ void dynamic_omp_CSR_IC_nnzC_footprints(const int IA[], const int JA[],
   }
 }
 
+//int indexRowId = -1;
 void static_omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int nnzA,
         const int IB[], const int JB[], const QValue B[], const int nnzB,
         int* &IC, int* &JC, QValue* &C, int& nnzC,
@@ -166,6 +167,7 @@ void static_omp_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const
     int low = ends[tid];
     int high = ends[tid + 1];
     for (int i = low; i < high; ++i) {
+      //indexRowId = i;
       indexProcessCRowI(index,
           IA[i + 1] - IA[i], JA + IA[i], A + IA[i],
           IB, JB, B,

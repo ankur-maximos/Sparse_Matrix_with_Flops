@@ -129,6 +129,7 @@ int processCRowI(QValue x[], bool* xb,
         const int IB[], const int JB[], const QValue B[],
         int* iJC, QValue* iC);
 
+//extern int indexRowId;
 //inline int indexProcessCRowI(int *restrict index, // index array must be initilized with -1
 #ifdef __CUDACC__
 inline int indexProcessCRowI(int *index,
@@ -152,6 +153,8 @@ inline int indexProcessCRowI(int *restrict index,
     iJC[++ip] = t;
     index[t] = ip;
     iC[ip] = iA[jp] * B[tp];
+    // if (indexRowId == 3 && t == 247)
+    //   printf("C[%d][%d]+=A[%d][%d]*B[%d][%d]=%f*%f=%f\n", indexRowId, t, indexRowId, j, j, t, iA[jp], B[tp], iC[index[t]]);
   }
   for(int jp = 1; jp < iAnnz; ++jp) {
     int j = iJA[jp];
@@ -165,6 +168,8 @@ inline int indexProcessCRowI(int *restrict index,
       } else {
         iC[index[t]] += iA[jp] * B[tp];
       }
+      // if (indexRowId == 3 && t == 247)
+      //   printf("C[%d][%d]+=A[%d][%d]*B[%d][%d]=%f*%f=%f\n", indexRowId, t, indexRowId, j, j, t, iA[jp], B[tp], iC[index[t]]);
       // This hack will remove if condition but it will make program slightly slow due to more operations.
       // This may worth a try on Xeon Phi machines.
       // int f = index[t] >> 31;
