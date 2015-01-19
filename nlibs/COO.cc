@@ -98,7 +98,11 @@ int COO::readSNAPFile(const char fname[], bool isTrans) {
     QValue val;
     printf("symm %d %d %d\n", this->rows, this->cols, this->nnz);
     for (int i = 0; i < nnz; ++i) {
+#ifdef FDOUBLE
       int ret = fscanf(fpin, "%d%d%lf", &from, &to, &val);
+#else
+      int ret = fscanf(fpin, "%d%d%f", &from, &to, &val);
+#endif
       assert (isMtx);
       --from; --to;
       //isTrans is not useful if symmetric
@@ -125,7 +129,11 @@ int COO::readSNAPFile(const char fname[], bool isTrans) {
     printf("nonsymm %d %d %d\n", this->rows, this->cols, this->nnz);
     for (int i = 0; i < nnz; ++i) {
       fgets(line, MM_MAX_LINE_LENGTH, fpin);
+#ifdef FDOUBLE
       int ret = sscanf(line, "%d%d%lf", &from, &to, &val);
+#else
+      int ret = sscanf(line, "%d%d%f", &from, &to, &val);
+#endif
       if (isMtx) {
         assert (isMtx);
         --from; --to;
@@ -183,7 +191,11 @@ void COO::output(const char* msg) {
   printf("%s\n", msg);
   for(int i=0;i<nnz;i++)
   {
+#ifdef FDOUBLE
     printf("%d %d %lf\n", cooRowIndex[i], cooColIndex[i], cooVal[i]);
+#else
+    printf("%d %d %f\n", cooRowIndex[i], cooColIndex[i], cooVal[i]);
+#endif
   }
   printf("host output end\n");
 }
