@@ -174,7 +174,7 @@ __global__ void sgpu_SpGEMM_tlarge(
 }
 
 
-void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, int* dv, const vector<int> &hv, CSR &dC) {
+void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv, CSR &dC) {
   int m = dA.rows;
   int n = dB.cols;
   if (hv.size() > 0 + 1 && hv[1] - hv[0] > 0) { // up to fp0
@@ -278,10 +278,10 @@ void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, int* dv, const vect
   }
 }
 
-CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, int* dv, const vector<int> &hv) {
+CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv) {
   CSR dC;
   //int *dqueue = NULL; computeDv(dA, dB, &dv, &dqueue);
-  gpu_compute_IC(dA, dB, drowIds, dv, hv, dC);
+  gpu_compute_IC(dA, dB, drowIds, hv, dC);
   HANDLE_ERROR(cudaGetLastError());
   thrust::device_ptr<int> dIC = thrust::device_pointer_cast(dC.rowPtr);
   int m = dA.rows;
@@ -291,7 +291,7 @@ CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, int* dv, const v
   HANDLE_ERROR(cudaMalloc((void**)&dC.colInd, cNnz * sizeof(int)));
   HANDLE_ERROR(cudaMalloc((void**)&dC.values, cNnz * sizeof(QValue)));
   //HANDLE_ERROR(cudaMemset(dC.values, 0, cNnz * sizeof(QValue)));
-  sgpu_SpGEMM(dA, dB, drowIds, dv, hv, dC);
+  sgpu_SpGEMM(dA, dB, drowIds, hv, dC);
   cudaDeviceSynchronize();
   dC.nnz = cNnz;
   dC.rows = dA.rows;

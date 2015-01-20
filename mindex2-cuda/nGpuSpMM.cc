@@ -14,7 +14,8 @@
 #include "mkls/mkl_csr_kernel.h"
 #include "gpus/cusparse_spmm.h"
 
-CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, int v[4]);
+
+CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv);
 
 void ompFlops(const int m, const int IA[], const int JA[], const int IB[], long rowFlops[]) {
   const int stride = 512;
@@ -198,7 +199,7 @@ bool resultsComparison(CSR &hC, CSR &rC, const vector<int> &hv, const int *hqueu
 
 }
 
-CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, int* dv, const vector<int> &hv);
+std::vector<int> gpuFlopsClassify(const CSR &dA, const CSR &dB, int **drowIdsp);
 
 //CSR rC;
 CSR scudaSpMM(const CSR &hA, const CSR &hB) {
@@ -208,42 +209,27 @@ CSR scudaSpMM(const CSR &hA, const CSR &hB) {
   CSR dA = hA.toGpuCSR();
   CSR dB = hB.toGpuCSR();
   timer t;
-  long *hflops = (long*)malloc(m * sizeof(long)), *dflops = NULL;
-  double now1 = time_in_mill_now();
-  ompFlops(m, hA.rowPtr, hA.colInd, hB.rowPtr, hflops);
-  double now2 = time_in_mill_now();
-  int *dv = NULL;
-  int *hqueue = (int*) malloc(m * sizeof(int)), *dqueue = NULL;
-  vector<int> hv = classifyFlops(hflops, hA.rowPtr, m, hqueue);
-  double now3 = time_in_mill_now();
-  printf("time for flops=%lf ms classify=%lf ms\n", now2 - now1, now3 - now2);
-
-  HANDLE_ERROR(cudaMalloc((void**)&dqueue, m * sizeof(int)));
-  HANDLE_ERROR(cudaMemcpy((void*)dqueue, (void*) hqueue, m * sizeof(int), cudaMemcpyHostToDevice));
-  HANDLE_ERROR(cudaMalloc((void**)&dv, hv.size() * sizeof(int)));
-  HANDLE_ERROR(cudaMemcpy((void*)dv, (void*)(&hv[0]), hv.size() * sizeof(int), cudaMemcpyHostToDevice));
+  int *dqueue = NULL;
+  vector<int> hv = gpuFlopsClassify(dA, dB, &dqueue);
   timer t2;
-  CSR dC = sgpuSpMMWrapper(dA, dB, dqueue, dv, hv);
+  CSR dC = sgpuSpMMWrapper(dA, dB, dqueue, hv);
   double te = t.milliseconds_elapsed();
   double t2e = t2.milliseconds_elapsed();
   printf("SpGEMM compute pass %lf milliseconds\n", t2e);
   printf("hvsize=%u\n", hv.size());
   printf("SpGEMM rowFlops and classify includes %lf milliseconds\n", te);
-  HANDLE_ERROR(cudaFree(dqueue));
-  HANDLE_ERROR(cudaFree(dv));
+
   CSR hC = dC.toCpuCSR();
-
   dC.deviceDispose();
-  // CSR dC2 = cusparseSpMMWrapper(dA, dB);
-  // CSR rC = dC2.toCpuCSR();
-  // dC2.deviceDispose();
   CSR rC = hA.somp_spmm(hB, 512);
+  int *hqueue = (int*) malloc(m * sizeof(int));
+  HANDLE_ERROR(cudaMemcpy((void*) hqueue, (void*) dqueue, m * sizeof(int), cudaMemcpyDeviceToHost));
+  HANDLE_ERROR(cudaFree(dqueue));
   resultsComparison(hC, rC, hv, hqueue);
-
-  free(hflops); free(hqueue);
+  free(hqueue);
   dA.deviceDispose();
   dB.deviceDispose();
-  return rC;
+  return hC;
 }
 
 int main(int argc, char *argv[]) {

@@ -251,7 +251,7 @@ __global__ void sgpu_CSR_IC_nnzC_vlarge(const int IA[], const int JA[],
   }
 }
 
-void gpu_compute_IC(const CSR &dA, const CSR &dB, int *drowIds, int* dv, const vector<int> &hv, CSR &dC) {
+void gpu_compute_IC(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv, CSR &dC) {
   dC.rowPtr = NULL;
   int m = dA.rows;
   //int k = dA.cols;
