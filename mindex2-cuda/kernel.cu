@@ -257,9 +257,12 @@ void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &
     int *xbs = NULL;
     HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int)));
     HANDLE_ERROR(cudaMemset(xbs, -1, NBLOCKS * n * sizeof(int)));
-    sgpu_SpGEMM_olarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[10], hv[63] - hv[10], m, n, dC.rowPtr, dC.colInd, dC.values, xbs);
+    float *xs = NULL; HANDLE_ERROR(cudaMalloc((void**)&xs, NBLOCKS * n * sizeof(float)));
+    HANDLE_ERROR(cudaMemset(xs, 0, NBLOCKS * n * sizeof(float)));
+    sgpu_SpGEMM_tlarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[10], hv[63] - hv[10], m, n, dC.rowPtr, dC.colInd, dC.values, xbs, xs);
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaFree(xbs));
+    HANDLE_ERROR(cudaFree(xs));
   }
 
   if (hv[64] - hv[63] > 0) // >=128 non entries a single row of matrix A.
@@ -268,13 +271,9 @@ void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &
     int *xbs = NULL;
     HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int)));
     HANDLE_ERROR(cudaMemset(xbs, -1, NBLOCKS * n * sizeof(int)));
-    float *xs = NULL; HANDLE_ERROR(cudaMalloc((void**)&xs, NBLOCKS * n * sizeof(float)));
-    HANDLE_ERROR(cudaMemset(xs, 0, NBLOCKS * n * sizeof(float)));
-    //sgpu_SpGEMM_olarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[63], hv.back() - hv[63], m, n, dC.rowPtr, dC.colInd, dC.values, xbs);
-    sgpu_SpGEMM_tlarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[63], hv.back() - hv[63], m, n, dC.rowPtr, dC.colInd, dC.values, xbs, xs);
+    sgpu_SpGEMM_olarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[63], hv[64] - hv[63], m, n, dC.rowPtr, dC.colInd, dC.values, xbs);
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaFree(xbs));
-    HANDLE_ERROR(cudaFree(xs));
   }
 }
 

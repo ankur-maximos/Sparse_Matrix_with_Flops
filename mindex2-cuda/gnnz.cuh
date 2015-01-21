@@ -185,8 +185,8 @@ __global__ void sgpu_CSR_IC_nnzC_vlarge(const int IA[], const int JA[],
       keys[threadIdx.x] = predicate ? (IB[a + 1] - IB[a]) : -1;
       as[threadIdx.x] = a;
       unsigned le4 = partition_by_bound(keys, as, 4);
-      unsigned le16 = partition_by_bound(keys, as, 16);
-      unsigned le128 = partition_by_bound(keys, as, 128);
+      unsigned le16 = partition_by_bound(keys, as, 32);
+      unsigned le128 = partition_by_bound(keys, as, 64);
       unsigned total = min(IA[rowId + 1] + threadIdx.x - ap, blockDim.x);
       __syncthreads();
       for (int ap = threadIdx.x; ap < le4; ap += blockDim.x) {
@@ -330,19 +330,9 @@ void gpu_compute_IC(const CSR &dA, const CSR &dB, int *drowIds, const vector<int
     sgpu_CSR_IC_nnzC_mid<NTHREADS, WARP_SIZE, 571><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[9], hv[10] - hv[9], m, n, dC.rowPtr);
     HANDLE_ERROR(cudaGetLastError());
   }
-  /*if (hv.size() > 10 + 1 && hv[11] - hv[10] > 0) { // up to fp512*/
-  /*  const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 128;*/
-  /*  const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;*/
-  /*  const unsigned NBLOCKS = qmin(65535, (hv[10] - hv[9] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);*/
-  /*  sgpu_CSR_IC_nnzC_mid<NTHREADS, WARP_SIZE, 1187><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[10], hv[11] - hv[10], m, n, dC.rowPtr);*/
-  /*  HANDLE_ERROR(cudaGetLastError());*/
-  /*}*/
-  //if (hv.size() > 11 + 1) // up to fp1024
-    //sgpu_CSR_IC_nnzC_mid<512, 128, 2089><<<64, 512>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[11], hv[12] - hv[11], m, n, dC.rowPtr);
 
   //very large
   if (hv.size() > 10 + 1 && hv.back() - hv[10] > 0) // larger than fp256
-  //if (hv.size() > 11 + 1 && hv.back() - hv[11] > 0) // larger than fp1024
   {
     const int NBLOCKS = 512; const int NTHREADS = 128;
     int *xbs = NULL, *iJCs = NULL;

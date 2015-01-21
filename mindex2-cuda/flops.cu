@@ -62,8 +62,10 @@ __global__ void gcomputeBinId(const int m, const int* dIA, const int *dJA, const
     if (tmpRowFlops == 0) q = 64;
     else {
       int acount = dIA[i + 1] - dIA[i];
-      if (acount >= 128) q = 63;
-      else if (acount > 1) q = dqueueId(tmpRowFlops);
+      if (acount > 1) {
+        if (acount >= 32 && tmpRowFlops > acount * 32) q = 63;
+        else q = dqueueId(tmpRowFlops);
+      }
     }
     __syncthreads();
     binIds[i] = q;
