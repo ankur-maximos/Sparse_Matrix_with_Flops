@@ -331,14 +331,27 @@ void gpu_compute_IC(const CSR &dA, const CSR &dB, int *drowIds, const vector<int
     HANDLE_ERROR(cudaGetLastError());
   }
 
+  assert (hv.size() == 65);
   //very large
-  if (hv.size() > 10 + 1 && hv.back() - hv[10] > 0) // larger than fp256
+  //if (hv.size() > 10 + 1 && hv.back() - hv[10] > 0) // larger than fp256
+  if (hv.size() > 10 + 1 && hv[63] - hv[10] > 0) // larger than fp256
   {
     const int NBLOCKS = 512; const int NTHREADS = 128;
     int *xbs = NULL, *iJCs = NULL;
     HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int))); cudaMemset(xbs, 0, NBLOCKS * n * sizeof(int));
     HANDLE_ERROR(cudaMalloc((void**)&iJCs, NBLOCKS * n * sizeof(int)));
-    sgpu_CSR_IC_nnzC_vlarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[10], hv.back() - hv[10], m, n, dC.rowPtr, xbs, iJCs);
+    sgpu_CSR_IC_nnzC_vlarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[10], hv[63]- hv[10], m, n, dC.rowPtr, xbs, iJCs);
+    HANDLE_ERROR(cudaGetLastError());
+    HANDLE_ERROR(cudaFree(iJCs));
+    HANDLE_ERROR(cudaFree(xbs));
+  }
+
+  if (hv[64] - hv[63] > 0) {
+    const int NBLOCKS = 512; const int NTHREADS = 128;
+    int *xbs = NULL, *iJCs = NULL;
+    HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int))); cudaMemset(xbs, 0, NBLOCKS * n * sizeof(int));
+    HANDLE_ERROR(cudaMalloc((void**)&iJCs, NBLOCKS * n * sizeof(int)));
+    sgpu_CSR_IC_nnzC_olarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[63], hv[64] - hv[63], m, n, dC.rowPtr, xbs, iJCs);
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaFree(iJCs));
     HANDLE_ERROR(cudaFree(xbs));
