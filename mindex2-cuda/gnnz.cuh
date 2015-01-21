@@ -198,6 +198,7 @@ __global__ void sgpu_CSR_IC_nnzC_vlarge(const int IA[], const int JA[],
           }
         }
       }
+      __syncthreads();
       //half warp
       const int HWARPS_PER_BlOCK = BLOCK_THREADS / 16;
       const int hwarpId = threadIdx.x / 16;
@@ -211,6 +212,7 @@ __global__ void sgpu_CSR_IC_nnzC_vlarge(const int IA[], const int JA[],
           }
         }
       }
+      __syncthreads();
       //warp
       const int WARPS_PER_BlOCK = BLOCK_THREADS / 32;
       const int warpId = threadIdx.x / 32;
