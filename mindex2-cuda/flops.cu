@@ -48,7 +48,7 @@ __device__ inline int dqueueId(long x) {
 
 template <int BLOCK_THREADS>
 __global__ void gcomputeBinId(const int m, const int* dIA, const int *dJA, const int* dIB,
-     int *binIds, int *drowIds, long *dflops) {
+     int *binIds, int *drowIds) {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   for (int i = tid; i < m; i += blockDim.x * gridDim.x) {
     long tmpRowFlops = 0;
@@ -57,7 +57,7 @@ __global__ void gcomputeBinId(const int m, const int* dIA, const int *dJA, const
       int BrowFlops = dIB[a + 1] - dIB[a];
       tmpRowFlops += BrowFlops;
     }
-    dflops[i] = tmpRowFlops;
+    //dflops[i] = tmpRowFlops;
     int q = 0;
     if (tmpRowFlops == 0) q = 64;
     else {
@@ -91,11 +91,11 @@ std::vector<int> gpuFlopsClassify(const CSR &dA, const CSR &dB, int **drowIdsp) 
   int *dbinIds = NULL, *drowIds = NULL;
   HANDLE_ERROR(cudaMalloc((void**)&dbinIds, m * sizeof(int)));
   HANDLE_ERROR(cudaMalloc((void**)&drowIds, m * sizeof(int)));
-  long *dflops = NULL;
-  HANDLE_ERROR(cudaMalloc((void**)&dflops, m * sizeof(long)));
+  //long *dflops = NULL;
+  //HANDLE_ERROR(cudaMalloc((void**)&dflops, m * sizeof(long)));
   const unsigned BLOCK_THREADS = 256;
   const unsigned NBLOCKS = qmin(65535, (m + BLOCK_THREADS - 1) / BLOCK_THREADS);
-  gcomputeBinId<BLOCK_THREADS><<<NBLOCKS, BLOCK_THREADS>>>(m, dA.rowPtr, dA.colInd, dB.rowPtr, dbinIds, drowIds, dflops);
+  gcomputeBinId<BLOCK_THREADS><<<NBLOCKS, BLOCK_THREADS>>>(m, dA.rowPtr, dA.colInd, dB.rowPtr, dbinIds, drowIds);
   std::vector<int> v;
   thrust::device_ptr<int> dbinIds_dptr(dbinIds);
   thrust::device_ptr<int> drowIds_dptr(drowIds);
