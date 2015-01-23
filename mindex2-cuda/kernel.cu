@@ -183,19 +183,19 @@ void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &
   if (hv.size() > 1 + 1 && hv[2] - hv[1] > 0) { // up to fp1
     const unsigned NTHREADS = 512; const unsigned WARP_SIZE = 1;
     const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[5] - hv[4] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
+    const unsigned NBLOCKS = qmin(65535, (hv[2] - hv[1] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
     sgpu_SpGEMM_fp1<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[1], hv[2] - hv[1], m, n, dC.rowPtr, dC.colInd, dC.values);
   }
   if (hv.size() > 2 + 1 && hv[3] - hv[2] > 0) { // up to fp2
     const unsigned NTHREADS = 512; const unsigned WARP_SIZE = 1;
     const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[5] - hv[4] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
+    const unsigned NBLOCKS = qmin(65535, (hv[3] - hv[2] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
     sgpu_SpGEMM_fp2<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[2], hv[3] - hv[2], m, n, dC.rowPtr, dC.colInd, dC.values);
   }
   if (hv.size() > 3 + 1 && hv[4] - hv[3] > 0) { // up to fp4
     const unsigned NTHREADS = 256; const unsigned WARP_SIZE = 1;
     const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[5] - hv[4] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
+    const unsigned NBLOCKS = qmin(65535, (hv[4] - hv[3] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
     sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 7><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[3], hv[4] - hv[3], m, n, dC.rowPtr, dC.colInd, dC.values);
   }
   if (hv.size() > 4 + 1 && hv[5] - hv[4] > 0) { // up to fp8
