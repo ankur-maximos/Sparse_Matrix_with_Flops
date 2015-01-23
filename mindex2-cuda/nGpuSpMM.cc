@@ -86,8 +86,14 @@ bool isPartialRawEqual(int s, int e, const int hqueue[], const CSR &hC, const CS
   bool flag = true;
   for (int q = s; q < e; ++q) {
     const int rowId = hqueue[q];
-    assert (hC.rowPtr[rowId] == rC.rowPtr[rowId]);
-    assert (hC.rowPtr[rowId + 1] == rC.rowPtr[rowId + 1]);
+    int hlen = hC.rowPtr[rowId + 1] - hC.rowPtr[rowId];
+    int rlen = rC.rowPtr[rowId + 1] - rC.rowPtr[rowId];
+    if (hlen != rlen)
+      printf("rowId=%d hIC[%d]=%d hlen=%d rIC[%d]=%d rlen=%d\n", rowId, rowId, hC.rowPtr[rowId], hlen,
+          rowId, rC.rowPtr[rowId], rlen);
+    //assert (hlen == rlen);
+    //assert (hC.rowPtr[rowId] == rC.rowPtr[rowId]);
+    //assert (hC.rowPtr[rowId + 1] == rC.rowPtr[rowId + 1]);
     //if (rowId == 49) cout << "row49 hC range from " << hC.rowPtr[rowId] << " to"<< hC.rowPtr[rowId + 1] << endl;
     for (int cp = rC.rowPtr[rowId]; cp < rC.rowPtr[rowId + 1]; ++cp) {
       int col = rC.colInd[cp];
@@ -133,69 +139,95 @@ bool resultsComparison(CSR &hC, CSR &rC, const vector<int> &hv, const int *hqueu
   }
 
   if (hv.size() > 0 + 1) {
-    printf("Checking a 1 %d\n", hv[0]);
+    printf("Checking a 1 %d\n", hv[1] - hv[0]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[0], hv[1], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[0], hv[1], hqueue, rC, hC);
   }
   if (hv.size() > 1 + 1) {
     printf("Checking fp 1 %d\n", hv[2] - hv[1]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[1], hv[2], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[1], hv[2], hqueue, rC, hC);
   }
   if (hv.size() > 2 + 1) {
     printf("Checking fp 2 %d\n", hv[3] - hv[2]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[2], hv[3], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[2], hv[3], hqueue, rC, hC);
   }
   if (hv.size() > 3 + 1) {
     printf("Checking fp l4 %d\n", hv[4] - hv[3]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[3], hv[4], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[3], hv[4], hqueue, rC, hC);
   }
   if (hv.size() > 4 + 1) {
     printf("Checking fp 8 %d\n", hv[5] - hv[4]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[4], hv[5], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[4], hv[5], hqueue, rC, hC);
   }
   if (hv.size() > 5 + 1) {
     printf("Checking fp 16 %d\n", hv[6] - hv[5]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[5], hv[6], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[5], hv[6], hqueue, rC, hC);
   }
   if (hv.size() > 6 + 1) {
     printf("Checking fp 32 %d\n", hv[7] - hv[6]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[6], hv[7], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[6], hv[7], hqueue, rC, hC);
   }
   if (hv.size() > 7 + 1) {
     printf("Checking fp 64 %d\n", hv[8] - hv[7]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[7], hv[8], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[7], hv[8], hqueue, rC, hC);
   }
   if (hv.size() > 8 + 1) {
     printf("Checking fp 128 %d\n", hv[9] - hv[8]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[8], hv[9], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[8], hv[9], hqueue, rC, hC);
   }
   if (hv.size() > 9 + 1) {
     printf("Checking fp 256 %d\n", hv[10] - hv[9]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[9], hv[10], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[9], hv[10], hqueue, rC, hC);
   }
   if (hv.size() > 10 + 1) {
     printf("Checking fp 512 %d\n", hv[11] - hv[10]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[10], hv[11], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[10], hv[11], hqueue, rC, hC);
   }
   if (hv.size() > 11 + 1) {
     printf("Checking fp larger than 512 count=%d\n", hv[63] - hv[11]);
+    printf("hC VS rC\n");
     isPartialRawEqual(hv[11], hv[63], hqueue, hC, rC);
+    printf("rC VS hC\n");
     isPartialRawEqual(hv[11], hv[63], hqueue, rC, hC);
   }
   assert (hv.size() == 65);
-  printf("Checking >=128 nonzero entries in single A's row  count=%d\n", hv[64] - hv[63]);
-  isPartialRawEqual(hv[63], hv.back(), hqueue, hC, rC);
-  isPartialRawEqual(hv[63], hv.back(), hqueue, rC, hC);
+  printf("Checking fp>=256 olarge nonzero entries in single A's row  count=%d\n", hv[64] - hv[63]);
+    printf("hC VS rC\n");
+  isPartialRawEqual(hv[63], hv[64], hqueue, hC, rC);
+    printf("rC VS hC\n");
+  isPartialRawEqual(hv[63], hv[64], hqueue, rC, hC);
 
 }
 
