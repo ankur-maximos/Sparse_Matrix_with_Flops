@@ -24,6 +24,8 @@ __global__ void sgpu_SpGEMM_olarge(
     const int m, const int n,
     int IC[], int JC[], QValue C[],
     int *xbs) {
+  __shared__ int as[BLOCK_THREADS];
+  __shared__ QValue Aaps[BLOCK_THREADS];
   __shared__ int count;
   if (threadIdx.x == 0) {
     count = 0;
@@ -36,27 +38,47 @@ __global__ void sgpu_SpGEMM_olarge(
     const int ICi = IC[rowId];
     int *iJC = JC + ICi;
     QValue *iC = C + ICi;
-    for (int ap = IA[rowId]; ap < IA[rowId + 1]; ++ap) {
-      const int a = JA[ap];
-      const QValue Aap = A[ap];
-      for (int bp = IB[a] + threadIdx.x; bp < IB[a + 1]; bp += blockDim.x) {
-        int b = JB[bp];
-        if (xb[b] == -1) {
-          int pos = atomicAdd(&count, 1);
-          iJC[pos] = b;
-          iC[pos] = Aap * B[bp];
-          xb[b] = pos;
-        } else {
-          iC[xb[b]] += Aap * B[bp];
-        }
-        //if (rowId == 3 && b == 247) {
-          //printf("A[%d][%d]=%f ap=%d\n", rowId, a, Aap, ap);
-          //printf("find C[%d][%d]=%f a=%d Aap=%f B[bp]=%f\n", rowId, b, iC[xb[b]], a, Aap, B[bp]);
-          //printf("C[%d][%d]+=A[%d][%d]*B[%d][%d]=%f*%f=%f\n", rowId, b, rowId, a, a, b, Aap, B[bp], iC[xb[b]]);
-        //}
-      }
+    for (int ap = IA[rowId] + threadIdx.x; __syncthreads_or(ap < IA[rowId + 1]); ap += blockDim.x) {
+      int predicate = (ap < IA[rowId + 1]);
+      int a = predicate ? JA[ap] : -1;
+      QValue Aap = predicate ? A[ap] : 0.0;
+      as[threadIdx.x] = a;
+      Aaps[threadIdx.x] = Aap;
+      unsigned total = min(IA[rowId + 1] + threadIdx.x - ap, blockDim.x);
       __syncthreads();
+      for (int ap = 0; ap < total; ++ap) {
+        int a = as[ap];
+        QValue Aap = Aaps[ap];
+        for (int bp = IB[a] + threadIdx.x; bp < IB[a + 1]; bp += blockDim.x) {
+          int b = JB[bp];
+          if (xb[b] == -1) {
+            int pos = atomicAdd(&count, 1);
+            iJC[pos] = b;
+            iC[pos] = Aap * B[bp];
+            xb[b] = pos;
+          } else {
+            iC[xb[b]] += Aap * B[bp];
+          }
+        }
+        __syncthreads();
+      }
     }
+    /*for (int ap = IA[rowId]; ap < IA[rowId + 1]; ++ap) {*/
+    /*  const int a = JA[ap];*/
+    /*  const QValue Aap = A[ap];*/
+    /*  for (int bp = IB[a] + threadIdx.x; bp < IB[a + 1]; bp += blockDim.x) {*/
+    /*    int b = JB[bp];*/
+    /*    if (xb[b] == -1) {*/
+    /*      int pos = atomicAdd(&count, 1);*/
+    /*      iJC[pos] = b;*/
+    /*      iC[pos] = Aap * B[bp];*/
+    /*      xb[b] = pos;*/
+    /*    } else {*/
+    /*      iC[xb[b]] += Aap * B[bp];*/
+    /*    }*/
+    /*  }*/
+    /*  __syncthreads();*/
+    /*}*/
     for (int cp = threadIdx.x; cp < count; cp += blockDim.x) {
       int c = iJC[cp];
       xb[c] = -1;

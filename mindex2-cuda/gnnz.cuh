@@ -122,6 +122,7 @@ __global__ void sgpu_CSR_IC_nnzC_olarge(const int IA[], const int JA[],
     const int drowIds[], const int gcount,
     const int m, const int n, int* IC,
     int *xbs, int *iJCs) {
+  __shared__ int as[BLOCK_THREADS];
   int *xb = xbs + blockIdx.x * n;
   int *iJC = iJCs + blockIdx.x * n;
   if (threadIdx.x == 0 && blockIdx.x ==0) {
@@ -134,18 +135,26 @@ __global__ void sgpu_CSR_IC_nnzC_olarge(const int IA[], const int JA[],
   __syncthreads();
   for (int q = blockIdx.x; q < gcount; q += gridDim.x) {
     int rowId = drowIds[q];
-    IC[rowId] = 0;
-    for (int ap = IA[rowId]; ap < IA[rowId + 1]; ++ap) {
-      int a = JA[ap];
-      for (int bp = IB[a] + threadIdx.x; bp < IB[a + 1]; bp += blockDim.x) {
-        int b = JB[bp];
-        if (xb[b] == 0) {
-          iJC[atomicAdd(&count, 1)] = b;
-          xb[b] = true;
-        }
-      }
+    if (threadIdx.x == 0) IC[rowId] = 0;
+    for (int ap = IA[rowId] + threadIdx.x; __syncthreads_or(ap < IA[rowId + 1]); ap += blockDim.x) {
+      int predicate = (ap < IA[rowId + 1]);
+      int a = predicate ? JA[ap] : -1;
+      as[threadIdx.x] = a;
+      unsigned total = min(IA[rowId + 1] + threadIdx.x - ap, blockDim.x);
       __syncthreads();
+      for (int ap = 0; ap < total; ++ap) {
+        int a = as[ap];
+        for (int bp = IB[a] + threadIdx.x; bp < IB[a + 1]; bp += blockDim.x) {
+          int b = JB[bp];
+          if (xb[b] == 0) {
+            iJC[atomicAdd(&count, 1)] = b;
+            xb[b] = true;
+          }
+        }
+        __syncthreads();
+      }
     }
+    __syncthreads();
     for (int cp = threadIdx.x; cp < count; cp += blockDim.x) {
       int c = iJC[cp];
       xb[c] = 0;
@@ -353,6 +362,7 @@ void gpu_compute_IC(const CSR &dA, const CSR &dB, int *drowIds, const vector<int
     int *xbs = NULL, *iJCs = NULL;
     HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int))); cudaMemset(xbs, 0, NBLOCKS * n * sizeof(int));
     HANDLE_ERROR(cudaMalloc((void**)&iJCs, NBLOCKS * n * sizeof(int)));
+    //sgpu_CSR_IC_nnzC_vlarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[63], hv[64] - hv[63], m, n, dC.rowPtr, xbs, iJCs);
     sgpu_CSR_IC_nnzC_olarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[63], hv[64] - hv[63], m, n, dC.rowPtr, xbs, iJCs);
     HANDLE_ERROR(cudaGetLastError());
     HANDLE_ERROR(cudaFree(iJCs));

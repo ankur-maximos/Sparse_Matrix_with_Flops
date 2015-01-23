@@ -35,7 +35,7 @@ int inline qmin(const int a, const int b) {
 }
 
 __device__ inline int dqueueId(long x) {
-  assert (x > 0);
+  //assert (x > 0);
   if (x == 0) return 0;
   else if (x == 1) return 1;
   int ret = 2;
@@ -59,14 +59,13 @@ __global__ void gcomputeBinId(const int m, const int* dIA, const int *dJA, const
     }
     //dflops[i] = tmpRowFlops;
     int q = 0;
+    q = dqueueId(tmpRowFlops);
     if (tmpRowFlops == 0) q = 64;
     else {
       int acount = dIA[i + 1] - dIA[i];
-      if (acount > 1) {
-        if (acount >= 32 && tmpRowFlops > acount * 32) q = 63;
-        else q = dqueueId(tmpRowFlops);
-      }
+      if (tmpRowFlops > 256  && tmpRowFlops > acount * 32) q = 63;
     }
+    //if (q == 0) assert (dIA[i + 1] - dIA[i] == 1);
     __syncthreads();
     binIds[i] = q;
     drowIds[i] = i;

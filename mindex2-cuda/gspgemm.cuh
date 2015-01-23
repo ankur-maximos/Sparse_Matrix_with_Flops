@@ -12,10 +12,11 @@ __global__ void sgpu_SpGEMM_fp1(const int IA[], const int JA[], const QValue A[]
     QValue *iC = C + IC[rowId];
     for (int ap = IA[rowId]; ap < IA[rowId + 1]; ++ap) {
       int a = JA[ap];
+      QValue Aap = A[ap];
       for (int bp = IB[a]; bp < IB[a + 1]; ++bp) {
        int b = JB[bp];
        iJC[0] = b;
-       iC[0] = A[ap] * B[bp];
+       iC[0] = Aap * B[bp];
       }
     }
   }
@@ -251,7 +252,6 @@ __global__ void sgpu_SpGEMM_mid(const int IA[], const int JA[], const QValue A[]
   const int laneId = threadIdx.x % WARP_SIZE;
   for (int q = gwarpId; q < gcount; q += WARPS_PER_BlOCK * gridDim.x) {
     int rowId = drowIds[q];
-    //if (rowId == 548 && laneId == 0) printf("row548 is mid\n");
     for (int z = laneId; z < HPRIME; z += WARP_SIZE) {
       hbs[warpId][z] = -1;
       hxs[warpId][z] = 0.0;
@@ -265,13 +265,9 @@ __global__ void sgpu_SpGEMM_mid(const int IA[], const int JA[], const QValue A[]
         int pos = -1;
         int index = hashCASAdd2(hbs[warpId], HPRIME, b, &pos);
         if (index == -1) {
-          //atomicAdd(hxs[warpId] + pos, Aap * B[bp]);
           hxs[warpId][pos] = Aap * B[bp];
-          //if (rowId == 2230 && b == 2618) printf("row 2230 col 2618 is here with index=%d pos=%d val=%f\n", index, pos, hxs[warpId][pos]);
         } else {
-          //atomicAdd(hxs[warpId] + pos, Aap * B[bp]);
           hxs[warpId][pos] += Aap * B[bp];
-          //if (rowId == 2230 && b == 2618) printf("row 2230 col 2618 is here with index=%d pos=%d val=%f\n", index, pos, hxs[warpId][pos]);
         }
       }
       __syncthreads();
