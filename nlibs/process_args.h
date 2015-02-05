@@ -10,6 +10,19 @@
 #include <sys/types.h>
 #include "qrmcl.h"
 
+enum SharedOption {CachePreferNone, CachePreferShared, CachePreferL1};
+static char *sharedOptionsStr[] = {"CachePreferNone", "CachePreferShared", "CachePreferL1"};
+static std::pair<string, SharedOption> smap_data[] = {
+    std::make_pair("None", CachePreferNone),
+    std::make_pair("Shared", CachePreferShared),
+    std::make_pair("L1", CachePreferL1),
+    std::make_pair("none", CachePreferNone),
+    std::make_pair("shared", CachePreferShared),
+    std::make_pair("l1", CachePreferL1),
+};
+static std::map<std::string, SharedOption> sharedMap(smap_data,
+        smap_data + sizeof smap_data / sizeof smap_data[0]);
+
 struct Options {
   bool calcChange = false;
   int maxIters = 5;
@@ -18,6 +31,7 @@ struct Options {
   int stride = 512;
   int ptile = 2;
   RunOptions rmclOption;
+  SharedOption sharedOption;
   int br = 2, bc = 8;
 };
 

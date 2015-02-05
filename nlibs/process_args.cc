@@ -5,6 +5,7 @@ Options options;
 int process_args(int argc, char **argv) {
   int c;
   options.inputFileName[0] = '\n';
+  options.sharedOption = CachePreferNone;
   while (1) {
     static struct option long_options[] = {
       /* These options set a flag. */
@@ -13,6 +14,7 @@ int process_args(int argc, char **argv) {
          We distinguish them by their indices. */
       {"input",  required_argument, 0, 'i'},
       {"rmclOptions",  required_argument, 0, 'r'},
+      {"shared",  required_argument, 0, 'e'},
       {"maxIters",  required_argument, 0, 'm'},
       {"stride",  required_argument, 0, 'd'},
       {"stats", no_argument, 0, 's'},
@@ -24,13 +26,13 @@ int process_args(int argc, char **argv) {
     };
     /* getopt_long stores the option index here. */
     int option_index = 0;
-
     c = getopt_long (argc, argv, "cr:i:m:sx:y:h",
         long_options, &option_index);
     /* Detect the end of the options. */
     if (c == -1)
       break;
     string runString;
+    string sharedString;
     switch (c) {
       case 0:
         /* If this option set a flag, do nothing else now. */
@@ -54,6 +56,12 @@ int process_args(int argc, char **argv) {
       case 'r':
         runString = optarg;
         options.rmclOption = runMap[runString];
+        break;
+      case 'e':
+        sharedString = optarg;
+        //cout << sharedString << endl;
+        options.sharedOption = sharedMap[sharedString];
+        //printf("SharedOption= %s %d\t", sharedOptionsStr[options.sharedOption], options.sharedOption);
         break;
       case 'm':
         options.maxIters = atol(optarg);
@@ -101,5 +109,6 @@ void print_args() {
   printf("stride= %d\t", options.stride);
   printf("ptile= %d\t", options.ptile);
   printf("rmclOption= %s\t", runOptionsStr[options.rmclOption]);
+  printf("SharedOption= %s\t", sharedOptionsStr[options.sharedOption]);
   printf("}\n");
 }
