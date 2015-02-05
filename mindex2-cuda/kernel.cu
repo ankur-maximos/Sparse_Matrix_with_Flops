@@ -196,7 +196,7 @@ __global__ void sgpu_SpGEMM_tlarge(
 }
 
 
-void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv, CSR &dC) {
+void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv, CSR &dC, int cNnz) {
   int m = dA.rows;
   int n = dB.cols;
   if (hv.size() > 0 + 1 && hv[1] - hv[0] > 0) { // up to fp0
@@ -228,14 +228,14 @@ void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &
     HANDLE_ERROR(cudaGetLastError());
   }
   if (hv.size() > 5 + 1 && hv[6] - hv[5] > 0) { // up to fp16
-    const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 16;
+    const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 8;
     const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
     const unsigned NBLOCKS = qmin(65535, (hv[6] - hv[5] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
     sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 37><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[5], hv[6] - hv[5], m, n, dC.rowPtr, dC.colInd, dC.values);
     HANDLE_ERROR(cudaGetLastError());
   }
   if (hv.size() > 6 + 1 && hv[7] - hv[6] > 0) { // up to fp32
-    const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 32;
+    const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 16;
     const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
     const unsigned NBLOCKS = qmin(65535, (hv[7] - hv[6] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
     sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 71><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[6], hv[7] - hv[6], m, n, dC.rowPtr, dC.colInd, dC.values);
@@ -271,30 +271,47 @@ void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &
 
   assert (hv.size() == 65);
   //very large
+
+  const int NTHREADS = 128;
+  const double memoryMWordsAvail = GBs * 1000.0 / 4 - ((dA.nnz * 2 + dA.rows) + (dB.nnz * 2 + dB.rows) + (cNnz * 2 + dA.rows)) / 1000.0 / 1000.0;
+  const int blockAvail = memoryMWordsAvail * 1000 * 1000 / (n * 2);
+  const int NBLOCKS10 = qmin3(blockAvail, hv[63] - hv[10], MAX_NBLOCKS);
+  const int NBLOCKS11 = qmin3(blockAvail, hv[64] - hv[63], MAX_NBLOCKS);
+  const int NBLOCKS = std::max(NBLOCKS10, NBLOCKS11);
+  int *xbs = NULL; float *xs = NULL;
+  if (NBLOCKS > 0) {
+    //const int NBLOCKS10 = 512, NBLOCKS = 512;
+    HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int)));
+    HANDLE_ERROR(cudaMemset(xbs, -1, NBLOCKS * n * sizeof(int)));
+    if (NBLOCKS10 > 0) {
+      HANDLE_ERROR(cudaMalloc((void**)&xs, NBLOCKS10 * n * sizeof(float)));
+      HANDLE_ERROR(cudaMemset(xs, 0, NBLOCKS10 * n * sizeof(float)));
+    }
+  }
   if (hv.size() > 10 + 1 && hv[63] - hv[10] > 0) // larger than fp256
   //if (hv.size() > 10 + 1 && hv.back() - hv[10] > 0) // larger than fp256
   //if (hv.size() > 11 + 1 && hv.back() - hv[11] > 0) // larger than fp512
   {
-    const int NBLOCKS = 512; const int NTHREADS = 128;
-    int *xbs = NULL;
-    HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int)));
-    HANDLE_ERROR(cudaMemset(xbs, -1, NBLOCKS * n * sizeof(int)));
-    float *xs = NULL; HANDLE_ERROR(cudaMalloc((void**)&xs, NBLOCKS * n * sizeof(float)));
-    HANDLE_ERROR(cudaMemset(xs, 0, NBLOCKS * n * sizeof(float)));
+    const int NBLOCKS = NBLOCKS10; //qmin3(blockAvail, hv[63] - hv[10], MAX_NBLOCKS);
+    //const int NBLOCKS = 512;
+    printf("tlarge blockAvail = %d NBLOCKS=%d hsize=%d\n", blockAvail, NBLOCKS, hv[63] - hv[10]);
     sgpu_SpGEMM_tlarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[10], hv[63] - hv[10], m, n, dC.rowPtr, dC.colInd, dC.values, xbs, xs);
     HANDLE_ERROR(cudaGetLastError());
-    HANDLE_ERROR(cudaFree(xbs));
+    //HANDLE_ERROR(cudaFree(xbs));
     HANDLE_ERROR(cudaFree(xs));
   }
 
   if (hv[64] - hv[63] > 0) // >=128 non entries a single row of matrix A.
   {
-    const int NBLOCKS = 512; const int NTHREADS = 128;
-    int *xbs = NULL;
-    HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int)));
-    HANDLE_ERROR(cudaMemset(xbs, -1, NBLOCKS * n * sizeof(int)));
+    const int NBLOCKS = NBLOCKS11; //qmin3(blockAvail, hv[64] - hv[63], MAX_NBLOCKS);
+    //const int NBLOCKS = 512;
+    //const int NBLOCKS = qmin3(blockAvail, hv[64] - hv[63], 512);
+    printf("olarge memoryMWordsAvail=%lf blockAvail = %d NBLOCKS=%d hsize=%d\n", memoryMWordsAvail, blockAvail, NBLOCKS, hv[64] - hv[63]);
     sgpu_SpGEMM_olarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[63], hv[64] - hv[63], m, n, dC.rowPtr, dC.colInd, dC.values, xbs);
     HANDLE_ERROR(cudaGetLastError());
+    //HANDLE_ERROR(cudaFree(xbs));
+  }
+  if (NBLOCKS > 0) {
     HANDLE_ERROR(cudaFree(xbs));
   }
 }
@@ -312,7 +329,7 @@ CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, const vector<int
   HANDLE_ERROR(cudaMalloc((void**)&dC.colInd, cNnz * sizeof(int)));
   HANDLE_ERROR(cudaMalloc((void**)&dC.values, cNnz * sizeof(QValue)));
   //HANDLE_ERROR(cudaMemset(dC.values, 0, cNnz * sizeof(QValue)));
-  sgpu_SpGEMM(dA, dB, drowIds, hv, dC);
+  sgpu_SpGEMM(dA, dB, drowIds, hv, dC, cNnz);
   cudaDeviceSynchronize();
   dC.nnz = cNnz;
   dC.rows = dA.rows;

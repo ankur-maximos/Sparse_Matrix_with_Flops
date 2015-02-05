@@ -1,6 +1,13 @@
+const int MAX_NBLOCKS = 2048;
+const int GBs = 5.6;
+
 int inline qmin(const int a, const int b) {
   if (a < b) return a;
   return b;
+}
+
+int inline qmin3(const int a, const int b, const int c) {
+  return qmin(qmin(a, b), c);
 }
 
 __global__ void sgpu_CSR_IC_nnzC_a1(const int IA[], const int JA[],
@@ -95,6 +102,7 @@ __global__ void sgpu_CSR_IC_nnzC_mid(const int IA[], const int JA[],
     const int m, const int n, int* IC) {
   const int WARPS_PER_BlOCK = BLOCK_THREADS / WARP_SIZE;
   __shared__ int hbs[WARPS_PER_BlOCK][HPRIME];
+  __shared__ int counts[WARPS_PER_BlOCK][WARP_SIZE];
   const int warpId = threadIdx.x / WARP_SIZE;
   const int gwarpId = warpId + blockIdx.x * WARPS_PER_BlOCK;
   const int laneId = threadIdx.x % WARP_SIZE;
@@ -111,7 +119,15 @@ __global__ void sgpu_CSR_IC_nnzC_mid(const int IA[], const int JA[],
         if (index == -1) ++count;
       }
     }
-    atomicAdd(&IC[rowId], count);
+    counts[warpId][laneId] = count;
+    __syncthreads();
+    for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
+      if (laneId < offset)
+        counts[warpId][laneId] += counts[warpId][laneId + offset];
+      __syncthreads();
+    }
+    if (laneId == 0) IC[rowId] = counts[warpId][0];
+    //atomicAdd(&IC[rowId], count);
     __syncthreads();
   }
 }
@@ -344,27 +360,40 @@ void gpu_compute_IC(const CSR &dA, const CSR &dB, int *drowIds, const vector<int
 
   assert (hv.size() == 65);
   //very large
+  const int NTHREADS = 128;
+  const double memoryMWordsAvail = GBs * 1000.0 / 4 - ((dA.nnz * 2 + dA.rows) + (dB.nnz * 2 + dB.rows) + dA.rows) / 1000.0 / 1000.0;
+  const double blockAvail = memoryMWordsAvail * 1000 * 1000 / (n * 2);
+  //printf("memoryMWordsAvail=%lf blockAvail = %lf\n", memoryMWordsAvail, blockAvail);
+  const int NBLOCKS10 = qmin3(blockAvail, hv[63] - hv[10], MAX_NBLOCKS);
+  const int NBLOCKS11 = qmin3(blockAvail, hv[64] - hv[63], MAX_NBLOCKS);
+  const int NBLOCKS = std::max(NBLOCKS10, NBLOCKS11);
+  int *xbs = NULL, *iJCs = NULL;
+  if (NBLOCKS > 0) {
+    HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int))); cudaMemset(xbs, 0, NBLOCKS * n * sizeof(int));
+    HANDLE_ERROR(cudaMalloc((void**)&iJCs, NBLOCKS * n * sizeof(int)));
+  }
   //if (hv.size() > 10 + 1 && hv.back() - hv[10] > 0) // larger than fp256
   if (hv.size() > 10 + 1 && hv[63] - hv[10] > 0) // larger than fp256
   {
-    const int NBLOCKS = 512; const int NTHREADS = 128;
-    int *xbs = NULL, *iJCs = NULL;
-    HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int))); cudaMemset(xbs, 0, NBLOCKS * n * sizeof(int));
-    HANDLE_ERROR(cudaMalloc((void**)&iJCs, NBLOCKS * n * sizeof(int)));
+    const int NBLOCKS = NBLOCKS10;
+    //const int NBLOCKS = 512;
+    printf("nnz vlarge memoryMWordsAvail=%lf blockAvail = %lf NBLOCKS=%d, hsize=%d\n", memoryMWordsAvail, blockAvail, NBLOCKS, hv[63] - hv[10]);
     sgpu_CSR_IC_nnzC_vlarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[10], hv[63]- hv[10], m, n, dC.rowPtr, xbs, iJCs);
     HANDLE_ERROR(cudaGetLastError());
-    HANDLE_ERROR(cudaFree(iJCs));
-    HANDLE_ERROR(cudaFree(xbs));
+    //HANDLE_ERROR(cudaFree(iJCs));
+    //HANDLE_ERROR(cudaFree(xbs));
   }
 
   if (hv[64] - hv[63] > 0) {
-    const int NBLOCKS = 512; const int NTHREADS = 128;
-    int *xbs = NULL, *iJCs = NULL;
-    HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int))); cudaMemset(xbs, 0, NBLOCKS * n * sizeof(int));
-    HANDLE_ERROR(cudaMalloc((void**)&iJCs, NBLOCKS * n * sizeof(int)));
-    //sgpu_CSR_IC_nnzC_vlarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[63], hv[64] - hv[63], m, n, dC.rowPtr, xbs, iJCs);
+    const int NBLOCKS = NBLOCKS11;
+    //const int NBLOCKS = 512;
+    printf("nnz olarge memoryMWordsAvail=%lf blockAvail = %lf NBLOCKS=%d hsize=%d\n", memoryMWordsAvail, blockAvail, NBLOCKS, hv[64] - hv[63]);
     sgpu_CSR_IC_nnzC_olarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dB.rowPtr, dB.colInd, drowIds + hv[63], hv[64] - hv[63], m, n, dC.rowPtr, xbs, iJCs);
     HANDLE_ERROR(cudaGetLastError());
+    //HANDLE_ERROR(cudaFree(iJCs));
+    //HANDLE_ERROR(cudaFree(xbs));
+  }
+  if (NBLOCKS > 0) {
     HANDLE_ERROR(cudaFree(iJCs));
     HANDLE_ERROR(cudaFree(xbs));
   }
