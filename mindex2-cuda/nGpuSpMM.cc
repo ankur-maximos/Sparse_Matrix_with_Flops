@@ -280,6 +280,9 @@ int main(int argc, char *argv[]) {
   CSR hB = hA.deepCopy();
   //CSR ompC = hA.somp_spmm(hB, options.stride);
   //rC = ompC;
+  if (options.sharedOption == CachePreferShared) cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
+  else if (options.sharedOption == CachePreferL1) cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+  else cudaDeviceSetCacheConfig(cudaFuncCachePreferNone);
   CSR hC = scudaSpMM(hA, hB);
 
 
