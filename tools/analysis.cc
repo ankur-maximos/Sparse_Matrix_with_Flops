@@ -35,11 +35,10 @@ int main(int argc, char *argv[]) {
   printf("%d & %d & %d & %lf\n", A.rows, A.nnz, C.nnz, flops, ((double)flops) / C.nnz);
   printf("Cnnz/Annz=%lf\n", (double)C.nnz / A.nnz);
 
-  vector<int> stats = A.nnzStats();
-  outputStats(stats);
-
-  vector<int> statsC = C.nnzStats();
-  outputStats(statsC);
+  //vector<int> stats = A.nnzStats();
+  vector<int> res = flopsStats(A.rowPtr,A.colInd,A.rowPtr,A.colInd,A.rows);
+  //vector<int> statsC = C.nnzStats();
+  outputStats(res);
   // Warmup for mkl_spmm
   At.dispose();
   A.dispose();

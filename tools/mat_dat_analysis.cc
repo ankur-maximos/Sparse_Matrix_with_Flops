@@ -137,13 +137,13 @@ int main() {
   vector<int> bin_bounds(arr,arr+4);
   //print_vector(bin_bounds);
 
-  COO coo_a(values, colIndex, rowIndex, rows, cols, nnz);
-  COO coo_b(values_b, colIndex_b, rowIndex_b, rows_b, cols_b, nnz_b);
-  CSR a = coo_a.toCSR();
-  CSR b = coo_b.toCSR();
+  //COO coo_a(values, colIndex, rowIndex, rows, cols, nnz);
+  //COO coo_b(values_b, colIndex_b, rowIndex_b, rows_b, cols_b, nnz_b);
+  //CSR a = coo_a.toCSR();
+  ///CSR b = coo_b.toCSR();
   //csr.averAndNormRowValue();
-  a.output("csr");
-  b.output("csr");
+  //a.output("csr");
+  //b.output("csr");
   /*int* temp = a.rowPtr;
   for(int i=0;i<=4;i++) {
     printf("%d ",temp[i]);
@@ -155,8 +155,8 @@ int main() {
   }*/
 
   // printing the bin bounds
-  print_bounds(bin_bounds);  
-  vector<int> bins = filter_rows(limit,a,b,bin_bounds);
-  print_vector(bins);
+  ///print_bounds(bin_bounds);  
+  //vector<int> bins = filter_rows(limit,a,b,bin_bounds);
+  //print_vector(bins);
   return 0;
 }

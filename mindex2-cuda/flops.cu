@@ -3,7 +3,7 @@
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/binary_search.h>
 #include <thrust/device_vector.h>
-
+#include <thrust/scan.h>
 #include "CSR.h"
 #include "gpus/cuda_handle_error.h"
 
@@ -35,22 +35,36 @@ int inline qmin(const int a, const int b) {
 }
 
 __device__ inline int dqueueId(long x) {
+  if(x == 0) return 1;
+  else if (x == 1) return 2;
+  else if (x > 512) return 7;
+  else if (x > 64 && x <= 512) return 6;
+  else if (x > 16 && x <= 64) return 5;
+  else if (x > 4 && x<=16) return 4;
+  else return 3; 
+}
+
+/*
+__device__ inline int dqueueId(long x) {
   //assert (x > 0);
-  if (x == 0) return 0;
-  else if (x == 1) return 1;
+  //if (x == 0) return 0;
+  if (x == 1) return 1;
+  else if (x > 1024) return 63;
+  else if (x > 256 && x <= 512) return 10;
+  else if (x > 512 && x <= 1024) return 11;
   int ret = 2;
   int up = 2;
   for (up = 2; ; up *= 2, ++ret) {
     if (x <= up) return ret;
   }
   //return -1;
-}
+} */
 
 template <int BLOCK_THREADS>
-__global__ void gcomputeBinId(const int m, const int* dIA, const int *dJA, const int* dIB,
-     int *binIds, int *drowIds) {
-  int tid = threadIdx.x + blockIdx.x * blockDim.x;
-  for (int i = tid; i < m; i += blockDim.x * gridDim.x) {
+__global__ void gcomputeFlops(const int m, const int* dIA, const int *dJA, const int* dIB,
+     int *drowIds,int *dflopIds) {
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    for (int i = tid; i < m; i += blockDim.x * gridDim.x) {
     long tmpRowFlops = 0;
     for (int ap = dIA[i]; ap < dIA[i + 1]; ++ap) {
       int a = dJA[ap];
@@ -58,22 +72,27 @@ __global__ void gcomputeBinId(const int m, const int* dIA, const int *dJA, const
       tmpRowFlops += BrowFlops;
     }
     //dflops[i] = tmpRowFlops;
-    int q = 0;
-    q = dqueueId(tmpRowFlops);
-    if (tmpRowFlops == 0) q = 64;
-    else {
-      int acount = dIA[i + 1] - dIA[i];
-      if (tmpRowFlops > 256  && tmpRowFlops > acount * 32) q = 63;
-    }
     //if (q == 0) assert (dIA[i + 1] - dIA[i] == 1);
-    __syncthreads();
-    binIds[i] = q;
+    //__syncthreads();
+    
+    dflopIds[i] = tmpRowFlops;
     drowIds[i] = i;
   }
 }
 
-thrust::device_vector<int> computeHistogram(int *sortedKeys, int m) {
-  thrust::device_ptr<int> sortedKeys_dptr(sortedKeys);
+/* kernel for assigning binids for rows */
+template <int BLOCK_THREADS>
+__global__ void gcomputeBinId(const int m, const int* dflopIds,short *dbinIds) {
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    int q = 0;
+    for(int i=tid;i<m;i+=blockDim.x*gridDim.x) {
+	q = dqueueId(dflopIds[i]);
+	dbinIds[i] = q;
+    }
+}
+
+thrust::device_vector<int> computeHistogram(short *sortedKeys, int m) {
+  thrust::device_ptr<short> sortedKeys_dptr(sortedKeys);
   int num_bins = sortedKeys_dptr[m - 1] + 1;
   thrust::device_vector<int> histogram;
   histogram.resize(num_bins + 1);
@@ -85,36 +104,77 @@ thrust::device_vector<int> computeHistogram(int *sortedKeys, int m) {
   return histogram;
 }
 
-std::vector<int> gpuFlopsClassify(const CSR &dA, const CSR &dB, int **drowIdsp) {
+/* Classification of flops to bins */
+std::vector<int> gpuFlopsClassify(const CSR &dA, const CSR &dB, int **drowIdsp, int **dflopId ) { 
   const int m = dA.rows;
-  int *dbinIds = NULL, *drowIds = NULL;
-  HANDLE_ERROR(cudaMalloc((void**)&dbinIds, m * sizeof(int)));
+  int *dflopIds = NULL, *drowIds = NULL;
+  short *dbinIds = NULL;
+  HANDLE_ERROR(cudaMalloc((void**)&dflopIds, (m+1) * sizeof(int)));
   HANDLE_ERROR(cudaMalloc((void**)&drowIds, m * sizeof(int)));
+  HANDLE_ERROR(cudaMalloc((void**)&dbinIds, (m+1) * sizeof(short)));
+ 
+  //unsigned long long int *d_totflops;
+  //HANDLE_ERROR(cudaMalloc((void**)&d_totflops, sizeof(unsigned long long int)));
   //long *dflops = NULL;
   //HANDLE_ERROR(cudaMalloc((void**)&dflops, m * sizeof(long)));
+  HANDLE_ERROR(cudaMemset(dflopIds, 0, 4));
   const unsigned BLOCK_THREADS = 256;
   const unsigned NBLOCKS = qmin(65535, (m + BLOCK_THREADS - 1) / BLOCK_THREADS);
-  gcomputeBinId<BLOCK_THREADS><<<NBLOCKS, BLOCK_THREADS>>>(m, dA.rowPtr, dA.colInd, dB.rowPtr, dbinIds, drowIds);
+  gcomputeFlops<BLOCK_THREADS><<<NBLOCKS, BLOCK_THREADS>>>(m, dA.rowPtr, dA.colInd, dB.rowPtr, drowIds, dflopIds+1);
+
   std::vector<int> v;
-  thrust::device_ptr<int> dbinIds_dptr(dbinIds);
+  thrust::device_ptr<int> dflopIds_dptr(dflopIds);
   thrust::device_ptr<int> drowIds_dptr(drowIds);
-  thrust::stable_sort_by_key(dbinIds_dptr, dbinIds_dptr + m, drowIds_dptr);
-  //outputDeviceIntArray("drowIds: ", drowIds, m);
-  thrust::counting_iterator<int> search_begin(0);
-  thrust::device_vector<int> dhist = computeHistogram(dbinIds, m);
+  //thrust::device_ptr<short> dbinIds_dptr(dbinIds);
+  thrust::stable_sort_by_key(dflopIds_dptr+1, dflopIds_dptr + m + 1, drowIds_dptr);
+  gcomputeBinId<BLOCK_THREADS><<<NBLOCKS, BLOCK_THREADS>>>(m + 1, dflopIds, dbinIds);
+  thrust::inclusive_scan(dflopIds_dptr+1,dflopIds_dptr+m+1,dflopIds_dptr+1);
+  //int *flops = new int[1];
+  //HANDLE_ERROR(cudaMemcpy(flops,dflopIds+m,4,cudaMemcpyDeviceToHost));
+
+  int *hflopIds = NULL; 
+  int *hrowIds = NULL;
+  short *hbinIds = NULL;
+  hflopIds = (int *)malloc((m+1) * sizeof(int));
+  hrowIds = (int*)malloc(m * sizeof(int));
+  hbinIds = (short*)malloc((m+1) * sizeof(short));
+  HANDLE_ERROR(cudaMemcpy(hflopIds,dflopIds,(m+1) * sizeof(int),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR(cudaMemcpy(hrowIds,drowIds, m * sizeof(int),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR(cudaMemcpy(hbinIds,dbinIds, (m+1) * sizeof(short),cudaMemcpyDeviceToHost));
+
+  printf("flops array is : \n");
+  for(int i=0;i<=m;i++) {
+	printf("%d ",*(hflopIds+i));
+  }
+  printf("\n");
+  printf("row array is : \n");
+  for(int i=0;i<m;i++) {
+	printf("%d ",*(hrowIds+i));
+  }
+  printf("\n");
+
+  for(int i = 0;i<=m ;i++) {
+     	printf("%hd ",*(hbinIds+i));
+  }
+
+  printf("\n");
+
+  thrust::device_vector<int> dhist = computeHistogram(dbinIds, m+1);
   *drowIdsp = drowIds;
+  *dflopId = dflopIds;
   v.resize(dhist.size());
   thrust::copy(dhist.begin(), dhist.end(), v.begin());
-  //printf("vsize=%u\n", v.size());
-  if (v.size() == 66) {
-    v.pop_back();
-  } else if (v.size() < 65) {
+  
+  /*if (v.size() < 9) {
     int osize = v.size();
     int back = v.back();
-    v.resize(65);
-    for (int i = osize; i <= 65; ++i) {
+    v.resize(9);
+    for (int i = osize; i < 9; ++i) {
       v[i] = back;
     }
+  }  */
+  for(int i=0;i<v.size();i++) {
+  	printf("hv :%d \n", v[i]);
   }
   return v;
 }

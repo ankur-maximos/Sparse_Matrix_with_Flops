@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   process_args(argc, argv);
   print_args();
   COO cooAt;
-  cooAt.readTransposedSNAPFile(options.inputFileName);
+  cooAt.readSNAPFile(options.inputFileName, false);
   CSR A = rmclInit(cooAt);
   CSR B = A.deepCopy();
   CSR C = A.omp_spmm(A);

@@ -10,6 +10,7 @@ __device__ inline uint32_t hash(uint32_t d) {
   return d;
 }
 
+
 __device__ inline int hashCASAdd(int hb[], const int hprime, const int b) {
   int index = hash(b) % hprime;
   do {
@@ -17,9 +18,18 @@ __device__ inline int hashCASAdd(int hb[], const int hprime, const int b) {
     if (old == -1) return -1;
     int ob = atomicCAS(hb + index, b, b);
     if (ob == b) return index;
-    index = (index + 1) % hprime;
+    index = (index+1) % hprime;
   } while (true);
-}
+} 
+
+/*__device__ inline int bigHashCASAdd(int hb[], const int hprime, const int b) {
+
+   int index = hash(b) % hprime;
+
+   do {
+	
+   } while (true);
+}*/
 
 __device__ inline int hashCASAdd2(int hb[], const int hprime, const int b, int *pos) {
   *pos = hash(b) % hprime;

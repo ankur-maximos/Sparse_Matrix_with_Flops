@@ -22,16 +22,16 @@ using namespace std;
 
 struct CSR {
 public:
-/*A real or complex array that contains the non-zero elements of a sparse matrix.
+/* A real or complex array that contains the non-zero elements of a sparse matrix.
  * The non-zero elements are mapped into the values array using the row-major upper
  * triangular storage mapping described above.*/
 	QValue* values;
 
-/*Element i of the integer array columns is the number of the column that
+/* Element i of the integer array columns is the number of the column that
  * contains the i-th element in the values array.*/
 	int* colInd;
 
-/*Element j of the integer array rowIndex gives the index of the element
+/* Element j of the integer array rowIndex gives the index of the element
  * in the values array that is
  * first non-zero element in a row j.*/
 	int* rowPtr;
@@ -292,7 +292,9 @@ public:
       flag = false;
     }
     double* rowVals = (double*)malloc(cols * sizeof(double));
+
     memset(rowVals, 0, cols * sizeof(double));
+
     for (int i = 0; i < rows && flag != false; ++i) {
       for (int j = rowPtr[i]; j < rowPtr[i + 1]; ++j) {
         int col = colInd[j];
@@ -303,7 +305,7 @@ public:
       for (int j = B.rowPtr[i]; j < B.rowPtr[i + 1]; ++j) {
         int col = B.colInd[j];
         float relativeError = fabs((rowVals[col] - B.values[j]) / B.values[j]);
-        if (relativeError > maxRelativeError && fabs(B.values[j]) > 1e-7) {
+        if (relativeError > maxRelativeError && fabs(B.values[j]) > 1e-8) {
           printf("values[%d, %d] %e should be %e\n", i, col, rowVals[col], B.values[j]);
           flag = false;
           break;
@@ -314,6 +316,7 @@ public:
       free(rowVals);
       return flag;
     }
+
     return flag;
   }
 

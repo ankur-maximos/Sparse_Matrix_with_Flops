@@ -33,7 +33,9 @@ void sequential_CSR_IC_nnzC(const int IA[], const int JA[],
   free(iJC);
   nnzC = IC[m];
 }
-
+/*
+ *
+ *  commenting it to redefine this function for adding functionaliy of bin flops count
 long long getSpMMFlops(const int IA[], const int JA[], const QValue A[], const int nnzA,
     const int IB[], const int JB[], const QValue B[], const int nnzB,
     const int m, const int k, const int n) {
@@ -51,7 +53,25 @@ long long getSpMMFlops(const int IA[], const int JA[], const QValue A[], const i
 #endif
   }
   return flops * 2;
+} */
+
+long long getSpMMFlops(const int IA[], const int JA[], const QValue A[], const int nnzA,
+    const int IB[], const int JB[], const QValue B[], const int nnzB,
+    const int m, const int k, const int n) {
+  long long flops = 0;
+  for (int i = 0; i < m; ++i) {
+    long row_flops = 0;
+    for (int jp = IA[i]; jp < IA[i + 1]; ++jp) {
+      int j = JA[jp];
+      long Brow_j_nnz = IB[j + 1] - IB[j];
+      row_flops += Brow_j_nnz;
+    }
+    if(row_flops > 1024) flops+=row_flops;
+  }
+  return flops;
 }
+
+
 
 void sequential_CSR_SpMM(const int IA[], const int JA[], const QValue A[], const int nnzA,
     const int IB[], const int JB[], const QValue B[], const int nnzB,

@@ -7,7 +7,7 @@ void CSR_PM_Test() {
   const int rowIndex[] = {0, 1, 2, 3, 3};
   const int colIndex[] = {1, 2, 0, 1, 3};
   const double values[] = {2.0, 3.0, 4.0, 1.0, 5.0};
-  COO coo(values, colIndex, rowIndex, rows, cols, nnz);
+  /*COO coo(values, colIndex, rowIndex, rows, cols, nnz);
   CSR M = coo.toCSR();
   coo.dispose();
   M.output("\nM");
@@ -27,7 +27,7 @@ void CSR_PM_Test() {
   mPM.output("mPM");
   pM.dispose();
   assert(isSame == true);
-  printf("%s Passed\n", __func__);
+  printf("%s Passed\n", __func__);*/
 }
 
 void CSR_MP_Test() {
@@ -35,7 +35,7 @@ void CSR_MP_Test() {
   const int rowIndex[] = {0, 1, 2, 3, 3};
   const int colIndex[] = {1, 2, 0, 1, 3};
   const double values[] = {2.0, 3.0, 4.0, 1.0, 5.0};
-  COO coo(values, colIndex, rowIndex, rows, cols, nnz);
+/*  COO coo(values, colIndex, rowIndex, rows, cols, nnz);
   CSR M = coo.toCSR();
   coo.dispose();
   int P[] = {1, 3, 0, 2};
@@ -59,7 +59,7 @@ void CSR_MP_Test() {
 #endif
   mP.dispose();
   assert(isSame == true);
-  printf("%s Passed\n", __func__);
+  printf("%s Passed\n", __func__);*/
 }
 
 void CSR_initWithDenseMatrixTest() {
@@ -72,7 +72,7 @@ void CSR_initWithDenseMatrixTest() {
   };
   const int rows = 5, cols = 6;
   CSR A;
-  A.initWithDenseMatrix(dMM, rows, cols);
+  /*A.initWithDenseMatrix(dMM, rows, cols);
   const int rowPtr[] = {0, 2, 3, 5, 6, 9};
   const int colInd[] = {0, 1, 2, 1, 5, 4, 0, 3, 5};
   const QValue values[] = {1, 2, 3, 4, 5, 2, 3, 1, 8};
@@ -83,7 +83,7 @@ void CSR_initWithDenseMatrixTest() {
     assert(colInd[j] == A.colInd[j]);
     assert(fabs(values[j] - A.values[j]) < 1e-8);
   }
-  printf("%s Passed\n", __func__);
+  printf("%s Passed\n", __func__);*/
 }
 
 int main() {
@@ -91,12 +91,12 @@ int main() {
   const int rowIndex[] = {0, 1, 2, 3, 3};
   const int colIndex[] = {1, 2, 0, 1, 3};
   const double values[] = {2.0, 3.0, 4.0, 1.0, 5.0};
-  COO coo(values, colIndex, rowIndex, rows, cols, nnz);
+  /*COO coo(values, colIndex, rowIndex, rows, cols, nnz);
   CSR csr = coo.toCSR();
   csr.averAndNormRowValue();
   csr.output("csr");
   CSR_PM_Test();
   CSR_MP_Test();
-  CSR_initWithDenseMatrixTest();
+  CSR_initWithDenseMatrixTest();*/
   return 0;
 }

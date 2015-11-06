@@ -40,4 +40,18 @@ std::vector<int> flopsStats(const int IA[], const int JA[], const QValue A[], co
     pushToStats(row_flops, stats);
   }
   return stats;
+} 
+
+std::vector<int> flopsStats(const int IA[], const int JA[],const int IB[], const int JB[], const int m) {
+  std::vector<int> stats(13, 0);
+  for (int i = 0; i < m; ++i) {
+    long row_flops = 0;
+    for (int jp = IA[i]; jp < IA[i + 1]; ++jp) {
+      int j = JA[jp];
+      long Brow_j_nnz = IB[j + 1] - IB[j];
+      row_flops += Brow_j_nnz;
+    }
+    pushToStats(row_flops, stats);
+  }
+  return stats;
 }

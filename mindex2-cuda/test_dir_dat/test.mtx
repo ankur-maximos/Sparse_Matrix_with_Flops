@@ -1,0 +1,24 @@
+%%MatrixMarket matrix coordinate real general
+%-------------------------------------------------------------------------------
+% UF Sparse Matrix Collection, Tim Davis
+% http://www.cise.ufl.edu/research/sparse/matrices/Oberwolfach/filter3D
+% name: Oberwolfach/filter3D
+% [Oberwolfach: tunable optical filter]
+% id: 1431
+% date: 2006
+% author: D. Hohlfield, T. Bechtold, H. Zappe
+% ed: E. Rudnyi
+% fields: name title A id notes aux date author ed kind
+% aux: E B C cname
+% kind: model reduction problem
+%-------------------------------------------------------------------------------
+% notes:
+% Primary matrix in this model reduction problem is the Oberwolfach A matrix
+%-------------------------------------------------------------------------------
+4 4 6
+1 2 -.0008109343960956759
+2 1 -2.6727333604411684e-6
+2 3 1.478460142719664e-6
+2 4 -8.662701342500658e-6
+3 1 2.3063597321124548e-5
+4 4 -8.147218938641685e-7

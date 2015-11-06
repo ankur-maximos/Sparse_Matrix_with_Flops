@@ -330,8 +330,6 @@ __global__ void gpuClassifyFlops(const int m, const long *dflops, const int* dIA
   }
   __syncthreads();
   plus_scan(counts);
-  for (int i = threadIdx.x + blockIdx.x * blockDim.x; i < m; ++i) {
-  }
 }
 
 void computeDv(const CSR &dA, const CSR &dB, int** dvp, int** dqueuep) {

@@ -1,0 +1,312 @@
+/home/niuq/data/matrix_input/cant.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/cant.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/cant.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=62451 cols=62451 nnz=2034917
+symm 62451 62451 2034917
+rows=62451 cols=62451 nnz=2034917
+symm 62451 62451 2034917
+Oflops=269475365
+/home/niuq/data/matrix_input/consph.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/consph.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/consph.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=83334 cols=83334 nnz=3046907
+symm 83334 83334 3046907
+rows=83334 cols=83334 nnz=3046907
+symm 83334 83334 3046907
+Oflops=463831013
+/home/niuq/data/matrix_input/mc2depi.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/mc2depi.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/mc2depi.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=525825 cols=525825 nnz=2100225
+nonsymm 525825 525825 2100225
+rows=525825 cols=525825 nnz=2100225
+nonsymm 525825 525825 2100225
+Oflops=0
+/home/niuq/data/matrix_input/filter3D.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/filter3D.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/filter3D.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=106437 cols=106437 nnz=1406808
+symm 106437 106437 1406808
+rows=106437 cols=106437 nnz=1406808
+symm 106437 106437 1406808
+Oflops=23398751
+/home/niuq/data/matrix_input/cop20k_A.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/cop20k_A.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/cop20k_A.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=121192 cols=121192 nnz=1362087
+symm 121192 121192 1362087
+rows=121192 cols=121192 nnz=1362087
+symm 121192 121192 1362087
+Oflops=24900554
+/home/niuq/data/matrix_input/mac_econ_fwd500.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/mac_econ_fwd500.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/mac_econ_fwd500.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=206500 cols=206500 nnz=1273389
+nonsymm 206500 206500 1273389
+rows=206500 cols=206500 nnz=1273389
+nonsymm 206500 206500 1273389
+Oflops=0
+/home/niuq/data/matrix_input/mc2depi.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/mc2depi.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/mc2depi.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=525825 cols=525825 nnz=2100225
+nonsymm 525825 525825 2100225
+rows=525825 cols=525825 nnz=2100225
+nonsymm 525825 525825 2100225
+Oflops=0
+/home/niuq/data/matrix_input/pdb1HYS.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/pdb1HYS.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/pdb1HYS.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=36417 cols=36417 nnz=2190591
+symm 36417 36417 2190591
+rows=36417 cols=36417 nnz=2190591
+symm 36417 36417 2190591
+Oflops=555317070
+/home/niuq/data/matrix_input/pwtk.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/pwtk.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/pwtk.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=217918 cols=217918 nnz=5926171
+symm 217918 217918 5926171
+rows=217918 cols=217918 nnz=5926171
+symm 217918 217918 5926171
+Oflops=625498821
+/home/niuq/data/matrix_input/rma10.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/rma10.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/rma10.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=46835 cols=46835 nnz=2374001
+nonsymm 46835 46835 2374001
+rows=46835 cols=46835 nnz=2374001
+nonsymm 46835 46835 2374001
+Oflops=149651894
+/home/niuq/data/matrix_input/scircuit.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/scircuit.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/scircuit.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=170998 cols=170998 nnz=958936
+nonsymm 170998 170998 958936
+rows=170998 cols=170998 nnz=958936
+nonsymm 170998 170998 958936
+Oflops=78783
+/home/niuq/data/matrix_input/webbase-1M.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/webbase-1M.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/webbase-1M.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=1000005 cols=1000005 nnz=3105536
+nonsymm 1000005 1000005 3105536
+rows=1000005 cols=1000005 nnz=3105536
+nonsymm 1000005 1000005 3105536
+Oflops=47630307
+/home/niuq/data/matrix_input/shipsec1.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/shipsec1.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/shipsec1.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=140874 cols=140874 nnz=3977139
+symm 140874 140874 3977139
+rows=140874 cols=140874 nnz=3977139
+symm 140874 140874 3977139
+Oflops=450532800
+/home/niuq/data/matrix_input/2cubes_sphere.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/2cubes_sphere.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/2cubes_sphere.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=101492 cols=101492 nnz=874378
+symm 101492 101492 874378
+rows=101492 cols=101492 nnz=874378
+symm 101492 101492 874378
+Oflops=0
+/home/niuq/data/matrix_input/cage12.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/cage12.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/cage12.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=130228 cols=130228 nnz=2032536
+nonsymm 130228 130228 2032536
+rows=130228 cols=130228 nnz=2032536
+nonsymm 130228 130228 2032536
+Oflops=0
+/home/niuq/data/matrix_input/hood.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/hood.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/hood.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=220542 cols=220542 nnz=5494489
+symm 220542 220542 5494489
+rows=220542 cols=220542 nnz=5494489
+symm 220542 220542 5494489
+Oflops=562004814
+/home/niuq/data/matrix_input/m133-b3.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/m133-b3.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/m133-b3.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=200200 cols=200200 nnz=800800
+nonsymm 200200 200200 800800
+rows=200200 cols=200200 nnz=800800
+nonsymm 200200 200200 800800
+Oflops=0
+/home/niuq/data/matrix_input/majorbasis.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/majorbasis.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/majorbasis.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=160000 cols=160000 nnz=1750416
+nonsymm 160000 160000 1750416
+rows=160000 cols=160000 nnz=1750416
+nonsymm 160000 160000 1750416
+Oflops=0
+/home/niuq/data/matrix_input/mario002.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/mario002.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/mario002.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=389874 cols=389874 nnz=1167685
+symm 389874 389874 1167685
+rows=389874 cols=389874 nnz=1167685
+symm 389874 389874 1167685
+Oflops=0
+/home/niuq/data/matrix_input/mono_500Hz.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/mono_500Hz.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/mono_500Hz.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=169410 cols=169410 nnz=5036288
+nonsymm 169410 169410 5036288
+rows=169410 cols=169410 nnz=5036288
+nonsymm 169410 169410 5036288
+Oflops=115483822
+/home/niuq/data/matrix_input/offshore.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/offshore.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/offshore.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=259789 cols=259789 nnz=2251231
+symm 259789 259789 2251231
+rows=259789 cols=259789 nnz=2251231
+symm 259789 259789 2251231
+Oflops=0
+/home/niuq/data/matrix_input/patents_main.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/patents_main.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/patents_main.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=240547 cols=240547 nnz=560943
+nonsymm 240547 240547 560943
+rows=240547 cols=240547 nnz=560943
+nonsymm 240547 240547 560943
+Oflops=1226
+/home/niuq/data/matrix_input/poisson3Da.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/poisson3Da.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/poisson3Da.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=13514 cols=13514 nnz=352762
+nonsymm 13514 13514 352762
+rows=13514 cols=13514 nnz=352762
+nonsymm 13514 13514 352762
+Oflops=3720657
+/home/niuq/data/matrix_input/qcd5_4.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/qcd5_4.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/qcd5_4.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=49152 cols=49152 nnz=1916928
+nonsymm 49152 49152 1916928
+rows=49152 cols=49152 nnz=1916928
+nonsymm 49152 49152 1916928
+Oflops=74760192
+/home/niuq/data/matrix_input/com-amazon.ungraph.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/com-amazon.ungraph.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/com-amazon.ungraph.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=548552 cols=548552 nnz=925872
+nonsymm 548552 548552 925872
+rows=548552 cols=548552 nnz=925872
+nonsymm 548552 548552 925872
+Oflops=0
+/home/niuq/data/matrix_input/email-Enron.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/email-Enron.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/email-Enron.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=36692 cols=36692 nnz=367662
+nonsymm 36692 36692 367662
+rows=36692 cols=36692 nnz=367662
+nonsymm 36692 36692 367662
+Oflops=44494529
+/home/niuq/data/matrix_input/roadNet-CA.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/roadNet-CA.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/roadNet-CA.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=1971281 cols=1971281 nnz=5533214
+nonsymm 1971281 1971281 5533214
+rows=1971281 cols=1971281 nnz=5533214
+nonsymm 1971281 1971281 5533214
+Oflops=0
+/home/niuq/data/matrix_input/twitter_combined.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/twitter_combined.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/twitter_combined.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=81306 cols=81306 nnz=2420765
+nonsymm 81306 81306 2420765
+rows=81306 cols=81306 nnz=2420765
+nonsymm 81306 81306 2420765
+Oflops=120959545
+/home/niuq/data/matrix_input/web-NotreDame.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/web-NotreDame.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/web-NotreDame.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=325729 cols=325729 nnz=1497134
+nonsymm 325729 325729 1497134
+rows=325729 cols=325729 nnz=1497134
+nonsymm 325729 325729 1497134
+Oflops=48080555
+/home/niuq/data/matrix_input/BioGRID_unweighted_graph.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/BioGRID_unweighted_graph.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/BioGRID_unweighted_graph.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=4364 cols=4364 nnz=25464
+nonsymm 4364 4364 25464
+rows=4364 cols=4364 nnz=25464
+nonsymm 4364 4364 25464
+Oflops=273408
+/home/niuq/data/matrix_input/com-dblp.ungraph.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/com-dblp.ungraph.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/com-dblp.ungraph.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=425957 cols=425957 nnz=1049866
+nonsymm 425957 425957 1049866
+rows=425957 cols=425957 nnz=1049866
+nonsymm 425957 425957 1049866
+Oflops=1556829
+/home/niuq/data/matrix_input/com-youtube.ungraph.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/com-youtube.ungraph.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/com-youtube.ungraph.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=1157828 cols=1157828 nnz=2987624
+nonsymm 1157828 1157828 2987624
+rows=1157828 cols=1157828 nnz=2987624
+nonsymm 1157828 1157828 2987624
+Oflops=168071657
+/home/niuq/data/matrix_input/facebook_combined.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/facebook_combined.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/facebook_combined.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=4039 cols=4039 nnz=88234
+nonsymm 4039 4039 88234
+rows=4039 cols=4039 nnz=88234
+nonsymm 4039 4039 88234
+Oflops=2173070
+/home/niuq/data/matrix_input/web-BerkStan.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/web-BerkStan.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/web-BerkStan.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=685230 cols=685230 nnz=7600595
+nonsymm 685230 685230 7600595
+rows=685230 cols=685230 nnz=7600595
+nonsymm 685230 685230 7600595
+Oflops=107210585
+/home/niuq/data/matrix_input/WIPHI_graph.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/WIPHI_graph.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/WIPHI_graph.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=5953 cols=5953 nnz=49607
+nonsymm 5953 5953 49607
+rows=5953 cols=5953 nnz=49607
+nonsymm 5953 5953 49607
+Oflops=764395
+/home/niuq/data/matrix_input/cit-HepPh.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/cit-HepPh.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/cit-HepPh.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=34546 cols=34546 nnz=421578
+nonsymm 34546 34546 421578
+rows=34546 cols=34546 nnz=421578
+nonsymm 34546 34546 421578
+Oflops=1549569
+/home/niuq/data/matrix_input/DIP_unweighted_graph.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/DIP_unweighted_graph.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/DIP_unweighted_graph.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=4995 cols=4995 nnz=21875
+nonsymm 4995 4995 21875
+rows=4995 cols=4995 nnz=21875
+nonsymm 4995 4995 21875
+Oflops=131011
+/home/niuq/data/matrix_input/loc-gowalla_edges.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/loc-gowalla_edges.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/loc-gowalla_edges.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=196591 cols=196591 nnz=1900654
+nonsymm 196591 196591 1900654
+rows=196591 cols=196591 nnz=1900654
+nonsymm 196591 196591 1900654
+Oflops=563028659
+/home/niuq/data/matrix_input/web-Google.mtx
+./bin_analysis.x --stride=512 --input=/home/niuq/data/matrix_input/web-Google.mtx
+{	calcChange= false	stats= false	inputFileName= /home/niuq/data/matrix_input/web-Google.mtx	maxIters= 30	stride= 512	ptile= 2	rmclOption= SEQ	SharedOption= CachePreferNone	}
+rows=916428 cols=916428 nnz=5105039
+nonsymm 916428 916428 5105039
+rows=916428 cols=916428 nnz=5105039
+nonsymm 916428 916428 5105039
+Oflops=1535785

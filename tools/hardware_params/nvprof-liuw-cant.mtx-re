@@ -1,0 +1,45 @@
+
+
+
+General summary of nvprofiler-----------------------------------------------
+
+
+
+
+Every counter is an aggregated value of the GPU i.e values are collected across all units of the GPU
+
+Instructions Issued , Instructions Executed, gld_request, gst_request----------------
+
+Event - gld_request:  Number of executed load instructions where the state space is not specified and hence generic addressing is used, increments per warp on a multiprocessor. It can include the load operations from global,local and shared state space.
+
+Event - gst_request:  Number of executed store instructions where the state space is not specified and hence generic addressing is used, increments per warp on a multiprocessor. It can include the store operations to global,local and shared state space.
+
+Event - inst_issued1:  Number of single instruction issued per cycle
+
+Event - inst_issued2:  Number of dual instructions issued per cycle
+
+Event - inst_executed:  Number of instructions executed, do not include replays.
+
+Event - l1_global_load_miss:  Number of cache lines that miss in L1 cache for global memory load accesses. In case of perfect coalescing this increments by 1,2, and 4 for 32, 64 and 128 bit accesses by a warp respectively.
+
+Event - l1_global_load_hit:  Number of cache lines that hit in L1 cache for global memory load accesses. In case of perfect coalescing this increments by 1,2, and 4 for 32, 64 and 128 bit accesses by a warp respectively.
+
+Event - global_store_transaction:  Number of global store transactions. Incr    ements by 1 per transaction. Transaction can be 32/64/96/128B.
+
+Event - uncached_global_load_transaction:  Number of uncached global load transactio    ns. Increments by 1 per transaction. Transaction can be 32/64/96/128B.
+
+Event - shared_load_replay:  Replays caused due to shared load bank conflict (when the addresses for two or more shared memory load requests fall in the same memory bank) or when there is no conflict but the total number of words accessed by all threads in the warp executing that instruction exceed the number of words that can be loaded in one cycle (256 bytes).
+
+Event - shared_store_replay:  Replays caused due to shared store bank conflict (when the addresses for two or more shared memory store requests fall in the same memory bank) or when there is no conflict but the total number of words accessed by all threads in the warp executing that instruction exceed the number of words that can be stored in one cycle.
+
+Event - shared_load:  Number of executed load instructions where state space is specified as shared, increments per warp on a multiprocessor.
+
+Event - shared_store:  Number of executed store instructions where state space is specified as shared, increments per warp on a multiprocessor.
+
+Event : l1_local_load_miss:  Number of cache lines that miss in L1 cache for local memory load accesses. In case of perfect coalescing this increments by 1,2, and 4 for 32, 64 and 128 bit accesses by a warp respectively.
+
+Event : l1_local_load_hit:  Number of cache lines that hit in L1 cache for local memory load accesses. In case of perfect coalescing this increments by 1,2, and 4 for 32, 64 and 128 bit accesses by a warp respectively.
+
+Event : local_store:  Number of executed store instructions where state space is specified as local, increments per warp on a multiprocessor.
+======== Warning: Event "ld_request" cannot be found on device 0.
+======== Error: application not found.

@@ -15,324 +15,262 @@
 #include "gnnz.cuh"
 #include "gspgemm.cuh"
 #include <assert.h>
+#include <vector>
 
-template <int BLOCK_THREADS>
-__global__ void sgpu_SpGEMM_olarge(
-    const int IA[], const int JA[], const QValue A[],
-    const int IB[], const int JB[], const QValue B[],
-    const int drowIds[], const int gcount,
-    const int m, const int n,
-    int IC[], int JC[], QValue C[],
-    int *xbs) {
-  __shared__ int as[BLOCK_THREADS];
-  __shared__ QValue Aaps[BLOCK_THREADS];
-  __shared__ int count;
-  if (threadIdx.x == 0) {
-    count = 0;
+#include <thrust/host_vector.h> 
+#include <thrust/device_vector.h> 
+#include <thrust/copy.h> 
+#include <thrust/fill.h> 
+#include <thrust/sequence.h>
+#include <thrust/sort.h>
+#include <thrust/transform.h>
+//#include <thrust/make_zip_iterator.h>
+//#include <thrust/sort_by_key.h>
+//#include <thrust/make_tuple.h>
+#include <thrust/tuple.h>
+
+#include "moderngpu.cuh"
+
+using namespace std;
+using namespace mgpu;
+
+const int FLOPS_SORT = 1024;
+
+
+struct pack{
+template <typename Tuple>
+  __device__ __host__ int64 operator()(const Tuple &t){
+    return ( static_cast<int64>( thrust::get<0>(t) ) << 32 ) | thrust::get<1>(t);
   }
-  int *xb = xbs + blockIdx.x * n;
+/*  __device__ __host__ int32 operator()(const Tuple &t){
+    return ( ( thrust::get<0>(t) ) << 16 ) | thrust::get<1>(t);
+  }
+*/};
+
+struct unpack{
+  __device__ __host__ thrust::tuple<int,int> operator()(int64 p){
+    int d = static_cast<int>(p >> 32);
+    int s = static_cast<int>(p & 0xffffffff);
+    return thrust::make_tuple(d, s);
+  }
+/*
+  __device__ __host__ thrust::tuple<int,int> operator()(int32 p){
+    int d = static_cast<int>(p >> 16);
+    int s = static_cast<int>(p & 0xffff);
+    return thrust::make_tuple(d, s);
+  }
+*/};
+
+
+
+template<int BLOCK_THREADS> 
+__global__ void compute_sorting_pointers(int flops_sort_arr[], int r_c_size, int segment_size, int* rowStream) { 
+     int tid = threadIdx.x + blockIdx.x * blockDim.x;	
+     int flop;
+     for(int i=tid; i<segment_size ; i+=blockDim.x * gridDim.x) {   
+	flop = FLOPS_SORT * (i+1); 
+        //printf("flop : %d", flop);
+        if(flop >= r_c_size) { flops_sort_arr[i] = -1;}
+	int cur_row = rowStream[flop-1];  
+	int next_row = rowStream[flop]; 
+        printf("cur_row %d next_row %d\n ", cur_row, next_row); 
+	while(flop<r_c_size  && next_row == cur_row) {  
+		flop++;  
+		cur_row = next_row;  
+		next_row = rowStream[flop];  
+	}
+        if(flop >= r_c_size) 
+        flops_sort_arr[i] = -1;
+ 	else 
+	flops_sort_arr[i] = flop;	
+    } 
+} 
+
+/*
+void sort_data(int size,thrust::devicevector<int> d_rows,thrust::devicevector<int> d_cols,thrust::devicevector<int> d_vals){
+	thrust::device_vector<int64> tmp(size);
+// Pack (day, site) pairs into 64-bit integers.
+	thrust::transform(
+		thrust::make_zip_iterator(thrust::make_tuple(d_rows.begin(), d_cols.begin())),
+		thrust::make_zip_iterator(thrust::make_tuple(d_rows.end(), d_cols.end())),
+		tmp.begin(),
+		pack());
+
+// Sort using the 64-bit integers as keys.
+	thrust::sort_by_key(tmp.begin(), tmp.end(), d_vals.begin());
+
+// Unpack (row,cols) pairs from 64-bit integers.
+	thrust::transform(
+		tmp.begin(),
+		tmp.end(),
+		thrust::make_zip_iterator(thrust::make_tuple(d_rows.begin(), d_cols.begin())),
+		unpack());
+}
+*/
+template<class T>
+__device__ void partition_by_bit(unsigned *keys, T* values, unsigned bit, int end) {
+  unsigned int i = threadIdx.x;
+  unsigned int size = blockDim.x;
+  unsigned k_i = keys[i];
+  T v_i = values[i];
+  unsigned int p_i = (k_i >> bit) & 1;
+  keys[i] = p_i;
   __syncthreads();
-  for (int q = blockIdx.x; q < gcount; q += gridDim.x) {
-    int rowId = drowIds[q];
-    //if (threadIdx.x == 0 && rowId == 3) printf("row%d is in olarge\n", rowId);
-    const int ICi = IC[rowId];
-    int *iJC = JC + ICi;
-    QValue *iC = C + ICi;
-    for (int ap = IA[rowId] + threadIdx.x; __syncthreads_or(ap < IA[rowId + 1]); ap += blockDim.x) {
-      int predicate = (ap < IA[rowId + 1]);
-      int a = predicate ? JA[ap] : -1;
-      QValue Aap = predicate ? A[ap] : 0.0;
-      as[threadIdx.x] = a;
-      Aaps[threadIdx.x] = Aap;
-      unsigned total = min(IA[rowId + 1] + threadIdx.x - ap, blockDim.x);
-      __syncthreads();
-      for (int ap = 0; ap < total; ++ap) {
-        int a = as[ap];
-        QValue Aap = Aaps[ap];
-        for (int bp = IB[a] + threadIdx.x; bp < IB[a + 1]; bp += blockDim.x) {
-          int b = JB[bp];
-          if (xb[b] == -1) {
-            int pos = atomicAdd(&count, 1);
-            iJC[pos] = b;
-            iC[pos] = Aap * B[bp];
-            xb[b] = pos;
-          } else {
-            iC[xb[b]] += Aap * B[bp];
-          }
-        }
-        __syncthreads();
-      }
-    }
-    /*for (int ap = IA[rowId]; ap < IA[rowId + 1]; ++ap) {*/
-    /*  const int a = JA[ap];*/
-    /*  const QValue Aap = A[ap];*/
-    /*  for (int bp = IB[a] + threadIdx.x; bp < IB[a + 1]; bp += blockDim.x) {*/
-    /*    int b = JB[bp];*/
-    /*    if (xb[b] == -1) {*/
-    /*      int pos = atomicAdd(&count, 1);*/
-    /*      iJC[pos] = b;*/
-    /*      iC[pos] = Aap * B[bp];*/
-    /*      xb[b] = pos;*/
-    /*    } else {*/
-    /*      iC[xb[b]] += Aap * B[bp];*/
-    /*    }*/
-    /*  }*/
-    /*  __syncthreads();*/
-    /*}*/
-    for (int cp = threadIdx.x; cp < count; cp += blockDim.x) {
-      int c = iJC[cp];
-      xb[c] = -1;
-    }
-    __syncthreads();
-    if (threadIdx.x == 0) {
-      count = 0;
-    }
-  }
-}
-
-__device__ inline void xBlockBrowsProcess(const int  start, const int end, const int aps[],
-    const int JA[], const float A[],
-    const int IB[], const int JB[], const float B[],
-    int *xb, float *x,
-    int *countp, int *iJC) {
-  for (int at = start; at < end; ++at) {
-    const int ap = aps[at];
-    const int a = JA[ap];
-    const float Aap = A[ap];
-    for (int bp = IB[a] + threadIdx.x; bp < IB[a + 1]; bp += blockDim.x) {
-      const int b = JB[bp];
-      const float cVal = Aap * B[bp];
-      if (xb[b] == -1) {
-        int pos = atomicAdd(countp, 1);
-        iJC[pos] = b;
-        x[b] = cVal;
-        xb[b] = -2;
-      } else {
-        x[b] += cVal;
-      }
-    }
-    __syncthreads();
-  }
-}
-
-template <int WARP_SIZE>
-__device__ inline void concurrentXBrowsProcess(const int toffset, const int  start, const int end, const int aps[],
-    const int JA[], const float A[],
-    const int IB[], const int JB[], const float B[],
-    int *xb, float *x,
-    int *countp, int *iJC) {
-  const int WARPS_PER_BlOCK = blockDim.x / WARP_SIZE;
-  int woffset = (toffset % blockDim.x + WARP_SIZE - 1) / WARP_SIZE;
-  const int warpId = (threadIdx.x / WARP_SIZE + WARPS_PER_BlOCK - woffset) % WARPS_PER_BlOCK;
-  const int laneId = threadIdx.x % WARP_SIZE;
-  for (int at = start + warpId; at < end; at += WARPS_PER_BlOCK) {
-    const int ap = aps[at];
-    const int a = JA[ap];
-    const float Aap = A[ap];
-    for (int bp = IB[a] + laneId; bp < IB[a + 1]; bp += WARP_SIZE) {
-      const int b = JB[bp];
-      float cVal = Aap * B[bp];
-      atomicAdd(x + b, cVal);
-      if (atomicCAS(xb + b, -1, -2) == -1) {
-        const int pos = atomicAdd(countp, 1);
-        iJC[pos] = b;
-      }
-    }
-    //__syncthreads();
-  }
+  unsigned int T_before = plus_scan(keys);
+  unsigned int T_total  = keys[size-1];
+  unsigned int F_total  = size - T_total;
   __syncthreads();
-}
-
-template <int BLOCK_THREADS>
-__global__ void sgpu_SpGEMM_tlarge(
-    const int IA[], const int JA[], const float A[],
-    const int IB[], const int JB[], const float B[],
-    const int drowIds[], const int gcount,
-    const int m, const int n,
-    int IC[], int JC[], float C[],
-    int *xbs, float *xs) {
-  __shared__ unsigned keys[BLOCK_THREADS];
-  __shared__ int aps[BLOCK_THREADS];
-  int *xb = xbs + blockIdx.x * n;
-  float *x = xs + blockIdx.x * n;
-  __shared__ int count;
-  if (threadIdx.x == 0) {
-    count = 0;
-  }
-  __syncthreads();
-  for (int q = blockIdx.x; q < gcount; q += gridDim.x) {
-    int rowId = drowIds[q];
-    const int ICi = IC[rowId];
-    int *iJC = JC + ICi;
-    float *iC = C + ICi;
-    for (int ap = IA[rowId] + threadIdx.x; __syncthreads_or(ap < IA[rowId + 1]); ap += blockDim.x) {
-      int predicate = (ap < IA[rowId + 1]);
-      int a = predicate ? JA[ap] : -1;
-      keys[threadIdx.x] = predicate ? (IB[a + 1] - IB[a]) : -1;
-      aps[threadIdx.x] = ap;
-      unsigned le4 = partition_by_bound(keys, aps, 4);
-      unsigned le32 = partition_by_bound(keys, aps, 32);
-      unsigned le64 = partition_by_bound(keys, aps, 64);
-      unsigned total = min(IA[rowId + 1] + threadIdx.x - ap, blockDim.x);
-      concurrentXBrowsProcess<1>(0, 0, le4, aps, JA, A, IB, JB, B, xb, x, &count, iJC);
-      //int toffset = (le4 + 15) / 16 * 16;
-      concurrentXBrowsProcess<16>(0, le4, le32, aps, JA, A, IB, JB, B, xb, x, &count, iJC);
-      //toffset = toffset + ((le32 - le4) * 16 + 31) / 32 * 32;
-      concurrentXBrowsProcess<32>(0, le32, le64, aps, JA, A, IB, JB, B, xb, x, &count, iJC);
-      __syncthreads();
-      xBlockBrowsProcess(le64, total, aps, JA, A, IB, JB, B, xb, x, &count, iJC);
-    }
-    for (int cp = threadIdx.x; cp < count; cp += blockDim.x) {
-      int c = iJC[cp];
-      xb[c] = -1;
-      iC[cp] = x[c];
-      x[c] = 0.0;
-    }
-    __syncthreads();
-    if (threadIdx.x == 0) {
-      count = 0;
-    }
+  if (p_i) {
+    keys[T_before - 1 + F_total] = k_i;
+    values[T_before - 1 + F_total] = v_i;
+  } else {
+    keys[i - T_before] = k_i;
+    values[i - T_before] = v_i;
   }
 }
 
-
-void sgpu_SpGEMM(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv, CSR &dC, int cNnz) {
-  int m = dA.rows;
-  int n = dB.cols;
-  if (hv.size() > 0 + 1 && hv[1] - hv[0] > 0) { // up to fp0
-    sgpu_SpGEMM_a1<512><<<128, 512>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[0], hv[1] - hv[0], m, n, dC.rowPtr, dC.colInd, dC.values);
-  }
-  if (hv.size() > 1 + 1 && hv[2] - hv[1] > 0) { // up to fp1
-    const unsigned NTHREADS = 512; const unsigned WARP_SIZE = 1;
-    const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[2] - hv[1] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
-    sgpu_SpGEMM_fp1<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[1], hv[2] - hv[1], m, n, dC.rowPtr, dC.colInd, dC.values);
-  }
-  if (hv.size() > 2 + 1 && hv[3] - hv[2] > 0) { // up to fp2
-    const unsigned NTHREADS = 512; const unsigned WARP_SIZE = 1;
-    const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[3] - hv[2] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
-    sgpu_SpGEMM_fp2<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[2], hv[3] - hv[2], m, n, dC.rowPtr, dC.colInd, dC.values);
-  }
-  if (hv.size() > 3 + 1 && hv[4] - hv[3] > 0) { // up to fp4
-    const unsigned NTHREADS = 256; const unsigned WARP_SIZE = 1;
-    const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[4] - hv[3] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
-    sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 7><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[3], hv[4] - hv[3], m, n, dC.rowPtr, dC.colInd, dC.values);
-  }
-  if (hv.size() > 4 + 1 && hv[5] - hv[4] > 0) { // up to fp8
-    const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 4;
-    const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[5] - hv[4] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
-    sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 17><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[4], hv[5] - hv[4], m, n, dC.rowPtr, dC.colInd, dC.values);
-    HANDLE_ERROR(cudaGetLastError());
-  }
-  if (hv.size() > 5 + 1 && hv[6] - hv[5] > 0) { // up to fp16
-    const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 8;
-    const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[6] - hv[5] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
-    sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 37><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[5], hv[6] - hv[5], m, n, dC.rowPtr, dC.colInd, dC.values);
-    HANDLE_ERROR(cudaGetLastError());
-  }
-  if (hv.size() > 6 + 1 && hv[7] - hv[6] > 0) { // up to fp32
-    const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 16;
-    const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[7] - hv[6] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
-    sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 71><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[6], hv[7] - hv[6], m, n, dC.rowPtr, dC.colInd, dC.values);
-    HANDLE_ERROR(cudaGetLastError());
-  }
-  if (hv.size() > 7 + 1 && hv[8] - hv[7] > 0) { // up to fp64
-    const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 32;
-    const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[8] - hv[7] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
-    sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 139><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[7], hv[8] - hv[7], m, n, dC.rowPtr, dC.colInd, dC.values);
-    HANDLE_ERROR(cudaGetLastError());
-  }
-  if (hv.size() > 8 + 1 && hv[9] - hv[8] > 0) { // up to fp128
-    const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 64;
-    const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[9] - hv[8] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
-    sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 271><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[8], hv[9] - hv[8], m, n, dC.rowPtr, dC.colInd, dC.values);
-  }
-  if (hv.size() > 9 + 1 && hv[10] - hv[9] > 0) { // up to fp256
-    const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 128;
-    const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
-    const unsigned NBLOCKS = qmin(65535, (hv[10] - hv[9] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
-    sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 571><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[9], hv[10] - hv[9], m, n, dC.rowPtr, dC.colInd, dC.values);
-    HANDLE_ERROR(cudaGetLastError());
-  }
-  /*if (hv.size() > 10 + 1 && hv[11] - hv[10] > 0) { // up to fp512*/
-  /*  const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 128;*/
-  /*  const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;*/
-  /*  const unsigned NBLOCKS = qmin(65535, (hv[11] - hv[10] + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);*/
-  /*  sgpu_SpGEMM_mid<NTHREADS, WARP_SIZE, 1187><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[10], hv[11] - hv[10], m, n, dC.rowPtr, dC.colInd, dC.values);*/
-  /*  HANDLE_ERROR(cudaGetLastError());*/
-  /*}*/
-
-  assert (hv.size() == 65);
-  //very large
-
-  const int NTHREADS = 128;
-  const double memoryMWordsAvail = GBs * 1000.0 / 4 - ((dA.nnz * 2 + dA.rows) + (dB.nnz * 2 + dB.rows) + (cNnz * 2 + dA.rows)) / 1000.0 / 1000.0;
-  const int blockAvail = memoryMWordsAvail * 1000 * 1000 / (n * 2);
-  const int NBLOCKS10 = qmin3(blockAvail, hv[63] - hv[10], MAX_NBLOCKS);
-  const int NBLOCKS11 = qmin3(blockAvail, hv[64] - hv[63], MAX_NBLOCKS);
-  const int NBLOCKS = std::max(NBLOCKS10, NBLOCKS11);
-  int *xbs = NULL; float *xs = NULL;
-  if (NBLOCKS > 0) {
-    //const int NBLOCKS10 = 512, NBLOCKS = 512;
-    HANDLE_ERROR(cudaMalloc((void**)&xbs, NBLOCKS * n * sizeof(int)));
-    HANDLE_ERROR(cudaMemset(xbs, -1, NBLOCKS * n * sizeof(int)));
-    if (NBLOCKS10 > 0) {
-      HANDLE_ERROR(cudaMalloc((void**)&xs, NBLOCKS10 * n * sizeof(float)));
-      HANDLE_ERROR(cudaMemset(xs, 0, NBLOCKS10 * n * sizeof(float)));
-    }
-  }
-  if (hv.size() > 10 + 1 && hv[63] - hv[10] > 0) // larger than fp256
-  //if (hv.size() > 10 + 1 && hv.back() - hv[10] > 0) // larger than fp256
-  //if (hv.size() > 11 + 1 && hv.back() - hv[11] > 0) // larger than fp512
-  {
-    const int NBLOCKS = NBLOCKS10; //qmin3(blockAvail, hv[63] - hv[10], MAX_NBLOCKS);
-    //const int NBLOCKS = 512;
-    printf("tlarge blockAvail = %d NBLOCKS=%d hsize=%d\n", blockAvail, NBLOCKS, hv[63] - hv[10]);
-    sgpu_SpGEMM_tlarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[10], hv[63] - hv[10], m, n, dC.rowPtr, dC.colInd, dC.values, xbs, xs);
-    HANDLE_ERROR(cudaGetLastError());
-    //HANDLE_ERROR(cudaFree(xbs));
-    HANDLE_ERROR(cudaFree(xs));
-  }
-
-  if (hv[64] - hv[63] > 0) // >=128 non entries a single row of matrix A.
-  {
-    const int NBLOCKS = NBLOCKS11; //qmin3(blockAvail, hv[64] - hv[63], MAX_NBLOCKS);
-    //const int NBLOCKS = 512;
-    //const int NBLOCKS = qmin3(blockAvail, hv[64] - hv[63], 512);
-    printf("olarge memoryMWordsAvail=%lf blockAvail = %d NBLOCKS=%d hsize=%d\n", memoryMWordsAvail, blockAvail, NBLOCKS, hv[64] - hv[63]);
-    sgpu_SpGEMM_olarge<NTHREADS><<<NBLOCKS, NTHREADS>>>(dA.rowPtr, dA.colInd, dA.values, dB.rowPtr, dB.colInd, dB.values, drowIds + hv[63], hv[64] - hv[63], m, n, dC.rowPtr, dC.colInd, dC.values, xbs);
-    HANDLE_ERROR(cudaGetLastError());
-    //HANDLE_ERROR(cudaFree(xbs));
-  }
-  if (NBLOCKS > 0) {
-    HANDLE_ERROR(cudaFree(xbs));
-  }
+__global__ void create_flags(const int d_cols_sorted[], const float d_vals[], const int d_prefix_sum_flags[], int flags[], int size){	
+	int num_threads = blockDim.x;
+	int tid = threadIdx.x;
+	int start = (blockIdx.x)*size;
+	int end = (blockIdx.x+1)*size;
+	if(tid == 0 && start == 0){
+		flags[0] = 1;
+		tid += num_threads;
+	} 
+	for(int i = start + tid; i<end;i+=num_threads){
+		if(d_cols_sorted[i] != d_cols_sorted[i-1]){
+			flags[i] = 1;
+			//printf("i == %d flags[i] = %d\n",i, flags[i]);
+		}
+	}
 }
 
-CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv) {
+
+void SegSortPairs(CudaContext& context,  int size_stream, int* rowStream, int* colStream, QValue* valueStream, int* segment_head_offsets, int total_num_segments_bins_1_to_6) {
+
+  thrust::device_ptr<int> drowStream(rowStream);
+  thrust::device_ptr<int> dcolStream(colStream);
+  thrust::device_vector<int64_t> rows_cols_packed(size_stream);
+  thrust::transform(
+    thrust::make_zip_iterator(thrust::make_tuple(drowStream, dcolStream)),
+    thrust::make_zip_iterator(thrust::make_tuple(drowStream+size_stream, dcolStream+size_stream)),
+    rows_cols_packed.begin(),
+    pack());
+
+  int64_t *keys_device = thrust::raw_pointer_cast(rows_cols_packed.data());
+
+  printf("\n\nSEG-SORT PAIRS DEMONSTRATION:\n\n");
+
+  // Use CudaContext::GenRandom to generate 100 random integers between 0 and
+  // 9.
+  int N1 = size_stream;
+  //MGPU_MEM(int) keys = context.GenRandom<int>(N1, 0, 99);
+
+  MGPU_MEM(int64_t) keys = context.Malloc(keys_device,N1);
+
+  // Fill values with ascending integers.
+  MGPU_MEM(int) values = context.FillAscending<int>(N1, 0, 1);
+
+  // Define 10 segment heads (for 11 segments in all).
+  // const int NumSegs = total_num_segments_bins_1_to_6;
+  // const int SegHeads[NumSegs] = { 4, 19, 22, 56, 61, 78, 81, 84, 94, 97 };
+  MGPU_MEM(int) segments = context.Malloc(segment_head_offsets, total_num_segments_bins_1_to_6);
+
+  //printf("Input keys:\n");
+  //PrintArray(*keys, "%4d", 10);
+
+  //printf("\nSegment heads:\n");
+  //PrintArray(*segments, "%4d", 10);
+
+  // Sort within segments.
+  SegSortPairsFromIndices(keys->get(), values->get(), N1, segments->get(),total_num_segments_bins_1_to_6, context);
+
+  printf("\nSorted data (segment heads are marked by *):\n");
+  //PrintArrayOp(*keys, FormatOpMarkArray(" %c%2d", segment_head_offsets, total_num_segments_bins_1_to_6), 10);
+
+  printf("\nSorted indices (segment heads are marked by *):\n");
+ // PrintArrayOp(*values, FormatOpMarkArray(" %c%2d", segment_head_offsets, total_num_segments_bins_1_to_6), 10);
+
+}
+
+
+
+CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv,int *dflops) {
   CSR dC;
-  //int *dqueue = NULL; computeDv(dA, dB, &dv, &dqueue);
-  gpu_compute_IC(dA, dB, drowIds, hv, dC);
-  HANDLE_ERROR(cudaGetLastError());
-  thrust::device_ptr<int> dIC = thrust::device_pointer_cast(dC.rowPtr);
+  int *rowStream,*colStream;
+  QValue *valueStream;
   int m = dA.rows;
-  //int n = dB.cols;
+  int *flops = new int[1];
+  HANDLE_ERROR(cudaMemcpy(flops,dflops+m,4,cudaMemcpyDeviceToHost));
+  HANDLE_ERROR(cudaMalloc((void**)&rowStream, *flops * sizeof(int)));
+  HANDLE_ERROR(cudaMalloc((void**)&colStream, *flops * sizeof(int)));
+  HANDLE_ERROR(cudaMalloc((void**)&valueStream,*flops * sizeof(QValue))); 
+  
+
+  //printf("total flops :%d\n",*flops); 
+  
+  gpu_compute_stream(dA, dB, drowIds, hv, rowStream, colStream, valueStream,dflops);
+  HANDLE_ERROR(cudaGetLastError());
+ 
+  /* 
+  printing for checking correctness
+
+  int *hrowStream = NULL;
+  int *hcolStream = NULL;
+  hrowStream = (int*) malloc(*flops * sizeof(int));
+  hcolStream = (int*) malloc(*flops * sizeof(int));
+  HANDLE_ERROR(cudaMemcpy(hrowStream,rowStream,*flops * sizeof(int),cudaMemcpyDeviceToHost));  
+  HANDLE_ERROR(cudaMemcpy(hcolStream,colStream,*flops * sizeof(int),cudaMemcpyDeviceToHost));
+  for(int i=0;i<(*flops);i++) {
+	printf("row : %d ,col : %d \n",hrowStream[i],hcolStream[i]);
+  } */
+  
+  int total_num_segments = ((*flops + FLOPS_SORT - 1)/FLOPS_SORT) - 1; // represents the size of the array
+  //printf("total number of segments : %d\n" , total_num_segments);
+  //printf("total flops : %d\n" , (hv[7] - hv[2]));
+  int *flops_sort_arr;
+  if(total_num_segments > 0) {
+    HANDLE_ERROR(cudaMalloc((void**)&flops_sort_arr, total_num_segments * sizeof(int)));
+    const int BLOCK_THREADS = 256;
+    const unsigned NBLOCKS = qmin(65535, (m + BLOCK_THREADS - 1) / BLOCK_THREADS);
+    compute_sorting_pointers<BLOCK_THREADS><<<NBLOCKS,BLOCK_THREADS>>>(flops_sort_arr, *flops, total_num_segments, rowStream);
+  }
+  
+  /*
+  printing for checking correctness
+  int *hflops_sort_arr = NULL;
+  hflops_sort_arr = (int*) malloc(total_num_segments * sizeof(int));   
+  HANDLE_ERROR(cudaMemcpy(hflops_sort_arr, flops_sort_arr, total_num_segments * sizeof(int), cudaMemcpyDeviceToHost));
+  for(int i=0;i<total_num_segments;i++) {
+ 	printf("pointer :%d\n" , hflops_sort_arr[i]);
+  } 
+  */
+ 
+  // Pack (day, site) pairs into 64-bit integers.
+  //thrust::device_ptr<int> dvalueStream(valueStream);
+  
+  //sort_data(*flops,drowStream,dcolStream,dvalueStream);
+  //TODO handle segment array size as 0 and for -1, Also finally this method should final CSR
+  //ContextPtr context = CreateCudaDevice(0);
+
+  //SegSortPairs(*context, *flops, rowStream, colStream, valueStream, flops_sort_arr, total_num_segments);
+
+  //uncomment later
+  //create_flags<<<NBLOCKS, NTHREADS>>>(d_cols_sorted, d_vals, d_prefix_sum_flags, d_flags, N/NBLOCKS);
+
+  /* 
+  thrust::device_ptr<int> dIC = thrust::device_pointer_cast(dC.rowPtr);
   thrust::exclusive_scan(dIC, dIC + m + 1, dIC);
   int cNnz = dIC[m];
+  printf("total number of nnz %d", cNnz);
   HANDLE_ERROR(cudaMalloc((void**)&dC.colInd, cNnz * sizeof(int)));
   HANDLE_ERROR(cudaMalloc((void**)&dC.values, cNnz * sizeof(QValue)));
-  //HANDLE_ERROR(cudaMemset(dC.values, 0, cNnz * sizeof(QValue)));
-  sgpu_SpGEMM(dA, dB, drowIds, hv, dC, cNnz);
+  // performing the computation in matrix -- kernel.cu
+  //sgpu_SpGEMM(dA, dB, drowIds, hv, dC, cNnz, temp_C_128_id, temp_C_128_val, temp_C_256_id, temp_C_256_val, temp_C_512_id, temp_C_512_val, temp_C_1024_id, temp_C_1024_val);
   cudaDeviceSynchronize();
   dC.nnz = cNnz;
   dC.rows = dA.rows;
-  dC.cols = dB.cols;
+  dC.cols = dB.cols; */
   return dC;
 }
