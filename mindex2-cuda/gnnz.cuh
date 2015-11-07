@@ -19,7 +19,7 @@ int inline qmin3(const int a, const int b, const int c) {
 void gpu_compute_stream(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv, int *rowStream, int *colStream, QValue *valueStream, int *dflops) {
   int m = dA.rows;
   int n = dB.cols;
-  printf("\n1 flop count: %d", (hv[3] - hv[2]));
+  //printf("\n1 flop count: %d", (hv[3] - hv[2]));
   if (hv.size() > 2 + 1 && hv[3] - hv[2] > 0) { // up to fp1 - bin1
     const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 1;
     const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;
@@ -28,7 +28,7 @@ void gpu_compute_stream(const CSR &dA, const CSR &dB, int *drowIds, const vector
     HANDLE_ERROR(cudaGetLastError());
   }
 
-  printf("\n2-4 flop count: %d", (hv[4] - hv[3]));
+  //printf("\n2-4 flop count: %d", (hv[4] - hv[3]));
   if (hv.size() > 3 + 1 && hv[4] - hv[3] > 0) { // up to fp[2-4] - bin2
     const unsigned NTHREADS = 128; const unsigned WARP_SIZE = 2;
     const unsigned WARPS_PER_BLOCK = NTHREADS / WARP_SIZE;

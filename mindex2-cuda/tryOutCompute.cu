@@ -432,7 +432,7 @@ __global__ void sgpu_stream_f16(const int IA[], const int JA[],
   iJC[3] = INT_MAX;
   for (int q = tid; q < gcount; q += blockDim.x * gridDim.x) {
     int rowId = dgqueue[q];
-    int count = 0;
+    int count = 0; 
     for (int ap = IA[rowId]; ap < IA[rowId + 1]; ++ap) {
       int a = JA[ap];
       for (int bp = IB[a]; bp < IB[a + 1]; ++bp) {
@@ -455,21 +455,22 @@ __global__ void sgpu_stream_f64(const int IA[], const int JA[], const QValue A[]
   __shared__ int offset[WARPS_PER_BLOCK];
   int count = 0;
   for (int q = gwarpId; q < gcount; q += WARPS_PER_BLOCK * gridDim.x) {
-    count = 0;
     if(laneId == 0) {
 	offset[warpId] = 0;
     }
     int r = rowqueue[q]; 
     for (int ap = IA[r]; ap < IA[r + 1]; ++ap) { 
+      count = 0;
       int a = JA[ap];
-      int val_a = A[ap];
+      QValue val_a = A[ap];
       for (int bp = IB[a] + laneId; bp < IB[a + 1]; bp += WARP_SIZE,count+=1) {	
         int streamindex = flopsqueue[q] + count * WARP_SIZE + laneId;  
         const int c = JB[bp]; 
   	rowStream[streamindex + offset[warpId]] = r; 
 	colStream[streamindex + offset[warpId]] = c; 
 	valueStream[streamindex + offset[warpId]] = val_a * B[bp]; 
-        printf("rowids : %d colid : %d index : %d count : %d flop: %d offset : %d\n",r,c,streamindex,count,flopsqueue[q],offset[warpId]);
+        
+        //printf("rowids : %d colid : %d index : %d count : %d flop: %d offset : %d\n",r,c,streamindex,count,flopsqueue[q],offset[warpId]);
       }
       count++;
  	__syncthreads();
@@ -491,18 +492,18 @@ __global__ void sgpu_stream_f4(const int IA[], const int JA[], const QValue A[],
     if(laneId == 0) {
        offset[warpId] = 0;
     }
-    count =0;
     int r = rowqueue[q]; 
     for (int ap = IA[r]; ap < IA[r + 1]; ++ap) { 
       int a = JA[ap];
-      int val_a = A[ap];
+      count = 0;
+      QValue val_a = A[ap];
       for (int bp = IB[a] + laneId; bp < IB[a + 1]; bp += WARP_SIZE,count+=1) {	
         int streamindex = flopsqueue[q] + count * WARP_SIZE + laneId;  
         const int c = JB[bp]; 
   	rowStream[streamindex + offset[warpId]] = r; 
 	colStream[streamindex + offset[warpId]] = c; 
 	valueStream[streamindex + offset[warpId]] = val_a * B[bp]; 
-        printf("rowids : %d colid : %d index : %d count : %d flop: %d offset : %d\n",r,c,streamindex,count,flopsqueue[q],offset[warpId]);
+        //printf("rowids : %d colid : %d index : %d count : %d flop: %d offset : %d\n",r,c,streamindex,count,flopsqueue[q],offset[warpId]);
       }
  	//__syncthreads();
 	if(laneId == 0) {
@@ -524,7 +525,7 @@ __global__ void sgpu_stream_f1(const int IA[], const int JA[],const QValue A[],c
     int c = JB[index];
     QValue b = B[index];
     int streamindex = flopsqueue[q];
-    printf("r : %d colids : %d index %d\n", r, c, streamindex);
+    //printf("r : %d colids : %d index %d\n", r, c, streamindex);
     rowStream[streamindex] = r;
     colStream[streamindex] = c;
     valueStream[streamindex] = a * b; 
@@ -540,7 +541,7 @@ __global__ void sgpu_stream_higher(const int IA[], const int JA[], const QValue 
     for (int ap = IA[r]; ap < IA[r + 1]; ++ap) { 
       count = 0; 
       int a = JA[ap]; 
-      int val_a = A[ap]; 
+      QValue val_a = A[ap]; 
       for (int bp = IB[a] + threadIdx.x ; bp < IB[a + 1]; bp += blockDim.x) { 
         int streamindex = flopsqueue[q] + count * blockDim.x + threadIdx.x; 
 	count++;  

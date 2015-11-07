@@ -12,6 +12,9 @@
 #include <thrust/device_ptr.h>
 #include <thrust/scan.h>
 #include <thrust/remove.h>
+
+#include <thrust/count.h>
+
 #include "gnnz.cuh"
 #include "gspgemm.cuh"
 #include <assert.h>
@@ -31,9 +34,15 @@
 
 #include "moderngpu.cuh"
 
+#include <inttypes.h>
+
+#define ENABLE_DEBUG 0
+#define ENABLE_PRINT 0
+
 using namespace std;
 using namespace mgpu;
 
+//variable that gives average size of segment?
 const int FLOPS_SORT = 1024;
 
 
@@ -73,7 +82,9 @@ __global__ void compute_sorting_pointers(int flops_sort_arr[], int r_c_size, int
         if(flop >= r_c_size) { flops_sort_arr[i] = -1;}
 	int cur_row = rowStream[flop-1];  
 	int next_row = rowStream[flop]; 
-        printf("cur_row %d next_row %d\n ", cur_row, next_row); 
+  
+  //printf("cur_row %d next_row %d\n ", cur_row, next_row); 
+
 	while(flop<r_c_size  && next_row == cur_row) {  
 		flop++;  
 		cur_row = next_row;  
@@ -129,7 +140,24 @@ __device__ void partition_by_bit(unsigned *keys, T* values, unsigned bit, int en
   }
 }
 
-__global__ void create_flags(const int d_cols_sorted[], const float d_vals[], const int d_prefix_sum_flags[], int flags[], int size){	
+__global__ void get_segment_heads_for_CSR_reduction(const int64_t d_row_cols_sorted[], const QValue d_vals[], int segment_heads_for_CSR_reduction[], int size){
+  int num_threads = blockDim.x;
+  int tid = threadIdx.x;
+  int start = (blockIdx.x)*size;
+  int end = (blockIdx.x+1)*size;
+  /*if(tid == 0 && start == 0){
+    segment_heads_for_CSR_reduction[0] = 1;
+    tid += num_threads;
+  } */
+  for(int i = start + tid; i<end;i+=num_threads){
+    if(d_row_cols_sorted[i] != d_row_cols_sorted[i-1]){
+      segment_heads_for_CSR_reduction[i] = i;
+      //printf("i == %d flags[i] = %d\n",i, flags[i]);
+    }
+  }
+}
+
+__global__ void create_flags(const int64_t d_row_cols_sorted[], const QValue d_vals[], const int d_prefix_sum_flags[], int flags[], int size){
 	int num_threads = blockDim.x;
 	int tid = threadIdx.x;
 	int start = (blockIdx.x)*size;
@@ -139,7 +167,7 @@ __global__ void create_flags(const int d_cols_sorted[], const float d_vals[], co
 		tid += num_threads;
 	} 
 	for(int i = start + tid; i<end;i+=num_threads){
-		if(d_cols_sorted[i] != d_cols_sorted[i-1]){
+		if(d_row_cols_sorted[i] != d_row_cols_sorted[i-1]){
 			flags[i] = 1;
 			//printf("i == %d flags[i] = %d\n",i, flags[i]);
 		}
@@ -147,7 +175,7 @@ __global__ void create_flags(const int d_cols_sorted[], const float d_vals[], co
 }
 
 
-void SegSortPairs(CudaContext& context,  int size_stream, int* rowStream, int* colStream, QValue* valueStream, int* segment_head_offsets, int total_num_segments_bins_1_to_6) {
+void SegSortPairs(CudaContext& context,  int size_stream, int* rowStream, int* colStream, QValue* valueStream, int* segment_head_offsets, int NumSegs) {
 
   thrust::device_ptr<int> drowStream(rowStream);
   thrust::device_ptr<int> dcolStream(colStream);
@@ -158,42 +186,126 @@ void SegSortPairs(CudaContext& context,  int size_stream, int* rowStream, int* c
     rows_cols_packed.begin(),
     pack());
 
-  int64_t *keys_device = thrust::raw_pointer_cast(rows_cols_packed.data());
+  //TODO: Decide whether to delete rowstream and colstream or whether to just reuse this memory in the unpacked rows and cols? 
+  //Maybe could consider deleting and recreating because sizeof(rowstream) == total #flops and size of final unpacked rowstream == total #nnzs in C. There could be a huge diff between the 2
 
-  printf("\n\nSEG-SORT PAIRS DEMONSTRATION:\n\n");
+  //int64_t *keys_device = thrust::raw_pointer_cast(rows_cols_packed.data());
 
-  // Use CudaContext::GenRandom to generate 100 random integers between 0 and
-  // 9.
-  int N1 = size_stream;
-  //MGPU_MEM(int) keys = context.GenRandom<int>(N1, 0, 99);
+  thrust::host_vector<int64_t> rows_cols_packed_host = rows_cols_packed;
 
-  MGPU_MEM(int64_t) keys = context.Malloc(keys_device,N1);
+  int64_t *keys_host = &rows_cols_packed_host[0];
 
-  // Fill values with ascending integers.
-  MGPU_MEM(int) values = context.FillAscending<int>(N1, 0, 1);
 
-  // Define 10 segment heads (for 11 segments in all).
-  // const int NumSegs = total_num_segments_bins_1_to_6;
-  // const int SegHeads[NumSegs] = { 4, 19, 22, 56, 61, 78, 81, 84, 94, 97 };
-  MGPU_MEM(int) segments = context.Malloc(segment_head_offsets, total_num_segments_bins_1_to_6);
+  MGPU_MEM(int64_t) mgpu_rows_cols_packed = context.Malloc(keys_host,size_stream);
+  MGPU_MEM(QValue) values = context.Malloc(valueStream, size_stream);
+  MGPU_MEM(int) segments = context.Malloc(segment_head_offsets, NumSegs);
 
-  //printf("Input keys:\n");
-  //PrintArray(*keys, "%4d", 10);
+#if ENABLE_DEBUG
+  printf("\n\nSEG-SORT PAIRS STARTING:\n\n");
+  cout<<"ROWS_COLS_PACKED (KEYS):\n";
+  for(int i=0;i<rows_cols_packed_host.size();i++){
+    cout<<keys_host[i]<<" ";
+  }
+  cout<<endl;
 
-  //printf("\nSegment heads:\n");
+  cout<<"VALUES: \n";
+  PrintArray(*values, "%9f", 10);
+
+  cout<<"total_num_segments"<<NumSegs<<endl;
+  printf("Input keys:\n");
+  HANDLE_ERROR(cudaMemcpy(keys_host,mgpu_rows_cols_packed->get(),size_stream * sizeof(int64_t),cudaMemcpyDeviceToHost));  
+  for(int i=0;i<size_stream;i++){
+    cout<<keys_host[i]<<" ";
+  }
+  cout<<endl;
+
+  printf("\nSegment heads:\n");
   //PrintArray(*segments, "%4d", 10);
+#endif
 
   // Sort within segments.
-  SegSortPairsFromIndices(keys->get(), values->get(), N1, segments->get(),total_num_segments_bins_1_to_6, context);
+  SegSortPairsFromIndices(mgpu_rows_cols_packed->get(), values->get(), size_stream, segments->get(),NumSegs, context);
 
-  printf("\nSorted data (segment heads are marked by *):\n");
-  //PrintArrayOp(*keys, FormatOpMarkArray(" %c%2d", segment_head_offsets, total_num_segments_bins_1_to_6), 10);
+#if ENABLE_DEBUG
+  printf("\nSorted keys :\n");
+  HANDLE_ERROR(cudaMemcpy(keys_host,mgpu_rows_cols_packed->get(),size_stream * sizeof(int64_t),cudaMemcpyDeviceToHost));  
+  for(int i=0;i<rows_cols_packed_host.size();i++){
+    cout<<keys_host[i]<<" ";
+  }
+  cout<<endl;
 
-  printf("\nSorted indices (segment heads are marked by *):\n");
- // PrintArrayOp(*values, FormatOpMarkArray(" %c%2d", segment_head_offsets, total_num_segments_bins_1_to_6), 10);
+  printf("\nSorted values :\n");
+  PrintArray(*values, "%9f", 10);
+#endif
 
+  MGPU_MEM(int64_t) mgpu_reduced_rows_cols_packed = context.Malloc<int64_t>(size_stream);
+  MGPU_MEM(QValue) mgpu_reduced_vals = context.Malloc<QValue>(size_stream);
+  
+  //reduce on row_cols_packed
+
+  //numSegments = number of unique r,c values 
+  int numSegments;
+  ReduceByKey(mgpu_rows_cols_packed->get(), values->get(), size_stream,
+    QValue(0.0), mgpu::plus<QValue>(), mgpu::equal_to<int64_t>(), mgpu_reduced_rows_cols_packed->get(),
+    mgpu_reduced_vals->get(), &numSegments, (int*)0, context);
+
+#if ENABLE_DEBUG
+  printf("\nReduced keys:\n");
+  //PrintArray(*keysDestDevice, numSegments, "%4f", 10);
+  HANDLE_ERROR(cudaMemcpy(keys_host, mgpu_reduced_rows_cols_packed->get(), numSegments * sizeof(int64_t), cudaMemcpyDeviceToHost));  
+  for(int i=0;i<numSegments;i++){
+    cout<<keys_host[i]<<" ";
+  }
+  cout<<endl;
+
+
+  printf("\nReduced values:\n");
+  PrintArray(*mgpu_reduced_vals, numSegments, "%4f", 10);
+#endif
+
+  //unpack keysDestDevice into rows and cols
+  int64_t* d_reduced_rows_cols_packed = mgpu_reduced_rows_cols_packed->get();
+
+  thrust::device_ptr<int64_t> thrust_reduced_rows_cols_packed(d_reduced_rows_cols_packed);
+
+  thrust::transform(
+    thrust_reduced_rows_cols_packed,
+    thrust_reduced_rows_cols_packed+numSegments,
+    thrust::make_zip_iterator(thrust::make_tuple(drowStream, dcolStream)),
+    unpack());
+
+#if ENABLE_PRINT  
+  int *hrowStream = NULL;
+  int *hcolStream = NULL;
+  QValue* hvalStream = NULL;
+
+  hrowStream = (int*) malloc(numSegments * sizeof(int));
+  hcolStream = (int*) malloc(numSegments * sizeof(int));
+  hvalStream = (QValue*) malloc(numSegments * sizeof(QValue));
+
+  HANDLE_ERROR(cudaMemcpy(hrowStream,rowStream,numSegments * sizeof(int),cudaMemcpyDeviceToHost));  
+  HANDLE_ERROR(cudaMemcpy(hcolStream,colStream,numSegments * sizeof(int),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR(cudaMemcpy(hvalStream,mgpu_reduced_vals->get(), numSegments * sizeof(QValue),cudaMemcpyDeviceToHost));
+
+  for(int i=0;i<(numSegments);i++) {
+    printf("row : %d ,col : %d, val : %f\n",hrowStream[i],hcolStream[i],hvalStream[i]);
+  }
+
+  
+#endif
+  //need to handle bin 7
 }
 
+
+template <typename T>
+struct is_odd : public thrust::unary_function<T,bool>
+{
+    __host__ __device__
+    bool operator()(T x)
+    {
+        return x % 2;
+    }
+};
 
 
 CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, const vector<int> &hv,int *dflops) {
@@ -213,48 +325,87 @@ CSR sgpuSpMMWrapper(const CSR &dA, const CSR &dB, int *drowIds, const vector<int
   gpu_compute_stream(dA, dB, drowIds, hv, rowStream, colStream, valueStream,dflops);
   HANDLE_ERROR(cudaGetLastError());
  
-  /* 
-  printing for checking correctness
+   
+ // printing for checking correctness
+#if ENABLE_DEBUG
 
   int *hrowStream = NULL;
   int *hcolStream = NULL;
+  QValue* hvalStream = NULL;
   hrowStream = (int*) malloc(*flops * sizeof(int));
   hcolStream = (int*) malloc(*flops * sizeof(int));
+  hvalStream = (QValue*) malloc(*flops * sizeof(QValue));
   HANDLE_ERROR(cudaMemcpy(hrowStream,rowStream,*flops * sizeof(int),cudaMemcpyDeviceToHost));  
   HANDLE_ERROR(cudaMemcpy(hcolStream,colStream,*flops * sizeof(int),cudaMemcpyDeviceToHost));
+  HANDLE_ERROR(cudaMemcpy(hvalStream,valueStream,*flops * sizeof(QValue),cudaMemcpyDeviceToHost));
+
   for(int i=0;i<(*flops);i++) {
-	printf("row : %d ,col : %d \n",hrowStream[i],hcolStream[i]);
-  } */
+	  printf("row : %d ,col : %d , val: %f\n",hrowStream[i],hcolStream[i],hvalStream[i]);
+  } 
+#endif
   
   int total_num_segments = ((*flops + FLOPS_SORT - 1)/FLOPS_SORT) - 1; // represents the size of the array
-  //printf("total number of segments : %d\n" , total_num_segments);
+  printf("total number of segments : %d\n" , total_num_segments);
   //printf("total flops : %d\n" , (hv[7] - hv[2]));
-  int *flops_sort_arr;
+  int *d_segment_heads;
   if(total_num_segments > 0) {
-    HANDLE_ERROR(cudaMalloc((void**)&flops_sort_arr, total_num_segments * sizeof(int)));
+    HANDLE_ERROR(cudaMalloc((void**)&d_segment_heads, total_num_segments * sizeof(int)));
     const int BLOCK_THREADS = 256;
     const unsigned NBLOCKS = qmin(65535, (m + BLOCK_THREADS - 1) / BLOCK_THREADS);
-    compute_sorting_pointers<BLOCK_THREADS><<<NBLOCKS,BLOCK_THREADS>>>(flops_sort_arr, *flops, total_num_segments, rowStream);
+    compute_sorting_pointers<BLOCK_THREADS><<<NBLOCKS,BLOCK_THREADS>>>(d_segment_heads, *flops, total_num_segments, rowStream);
   }
   
   /*
   printing for checking correctness
-  int *hflops_sort_arr = NULL;
-  hflops_sort_arr = (int*) malloc(total_num_segments * sizeof(int));   
-  HANDLE_ERROR(cudaMemcpy(hflops_sort_arr, flops_sort_arr, total_num_segments * sizeof(int), cudaMemcpyDeviceToHost));
-  for(int i=0;i<total_num_segments;i++) {
- 	printf("pointer :%d\n" , hflops_sort_arr[i]);
-  } 
   */
- 
+  //prints the segment heads
+
+  int *h_segment_heads = NULL;
+  h_segment_heads = (int*) malloc(total_num_segments * sizeof(int));   
+  HANDLE_ERROR(cudaMemcpy(h_segment_heads, d_segment_heads, total_num_segments * sizeof(int), cudaMemcpyDeviceToHost));
+
+  int idx_of_last_minus1;
+  for(idx_of_last_minus1=total_num_segments-1 ; idx_of_last_minus1>0 && (h_segment_heads[idx_of_last_minus1] == -1); idx_of_last_minus1--){
+  }
+  cout<<"idx_of_last_minus1 = "<<idx_of_last_minus1<<endl;
+
+#if ENABLE_DEBUG
+  for(int i=0;i<total_num_segments;i++) {
+ 	  printf("segment head %d :%d\n" ,i, h_segment_heads[i]);
+  }
+#endif
+
+/* flops array - prefix sum of flops per row after rows are sorted in ascending order of flops
+    Note that flops[0] will always be 0. Also, flops array stores all the rows that have 0 flops also. 
+
+*/
+//  d_segment_heads contains my segment heads
+/*
+    hv array - contains info about starting indices of each bin in flops array. There are at most 7 bins in total and total size of hv is at most 9 (first 2 elements are dummy). Starting index of Bin #i (where i ranges from 1..7) is located in hv[i+1]. This value will point to the index in flops array containing the first non-zero value (flops is sorted so starting elements may be 0 - see above info about flops array for more details).
+
+hv[8] -> index where bin 7 starts in flops array
+
+*/
   // Pack (day, site) pairs into 64-bit integers.
   //thrust::device_ptr<int> dvalueStream(valueStream);
   
   //sort_data(*flops,drowStream,dcolStream,dvalueStream);
+  
   //TODO handle segment array size as 0 and for -1, Also finally this method should final CSR
-  //ContextPtr context = CreateCudaDevice(0);
 
-  //SegSortPairs(*context, *flops, rowStream, colStream, valueStream, flops_sort_arr, total_num_segments);
+  ContextPtr context = CreateCudaDevice(0);
+ 
+  //reducing total_num_segments by 1 as the last element in d_segment_heads contains -1
+  //total_num_segments = idx_of_last_minus1 + 1
+  SegSortPairs(*context, *flops, rowStream, colStream, valueStream, d_segment_heads, idx_of_last_minus1+1);
+
+  //get_segment_heads_for_CSR_reduction(const int64_t d_row_cols_sorted[], const QValue d_vals[], int segment_heads_for_CSR_reduction[], int size);
+
+  //Iterator values_end = thrust::remove_if(values.begin(), values.end(), is_odd<int>());
+
+  
+  // since the values after values_end are garbage, we'll resize the vector
+  //values.resize(values_end - values.begin());
 
   //uncomment later
   //create_flags<<<NBLOCKS, NTHREADS>>>(d_cols_sorted, d_vals, d_prefix_sum_flags, d_flags, N/NBLOCKS);

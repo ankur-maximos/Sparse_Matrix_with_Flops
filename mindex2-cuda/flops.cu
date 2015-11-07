@@ -7,6 +7,8 @@
 #include "CSR.h"
 #include "gpus/cuda_handle_error.h"
 
+#define ENABLE_DEBUG 0
+
 void outputDeviceLongArray(long *dflops, int m) {
   long *hflops = (long*)malloc(m * sizeof(long));
   HANDLE_ERROR(cudaMemcpy((void*)hflops, (void*) dflops, m * sizeof(long), cudaMemcpyDeviceToHost));
@@ -132,6 +134,8 @@ std::vector<int> gpuFlopsClassify(const CSR &dA, const CSR &dB, int **drowIdsp, 
   //int *flops = new int[1];
   //HANDLE_ERROR(cudaMemcpy(flops,dflopIds+m,4,cudaMemcpyDeviceToHost));
 
+#if ENABLE_DEBUG
+
   int *hflopIds = NULL; 
   int *hrowIds = NULL;
   short *hbinIds = NULL;
@@ -159,6 +163,7 @@ std::vector<int> gpuFlopsClassify(const CSR &dA, const CSR &dB, int **drowIdsp, 
 
   printf("\n");
 
+#endif
   thrust::device_vector<int> dhist = computeHistogram(dbinIds, m+1);
   *drowIdsp = drowIds;
   *dflopId = dflopIds;
